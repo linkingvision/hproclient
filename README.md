@@ -1,4 +1,9 @@
-# hproclient
+# HPro AI NVR Client & USC VMS Client (Windows x64 and macOS)
+
+![Login](./doc/img/login.png)
+![Grid View](./doc/img/liveview.png)
+![Storage setting](./doc/img/stgsetting.png)
+![Storage view](./doc/img/stgview.png)
 
 🥳 `Electron` + `Vue` + `Vite`
 
@@ -7,7 +12,7 @@
 ```sh
 
 node -v
-v20.19.1
+22.18.0
 
 ```
 
@@ -20,21 +25,4 @@ npm install
 
 # develop
 npm run dev
-```
-
-## Directory
-
-```diff
-hproclient/
-├── src/
-│   ├── main/                 # Electron 主进程
-│   ├── renderer/            # Vue 渲染进程
-│   │   ├── components/      # 组件
-│   │   ├── views/           # 页面
-│   │   ├── stores/          # 状态管理
-│   │   ├── utils/           # 工具函数
-│   │   └── assets/          # 静态资源
-│   └── preload/             # 预加载脚本
-├── dist/                    # 构建输出
-└── package.json
 ```
