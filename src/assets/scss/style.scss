@@ -1,0 +1,22 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  /* 禁止滚动条 */
+
+  background-color: #fff;
+  
+  // box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.1),  /* 左边 */
+  //   inset -1px 0 0 rgba(0, 0, 0, 0.1),    /* 右边 */
+  //   inset 0 -1px 0 rgba(0, 0, 0, 0.1);  /* 下边 */
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}

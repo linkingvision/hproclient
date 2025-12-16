@@ -1,0 +1,49 @@
+{
+  "name": "hproclient",
+  "version": "1.1.1201",
+  "main": "dist/main/index.js",
+  "description": "Electron + Vue + Vite.",
+  "author": "linkingvision",
+  "license": "MIT",
+  "private": true,
+  "keywords": [
+    "electron",
+    "rollup",
+    "vite",
+    "vue3",
+    "vue"
+  ],
+  "debug": {
+    "env": {
+      "VITE_DEV_SERVER_URL": "http://127.0.0.1:3344/"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build && electron-builder",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "electron": "^29.1.1",
+    "electron-builder": "^24.13.3",
+    "element-plus": "^2.2.17",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.5",
+    "vite-plugin-electron": "^0.28.4",
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "vue": "^3.4.21",
+    "vue-tsc": "^2.0.6"
+  },
+  "dependencies": {
+    "@imengyu/vue3-context-menu": "^1.4.4",
+    "electron-log": "^5.2.4",
+    "uuid": "^8.3.2",
+    "mitt": "^3.0.1",
+    "sass": "^1.54.9",
+    "vue3-tabs-chrome": "^0.3.2",
+    "vue-router": "^4.5.0",
+    "xml2js": "^0.4.11"
+  }
+}
