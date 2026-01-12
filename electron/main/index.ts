@@ -37,10 +37,14 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   : RENDERER_DIST;
 
 // Disable GPU Acceleration for Windows 7;
-if (os.release().startsWith('6.1')) app.disableHardwareAcceleration();
+if (os.release().startsWith('6.1')) {
+  app.disableHardwareAcceleration();
+}
 
 // Set application name for Windows 10+ notifications
-if (process.platform === 'win32') app.setAppUserModelId(app.getName());
+if (process.platform === 'win32') {
+  app.setAppUserModelId(app.getName());
+}
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -57,14 +61,51 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html');
 app.commandLine.appendSwitch('wm-window-animations-disabled');
 app.commandLine.appendSwitch('ignore-certificate-errors');
 
+async function createSidebarWindow(parentWin: BrowserWindow) {
+  let sidebarWin = new BrowserWindow({
+    title: "Hpro client sidebar",
+    frame: false,
+    show: false, // 窗口默认隐藏
+    // alwaysOnTop: true, // 保持在最顶层
+    transparent: true, // 窗口透明
+    resizable: false, // 禁止调整窗
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+    parent: parentWin,
+    webPreferences: {
+      preload,
+      nodeIntegration: true,
+    },
+  })
+  if (VITE_DEV_SERVER_URL) {
+    sidebarWin.webContents.openDevTools()
+    sidebarWin.loadURL(`${VITE_DEV_SERVER_URL}#Sidebar`)
+    // Open devTool if the app is not packaged
+  } else {
+    sidebarWin.loadFile(indexHtml, { hash: "Sidebar" })
+  }
+
+  // 主动测试向渲染器推送消息
+  sidebarWin.webContents.on('did-finish-load', () => {
+    let clientBounds = parentWin.getContentBounds();  // 获取内容区域的边界
+    sidebarWin.setBounds({ x: clientBounds.x, y: clientBounds.y, width: 250, height: clientBounds.height });
+    sidebarWin.setParentWindow(parentWin);
+    // var message = {
+    //   type: "Sidebar",
+    // }
+    // mainWin?.webContents.send('main-process-message', message)
+  })
+  sidebarWin.on('blur', () => {
+    // sidebarWin.hide()
+  })
+};
 async function createWindow(childPath: string) {
   let mainWin = new BrowserWindow({
-    title: "Unified Security 客户端",
+    title: "Hpro client main",
     width: 800,
     height: 600,
     frame: false,
     show: false, // 窗口默认隐藏
-    icon: 'favicon.ico', // 设置图标路径
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
     webPreferences: {
       preload,
       nodeIntegration: true,
@@ -75,7 +116,7 @@ async function createWindow(childPath: string) {
     mainWin.loadURL(VITE_DEV_SERVER_URL)
     // Open devTool if the app is not packaged
   } else {
-    mainWin.loadFile(this.indexHtml)
+    mainWin.loadFile(indexHtml)
   }
 
   mainWinArray.set(mainWin.webContents.id, mainWin)
@@ -99,47 +140,53 @@ async function createWindow(childPath: string) {
   // win.webContents.on('will-navigate', (event, url) => { }) #344
   mainWin.once('ready-to-show', () => {
     mainWin.show();
+    createSidebarWindow(mainWin)
     //全屏模式 
     if (!mainWin.isMaximized()) {
       mainWin.maximize();
     }
   })
   mainWin.on('minimize', () => {
-    console.log("minimize 最小化");
+    console.log("minimize...");
   });
   mainWin.on('move', () => {
-    let win_children = mainWin.getChildWindows()
-    if (win_children) {
-      let clientBounds = mainWin.getContentBounds();  // 获取内容区域的边界
-      win_children.forEach(child => {
-        // 更新子窗口的位置，使其跟随主窗口
-        child.setBounds({ x: clientBounds.x, y: clientBounds.y + 40, width: clientBounds.width, height: clientBounds.height - 40 });
-      });
-    }
+    setChildrenBounds()
 
   });
+  mainWin.on('resize', () => {
+    setChildrenBounds()
+  });
   mainWin.on('maximize', () => {
-    console.log("maximize 最大化");
+    console.log("maximize...");
     mainWin.webContents.send("header-minimize", "icon-xiangxiahuanyuan");
   });
   mainWin.on('unmaximize', () => {
-    console.log("unmaximize 取消最大化");
+    console.log("unmaximize...");
     mainWin.webContents.send("header-minimize", "icon-zuidahua");
-    let win_children = mainWin.getChildWindows()
-    if (win_children) {
-      let clientBounds = mainWin.getContentBounds();  // 获取内容区域的边界
-      win_children.forEach(child => {
-        // 更新子窗口的位置，使其跟随主窗口
-        child.setBounds({ x: clientBounds.x, y: clientBounds.y + 40, width: clientBounds.width, height: clientBounds.height - 40 });
-      });
-    }
+    setChildrenBounds()
   });
   mainWin.on('restore', () => {
-    console.log("win restore");
+    console.log("win restore...");
   });
   mainWin.on('close', (event) => {
     mainWin = null;
   });
+
+  function setChildrenBounds() {
+    let win_children = mainWin.getChildWindows()
+    if (win_children) {
+      let clientBounds = mainWin.getContentBounds();  // 获取内容区域的边界
+      win_children.forEach(child => {
+        if (child.getTitle() == "Hpro client sidebar") {
+          // 更新子窗口的位置，使其跟随主窗口
+          child.setBounds({ x: clientBounds.x, y: clientBounds.y, width: 250, height: clientBounds.height });
+        } else {
+          // 更新子窗口的位置，使其跟随主窗口
+          child.setBounds({ x: clientBounds.x + 1, y: clientBounds.y + 40, width: clientBounds.width - 2, height: clientBounds.height - 41 });
+        }
+      });
+    }
+  }
 };
 
 //启动页logo画面
@@ -246,7 +293,19 @@ ipcMain.on('window-close', function (event) {
 //接收关闭标签命令
 ipcMain.on('window-tabs-close', function (event, id) {
   //关闭此标签
-  // winManager.closeWindow(event.sender.id);
+  winManager.closeWindow(id);
+})
+//接收sidebar导航栏显示消息
+ipcMain.on('sidebar-show', function (event, id) {
+  const sender = event.sender;
+  //  通过 WebContents 找到点击的 BrowserWindow
+  const win = BrowserWindow.fromWebContents(sender);
+  const sidebarWindows = win.getChildWindows().find(win => {
+    const title = win.getTitle()
+    return title === "Hpro client sidebar";
+  })
+
+  sidebarWindows?.show();
 })
 
 ipcMain.on('get-site-device', function (event, uuid) {
@@ -297,7 +356,7 @@ ipcMain.on('switch-tabs', function (event, data) {
 ipcMain.on('open-new-win', (event, arg) => {
   createWindow("View")
 });
-
+//添加新的标签页
 ipcMain.handle('open-win-tabs', (event, arg) => {
   const newWin = winManager.openWindow().window;
   newWin.resizable = false;
@@ -308,7 +367,8 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
     return null;
   };
   let clientBounds = senderWindow.getContentBounds();  // 获取内容区域的边界
-  newWin.setBounds({ x: clientBounds.x, y: clientBounds.y + 40, width: clientBounds.width, height: clientBounds.height - 40 });
+  // 设置新窗口的大小边界
+  newWin.setBounds({ x: clientBounds.x + 1, y: clientBounds.y + 40, width: clientBounds.width - 2, height: clientBounds.height - 41 });
   newWin.setParentWindow(senderWindow);
   let routerPath = arg.path;
   if (VITE_DEV_SERVER_URL) {

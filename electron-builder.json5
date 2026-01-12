@@ -10,7 +10,6 @@
   "files": [
     "dist/**/*",
     "node_modules/**/*",
-    "release/**/*"
   ],
   "mac": {
     "target": [

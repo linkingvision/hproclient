@@ -8,7 +8,7 @@ let logo = localStorage.getItem('language') === 'en' ? logoen : logozh;
 
 <template>
   <div class="logo">
-    <img class="logo" :src="logotest" alt="">
+    <img class="logo-img" :src="logotest" alt="">
 
     <div class="progress"></div>
   </div>
@@ -26,16 +26,23 @@ let logo = localStorage.getItem('language') === 'en' ? logoen : logozh;
 .logo {
   width: 100%;
   /* 使 logo 自适应屏幕宽度 */
-  height: auto;
+  // height: auto;
   /* 自动调整高度，保持图像比例 */
-  max-width: 750px;
+  // max-width: 750px;
   /* 防止 logo 超出最大宽度 */
-  max-height: 500px;
+  // max-height: 500px;
   /* 防止 logo 超出最大高度 */
-  display: block;
+  // display: block;
   /* 防止图片下方出现空隙 */
   margin: 0 auto;
   /* 居中显示 */
+  .logo-img {
+    width: 100%;
+    height: 100%;
+    // max-height: 500px;
+    // object-fit: cover;
+    display: block;
+  }
 }
 
 .progress {

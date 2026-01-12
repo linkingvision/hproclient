@@ -1,5 +1,6 @@
 <template>
     <div id="container">
+        <SideBar />
         <el-header>
             <AppHeader />
         </el-header>
@@ -10,6 +11,7 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import AppHeader from "./Header.vue";
+// import SideBar from "./SideBar.vue";
 
 </script>
 <style lang="scss">

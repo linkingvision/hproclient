@@ -33,7 +33,7 @@ class WindowPoolManager {
         show: false, // 窗口默认隐藏
         hasShadow: false,
         transparent: true, // 窗口透明
-        icon: 'favicon.ico', // 设置图标路径
+        icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
         webPreferences: {
           devTools: true,
           preload: this.preload,
@@ -97,6 +97,9 @@ class WindowPoolManager {
 
   public closeWindow(id: number) {
     let windowPool = this.windowPools.get(id);
+    if (!windowPool) {
+      return;
+    }
     //获取当前窗口的子窗口
     let win_children = windowPool.window.getChildWindows()
     if (win_children) {

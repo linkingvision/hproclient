@@ -39,11 +39,14 @@
   "dependencies": {
     "@imengyu/vue3-context-menu": "^1.4.4",
     "electron-log": "^5.2.4",
-    "uuid": "^8.3.2",
     "mitt": "^3.0.1",
+    "pinia": "^3.0.4",
+    "pinia-plugin-persistedstate": "^4.7.1",
     "sass": "^1.54.9",
-    "vue3-tabs-chrome": "^0.3.2",
+    "uuid": "^8.3.2",
+    "vue-i18n": "^11.2.8",
     "vue-router": "^4.5.0",
+    "vue3-tabs-chrome": "^0.3.2",
     "xml2js": "^0.4.11"
   }
 }

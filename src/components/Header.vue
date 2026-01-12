@@ -1,9 +1,9 @@
 <template>
     <div id="header">
         <div class="header-left">
-            <span class="iconfont icon-caidanlan"></span>
+            <span class="iconfont icon-caidanlan" @click="sidebarShow"></span>
             <img src="" alt=""> Logo占位
-            <span class="iconfont icon-shouye"></span>
+            <i class="iconfont icon-shouye"></i>
         </div>
         <vue3-tabs-chrome class="hpro-tabs" :ref="setTabRef" :tabs="tabs" @click="handleClick" @remove="handleRemove"
             v-model="tab" insert-to-after>
@@ -25,6 +25,10 @@
 import { ref, reactive, onMounted, onUnmounted } from "vue";
 import { Vue3TabsChrome } from "vue3-tabs-chrome";
 import "vue3-tabs-chrome/dist/vue3-tabs-chrome.css";
+import { useStore } from '../store';
+
+const store = useStore()
+
 const afterAdd = ref(true)
 const tabRef = ref()
 const tab = ref()
@@ -91,20 +95,18 @@ const setTabRef = (el: any) => {
     tabRef.value = el
 }
 
+const sidebarShow = (event: Event) => {
+    console.log("sidebar-show=========>", event);
+
+    window.ipcRenderer.send('sidebar-show')
+}
 const handleClick = (event: Event, data: any) => {
     window.ipcRenderer.send('switch-tabs', data.id)
-    console.log("[tab handleClick========", data);
+    console.log("[tab handleClick========", data, tabs);
 }
 const handleRemove = (data: any, index: any) => {
-    console.log("[tabs remove==========", data, index);
-    if (!isDragging.value) {
-    } else {
-        isDragging.value = false
-    }
-    if (tab.value) {
-        window.ipcRenderer.send("action-tab-uuid", tab.value);
-    } else {
-    }
+    console.log("[tabs remove==========", data.id);
+    window.ipcRenderer.send("window-tabs-close", data.id);
 };
 const handleAdd = () => {
     let arg = {
@@ -164,10 +166,12 @@ let closeWindow = () => {
         text-align: center;
         height: 40px;
         line-height: 46px;
-
-        span {
+        padding: 0 10px;
+        justify-content: space-between;
+        i {
             padding: 0 10px;
             font-size: 18px;
+            cursor: pointer;
         }
     }
 

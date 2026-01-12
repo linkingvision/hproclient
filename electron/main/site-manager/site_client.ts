@@ -49,7 +49,7 @@ export class DiscoveryClient {
      */
     public async start(): Promise<void> {
         if (this.isRunning) {
-            log.debug('发现服务已经在运行中');
+            log.debug('服务已经在运行中');
             return;
         }
 
@@ -58,7 +58,7 @@ export class DiscoveryClient {
 
             this.client.bind(() => {
                 const address = this.client.address();
-                log.debug(`🔍 发现服务已启动，监听端口: ${address.port}`);
+                log.debug(`服务已启动，监听端口: ${address.port}`);
 
                 // 启用广播
                 this.client.setBroadcast(true);
@@ -197,7 +197,7 @@ export class DiscoveryClient {
     }
 
     /**
-     * 停止发现服务
+     * 停止服务
      */
     public stop(): void {
         if (!this.isRunning) {
