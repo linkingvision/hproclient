@@ -8,7 +8,6 @@ import './assets/icon/iconfont.js'
 import './assets/icon/iconfont.css'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
 import ContextMenu from '@imengyu/vue3-context-menu'
-import './utils/ipc'
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate  from 'pinia-plugin-persistedstate'
 import i18n from './static/i18n';

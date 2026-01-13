@@ -1,7 +1,7 @@
 <template>
     <div id="header">
         <div class="header-left">
-            <span class="iconfont icon-caidanlan" @click="sidebarShow"></span>
+            <i class="iconfont icon-caidanlan" @click="sidebarShow"></i>
             <img src="" alt=""> Logo占位
             <i class="iconfont icon-shouye"></i>
         </div>
@@ -9,7 +9,7 @@
             v-model="tab" insert-to-after>
             <template v-slot:after>
                 <span class="btn" v-if="afterAdd"
-                    style="height: 26px;line-height: 24px; padding: 0 5px; font-size: 20px;" @click="handleAdd">+</span>
+                    style="height: 24px;line-height: 24px; padding: 0 5px; text-align: center; font-size: 20px;" @click="handleAdd">+</span>
             </template>
         </vue3-tabs-chrome>
         <div class="header-right">

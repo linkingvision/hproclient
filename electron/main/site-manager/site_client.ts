@@ -230,13 +230,6 @@ export class DiscoveryClient {
         }
     }
 
-    /**
-     * 获取设备列表
-     */
-    public getDevices(): DiscoveredDevice[] {
-        return Array.from(this.discoveredDevices.values());
-    }
-
     public addDevice(data: any) {
         let device: DiscoveredDevice = {
             type: "manual",
@@ -258,14 +251,27 @@ export class DiscoveryClient {
     }
 
     /**
-     * 获取特定设备
+     * 获取设备列表
      */
-    public getDevice(uuid: string): DiscoveredDevice | undefined {
-        return this.discoveredDevices.get(uuid);
+    public getDevices(): DiscoveredDevice[] {
+        return Array.from(this.discoveredDevices.values());
     }
-    public setDevice(uuid: string, login: boolean) {
-        let device = this.discoveredDevices.get(uuid);
-        device.login = login;
+
+    /**
+     * 获取设备
+     */
+    public getDevice(ip: string): DiscoveredDevice | undefined {
+        return this.discoveredDevices.get(ip);
+    }
+
+    /**
+     * 修改设备
+     */
+    public setDevice(data: DiscoveredDevice) {
+        let device = this.discoveredDevices.get(data.ipv4Address);
+        device.login = data.login;
+        device.session = data.session;
+        device.access_token = data.access_token;
     }
     /**
      * 获取设备数量
@@ -274,10 +280,10 @@ export class DiscoveryClient {
         return this.discoveredDevices.size;
     }
     /**
-     * 清除所有设备（重置列表）
+     * 清除设备
      */
-    public clearDevice(uuid: string) {
-        this.discoveredDevices.delete(uuid);
+    public clearDevice(ip: string) {
+        this.discoveredDevices.delete(ip);
     }
 
     /**
@@ -331,12 +337,12 @@ export class DiscoveryClient {
      * 事件发射器
      */
     private emitDeviceAdded(device: DiscoveredDevice): void {
-        // 这里可以添加自定义事件处理
+        // 添加自定义事件处理
     }
 
 
     private emitDeviceRemoved(device: DiscoveredDevice): void {
-        // 这里可以添加自定义事件处理
+        // 删除自定义事件
     }
 
     /**

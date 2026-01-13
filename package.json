@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@imengyu/vue3-context-menu": "^1.4.4",
+    "axios": "^1.13.2",
     "electron-log": "^5.2.4",
     "mitt": "^3.0.1",
     "pinia": "^3.0.4",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from '../store';
 import LogoBlackEN from '../assets/image/HPro-black-en.svg'
@@ -9,7 +9,7 @@ const store = useStore();
 const route = useRoute();
 
 
-const activeIndex = ref<string>('/Home');
+const activeIndex = ref<string>('');
 
 // const sidebarRef = ref<HTMLElement | null>(null)
 // const handleClickOutside = (e: MouseEvent) => {
@@ -43,6 +43,9 @@ const gotoPage = (page: string) => {
 // onMounted(() => {
 //   getCurrentRouter();
 // })
+onUnmounted(() => {
+    console.log('sideBar')
+})
 </script>
 
 <template>
@@ -73,14 +76,12 @@ const gotoPage = (page: string) => {
 <style scoped lang="scss">
 .side-bar {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   position: absolute;
   top: 0;
   left: 0;
   transition: 0.3s;
   z-index: 10000;
-  box-shadow: 5px 0 10px rgba(0, 0, 0, 0.2);
-//   background-color: #0C0C0C;
   .sidebar-logo {
     width: 100%;
     height: 56px;

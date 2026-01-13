@@ -61,6 +61,7 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html');
 app.commandLine.appendSwitch('wm-window-animations-disabled');
 app.commandLine.appendSwitch('ignore-certificate-errors');
 
+//侧边栏
 async function createSidebarWindow(parentWin: BrowserWindow) {
   let sidebarWin = new BrowserWindow({
     title: "Hpro client sidebar",
@@ -73,7 +74,7 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     parent: parentWin,
     webPreferences: {
       preload,
-      nodeIntegration: true,
+      nodeIntegration: false,
     },
   })
   if (VITE_DEV_SERVER_URL) {
@@ -84,7 +85,7 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     sidebarWin.loadFile(indexHtml, { hash: "Sidebar" })
   }
 
-  // 主动测试向渲染器推送消息
+  //网页加载完成事件
   sidebarWin.webContents.on('did-finish-load', () => {
     let clientBounds = parentWin.getContentBounds();  // 获取内容区域的边界
     sidebarWin.setBounds({ x: clientBounds.x, y: clientBounds.y, width: 250, height: clientBounds.height });
@@ -92,12 +93,16 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     // var message = {
     //   type: "Sidebar",
     // }
+
+    // 主动测试向渲染器推送消息
     // mainWin?.webContents.send('main-process-message', message)
   })
   sidebarWin.on('blur', () => {
-    // sidebarWin.hide()
+    sidebarWin.hide()
   })
 };
+
+//主窗口
 async function createWindow(childPath: string) {
   let mainWin = new BrowserWindow({
     title: "Hpro client main",
@@ -108,7 +113,7 @@ async function createWindow(childPath: string) {
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
     webPreferences: {
       preload,
-      nodeIntegration: true,
+      nodeIntegration: false,
     },
   })
   if (VITE_DEV_SERVER_URL) {
@@ -120,7 +125,8 @@ async function createWindow(childPath: string) {
   }
 
   mainWinArray.set(mainWin.webContents.id, mainWin)
-  // 主动测试向渲染器推送消息
+
+  //网页加载完成事件
   mainWin.webContents.on('did-finish-load', () => {
     var message = {
       type: "tabs",
@@ -128,6 +134,7 @@ async function createWindow(childPath: string) {
         path: childPath,
       }
     }
+    // 主动测试向渲染器推送消息
     mainWin?.webContents.send('main-process-message', message)
   })
 
@@ -169,6 +176,11 @@ async function createWindow(childPath: string) {
     console.log("win restore...");
   });
   mainWin.on('close', (event) => {
+    mainWinArray.delete(mainWin.webContents.id);
+
+    if (mainWinArray.size == 0) {
+      app.quit()
+    }
     mainWin = null;
   });
 
@@ -205,7 +217,7 @@ const splashScreen = () => {
     webPreferences: {
       devTools: true,
       preload,
-      nodeIntegration: true,
+      nodeIntegration: false,
     },
   })
   if (VITE_DEV_SERVER_URL) {
@@ -253,8 +265,17 @@ app.on('activate', () => {
     createWindow("SiteLogin")
   }
 });
+// 监听 before-quit 事件（在退出应用前触发）
+app.on('before-quit', (event) => {
+  console.log('应用即将退出');
+});
 
+// 监听 will-quit 事件（在退出应用时触发）
+app.on('will-quit', (event) => {
+  console.log('应用正在退出');
+});
 
+//接收最小化命令
 ipcMain.on('window-min', function (event) {
   // 通过 WebContents 找到对应的 BrowserWindow
   const senderWindow = BrowserWindow.fromWebContents(event.sender);
@@ -284,11 +305,6 @@ ipcMain.on('window-close', function (event) {
     });
   }
   win.close()
-  mainWinArray.delete(event.sender.id);
-
-  if (mainWinArray.size == 0) {
-    app.quit()
-  }
 })
 //接收关闭标签命令
 ipcMain.on('window-tabs-close', function (event, id) {
@@ -308,6 +324,7 @@ ipcMain.on('sidebar-show', function (event, id) {
   sidebarWindows?.show();
 })
 
+//发送给所有窗口站点信息
 ipcMain.on('get-site-device', function (event, uuid) {
   const devices = DiscoveryClient.getDevices();
   log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
@@ -329,15 +346,34 @@ ipcMain.on('get-site-device', function (event, uuid) {
     }
   });
 })
-ipcMain.on('site-device-login', function (event, data) {
-  DiscoveryClient.setDevice(data.uuid, data.login);
+
+//站点登录保存信息
+ipcMain.handle('site-device-login', function (event, data) {
+  DiscoveryClient.setDevice(data);
+
 })
-ipcMain.on('delete-site-device', function (event, uuid) {
-  DiscoveryClient.clearDevice(uuid)
+
+//删除站点
+ipcMain.handle('delete-site-device', function (event, ipv4Address) {
+  DiscoveryClient.clearDevice(ipv4Address)
+  const devices = DiscoveryClient.getDevices();
+  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
+
+  if (devices.length > 0) {
+    devices.forEach((device, index) => {
+      const lastSeen = device.lastSeen || device.responseTime;
+      const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
+      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
+    });
+  }
+  return devices
 })
+
+//添加站点
 ipcMain.on('add-site-device', function (event, data) {
   DiscoveryClient.addDevice(data)
 })
+//切换标签
 ipcMain.on('switch-tabs', function (event, data) {
   const sender = event.sender;
   //  通过 WebContents 找到点击的 BrowserWindow
@@ -353,6 +389,7 @@ ipcMain.on('switch-tabs', function (event, data) {
     });
   }
 })
+//打开新的窗口
 ipcMain.on('open-new-win', (event, arg) => {
   createWindow("View")
 });
@@ -377,12 +414,26 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
   } else {
     newWin.loadFile(indexHtml, { hash: routerPath })
   };
+
+  //   //网页加载完成事件
+  // mainWin.webContents.on('did-finish-load', () => {
+  //   var message = {
+  //     type: "tabs",
+  //     data: {
+  //       path: childPath,
+  //     }
+  //   }
+  //   // 主动测试向渲染器推送消息
+  //   mainWin?.webContents.send('main-process-message', message)
+  // })
+
   newWin.once('ready-to-show', () => {
     newWin.show();
   })
   arg.id = newWin.id;
   return arg;
 });
+//获取站点信息
 ipcMain.handle('get-site-device', async (event) => {
   const devices = DiscoveryClient.getDevices();
   log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);

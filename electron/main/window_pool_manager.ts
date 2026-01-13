@@ -37,7 +37,7 @@ class WindowPoolManager {
         webPreferences: {
           devTools: true,
           preload: this.preload,
-          nodeIntegration: true,
+          nodeIntegration: false,
         },
       });
     }

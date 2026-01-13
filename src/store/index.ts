@@ -10,7 +10,7 @@ export const useStore = defineStore('main', () => {
 
   // 主题
   type ThemeType = 'darkblue' | 'c-dark-theme' | false
-  const darkMode = ref<ThemeType>(false)
+  const darkMode = ref<ThemeType>('c-dark-theme')
   function setDarkMode(value: ThemeType) {
     darkMode.value = value;
   }
@@ -21,13 +21,20 @@ export const useStore = defineStore('main', () => {
     sidebarShow.value = flag;
   }
 
+  const access_token = ref<string>('');
+  function setAccess_token(value: string) {
+    access_token.value = value;
+  }
+
   return {
     lang,
     changeLang,
     darkMode,
     setDarkMode,
     sidebarShow,
-    setSidebarShow
+    setSidebarShow,
+    access_token,
+    setAccess_token,
   }
 }, {
   persist: true

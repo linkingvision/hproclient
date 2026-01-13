@@ -1,0 +1,106 @@
+body.c-dark-theme {
+  background-color: #181818;
+  #header {
+    background-color: #222222;
+    .hpro-tabs {
+      background-color: #222222;
+      .active {
+        .tabs-background-content {
+          background-color: #333333;
+        }
+        .tabs-background-before, .tabs-background-after {
+          fill: #333333;
+        }
+        .tabs-close {
+          background-color: #333333;
+          .tabs-close-icon {
+            stroke: #fff;
+          }
+        }
+      }
+      .tabs-item:hover {
+        .tabs-background-content {
+          background-color: #333333;
+        }
+        .tabs-background-before, .tabs-background-after {
+          fill: #333333;
+        }
+        .tabs-close {
+          background-color: #333333;
+          .tabs-close-icon {
+            stroke: #fff;
+          }
+        }
+      }
+      .tabs-close-icon:hover {
+        stroke: #fff;
+        background-color: #222;
+      }
+      .tabs-after {
+        .btn:hover {
+          background-color: #333;
+        }
+      }
+    }
+    .header-right {
+      span:hover {
+        background-color: #333;
+      }
+      .close:hover {
+        background-color: red;
+      }
+    }
+  }
+
+  #setup {
+    .sites_select {
+      background-color: #333333;
+    }
+  }
+
+  .side-bar {
+    background-color: #0C0C0C;
+    color: #fff;
+    .el-menu {
+      .el-menu-item {
+        i, span {
+          color: #fff;
+        }
+      }
+      .el-menu-item.is-active {
+        color: #FFFFFF;
+        border-right: 5px solid #0399FE;
+        background: url("../imgs/sidebar1.png") no-repeat;
+        background-color: #202020;
+      }
+      .el-menu-item:hover {
+        background: url("../image/sidebar1.png") no-repeat;
+      }
+    }
+  }
+
+
+  p, span, i, div, h1, h2, h3, h4, h5, h6, button, input {
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .el-radio-group {
+    .el-radio-button__inner {
+      --el-fill-color-blank: #414141;
+      border-color: #414141;
+    }
+  }
+  .el-input {
+    --el-input-bg-color: #5B5B5B;
+    --el-input-border-color: #5B5B5B;
+    --el-fill-color-blank: #5B5B5B;
+    --el-input-hover-border-color: #5B5B5B;
+  }
+  .el-form {
+    --el-text-color-regular: #fff;
+  }
+  .el-dialog {
+    --el-dialog-bg-color: #333333;
+  }
+}
