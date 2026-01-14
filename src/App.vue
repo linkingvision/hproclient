@@ -28,6 +28,7 @@ watch(() => store.darkMode, (newVal: any) => {
 }, { immediate: true })
 onMounted(() => {
   // updateBodyTheme(store.darkMode)
+  console.log(store.darkMode, store.lang)
 })
 </script>
 

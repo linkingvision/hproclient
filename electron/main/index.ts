@@ -370,8 +370,19 @@ ipcMain.handle('delete-site-device', function (event, ipv4Address) {
 })
 
 //添加站点
-ipcMain.on('add-site-device', function (event, data) {
+ipcMain.handle('add-site-device', function (event, data) {
   DiscoveryClient.addDevice(data)
+  const devices = DiscoveryClient.getDevices();
+  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
+
+  if (devices.length > 0) {
+    devices.forEach((device, index) => {
+      const lastSeen = device.lastSeen || device.responseTime;
+      const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
+      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
+    });
+  }
+  return devices
 })
 //切换标签
 ipcMain.on('switch-tabs', function (event, data) {
@@ -409,7 +420,7 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
   newWin.setParentWindow(senderWindow);
   let routerPath = arg.path;
   if (VITE_DEV_SERVER_URL) {
-    newWin.webContents.openDevTools()
+    // newWin.webContents.openDevTools()
     newWin.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`)
   } else {
     newWin.loadFile(indexHtml, { hash: routerPath })
@@ -447,3 +458,14 @@ ipcMain.handle('get-site-device', async (event) => {
   }
   return devices
 });
+
+// 接收 SideBar 信息, 切换页面
+ipcMain.on('sidebar-switch-tab', async (event, data) => {
+  console.log('sidebar-switch-tab =>', data)
+  const sender = event.sender;
+  // 通过 WebContents 找到对应的 BrowserWindow
+  const senderWindow = BrowserWindow.fromWebContents(sender);
+  const mainWin = senderWindow.getParentWindow()
+  // mainWinArray.get('header')?.webContents.send('header-switch-tab', data)
+  mainWin?.webContents.send('header-switch-tab', data)
+})

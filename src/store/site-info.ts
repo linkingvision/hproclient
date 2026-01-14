@@ -2,11 +2,8 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { DiscoveredDevice } from '../types/site-info';
 
-export const SiteInfo = defineStore('siteInfo', () => {
+export const useSiteInfo = defineStore('siteInfo', () => {
     const siteDevices = ref<Array<DiscoveredDevice>>()
-    function setSiteDevices(data: Array<DiscoveredDevice>) {
-        siteDevices.value = data;
-    }
     function getSiteDevice(params: string) {
         siteDevices.value?.forEach(device => {
             if (device.ipv4Address == params) {
@@ -18,9 +15,15 @@ export const SiteInfo = defineStore('siteInfo', () => {
     function getSiteDevices() {
         return siteDevices;
     }
+    function setSiteDevices(data: Array<DiscoveredDevice>) {
+        console.log('store setSite =>', data)
+        siteDevices.value = data;
+    }
     return {
         getSiteDevice,
         getSiteDevices,
         setSiteDevices
     }
+}, {
+  persist: true
 })

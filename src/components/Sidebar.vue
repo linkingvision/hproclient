@@ -1,51 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useStore } from '../store';
 import LogoBlackEN from '../assets/image/HPro-black-en.svg'
 import LogoWhiteEN from '../assets/image/HPro-white-en.svg'
 
 const store = useStore();
-const route = useRoute();
 
 
 const activeIndex = ref<string>('');
 
-// const sidebarRef = ref<HTMLElement | null>(null)
-// const handleClickOutside = (e: MouseEvent) => {
-//   console.log('handleClickOutside =>', e)
-//   const target = e.target as HTMLElement;
-//   if (sidebarRef.value && !sidebarRef.value.contains(target)) {
-//     store.setSidebarShow(false) // 隐藏侧边栏
-//   }
-// }
-
-// const getCurrentRouter = () => {
-//   const fullPath = route.fullPath;
-//   const parts = fullPath.split('/').filter(Boolean);
-//   activeIndex.value = '/' + (parts[0] || '')
-// }
 const gotoPage = (page: string) => {
   // router.push(page)
+  if (page == 'sitelogin') {
+    console.log(page)
+    window.ipcRenderer.send('sidebar-switch-tab', page);
+  }
 }
 
-// const show = computed(() => store.sidebarShow);
-// watch(show, (newVal) => {
-//   console.log('sidebarShow change =>', newVal)
-//   if (newVal) {
-//     setTimeout(() => {
-//       document.addEventListener('click', handleClickOutside)
-//     }, 100)
-//   } else {
-//     document.removeEventListener('click', handleClickOutside)
-//   }
-// })
-// onMounted(() => {
-//   getCurrentRouter();
-// })
-onUnmounted(() => {
-    console.log('sideBar')
-})
+console.log('SideBar')
 </script>
 
 <template>
@@ -61,11 +33,11 @@ onUnmounted(() => {
       class="el-menu-vertical-demo"
       close-on-click-outside
     >
-      <el-menu-item index="/View" @click="gotoPage('/View')">
+      <el-menu-item index="/View" @click="() => gotoPage('system')">
         <i class="iconfont icon-xitong"></i>
         <span>{{ 'System' }}</span>
       </el-menu-item>
-      <el-menu-item index="/SiteLogin" @click="gotoPage('/SiteLogin')">
+      <el-menu-item index="/SiteLogin" @click="() => gotoPage('sitelogin')">
         <i class="iconfont icon-dengru"></i>
         <span>{{ 'Site Login' }}</span>
       </el-menu-item>

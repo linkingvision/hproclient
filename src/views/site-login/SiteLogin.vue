@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive } from 'vue'
 import { useStore } from '../../store'
+import { useSiteInfo } from '../../store/site-info'
 import type { TabsPaneContext } from 'element-plus'
 import { DiscoveredDevice } from '../../types/site-info';
 import { Search } from '@element-plus/icons-vue'
 import LogoBlackEN from '../../assets/image/HPro-black-en.svg'
 import LogoWhiteEN from '../../assets/image/HPro-white-en.svg'
-import axios from 'axios'
+import { md5 } from 'js-md5';
+import { Base64 } from 'js-base64';
+import { LoginApi, GetSiteApi, LoginSessionApi } from '../../api/login';
+import { ElMessage } from 'element-plus';
 
 const store = useStore()
+const siteStore = useSiteInfo();
 
 const activeName = ref('all')
 const filterText = ref<string>('')
@@ -24,18 +29,21 @@ const addform = reactive({
     ip: '',
     port: '',
     deviceName: '',
-
 })
 const addVisible = ref<boolean>(false)
+
+const rememberUsers = ref<any[]>([])
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {
     console.log(tab, event)
 }
-const siteDevice = ref<Array<DiscoveredDevice>>()
+
+const siteDevice = ref<Array<DiscoveredDevice>>([])
 function getSiteDevice() {
     window.ipcRenderer.invoke('get-site-device').then((msg: Array<DiscoveredDevice>) => {
         console.log('Received get-site-device data:', msg);
         siteDevice.value = msg
+        // siteStore.setSiteDevices(msg)
     })
 }
 const timerRef = ref<NodeJS.Timeout | null>(null);
@@ -43,51 +51,142 @@ const timerRef = ref<NodeJS.Timeout | null>(null);
 //登录成功调用
 //window.ipcRenderer.on('get-site-device')
 
-const GetSite = async () => {
-    if (!addform.ip || !addform.port) return;
-    const url = window.location.protocol + '//' + addform.ip + ':' + addform.port + '/uapi/v1/DiscoverService/Site';
-    return axios({
-        url,
-        method:'GET'
-    })
-}
-
 const clickSite = (row: any) => {
-    console.log('click Site => ', row)
+    // console.log('click Site => ', row)
     checkedSites.value = row
+    const userIndex = rememberUsers.value.findIndex((item: any) => item.ipv4Address == row.ipv4Address)
+    if (userIndex !== -1) {
+        const pwd = rememberUsers.value[userIndex].password.slice(11);
+        form.username = rememberUsers.value[userIndex].username;
+        form.password = Base64.decode(pwd);
+        form.enableHttps = rememberUsers.value[userIndex].enableHttps;
+        form.remPwd = rememberUsers.value[userIndex].rememberPwd;
+    } else {
+        Object.assign(form, {
+            username: '',
+            password: '',
+            enableHttps: false,
+            remPwd: false
+        })
+    }
 }
-const addSite = () => {
-    GetSite().then((res: any) => {
-        console.log('Get Site =>', res);
-        if (res.status == 200 && res.data.code == 200) {
-            console.log('可以添加')
-        }
-    }).catch(error => {
-        console.error('Get Site 失败，不存在 =>', error)
-    })
+const addSite = async () => {
+    if (!addform.ip || !addform.port) return;
+    const root = window.location.protocol + '//' + addform.ip + ':' + addform.port;
+    const res = await GetSiteApi(root)
+    if (res.status == 200 && res.data.code == 200) {
+        const result = res.data.result;
+        window.ipcRenderer.invoke('add-site-device', {
+            uuid: result.UUID,
+            deviceName: result.DeviceName,
+            ipv4Address: result.IPv4Address,
+            httpPort: result.HttpPort,
+            httpsPort: result.HttpsPort,
+            softwareVersion: result.SoftwareVersion,
+        }).then((msg: Array<DiscoveredDevice>) => {
+            siteDevice.value = msg;
+        })
+        addVisible.value = false;
+    }
 }
 const delSite = (ip: string) => {
+    checkedSites.value = {};
     console.log('Del Site => ', ip)
     window.ipcRenderer.invoke('delete-site-device', ip).then((msg: Array<DiscoveredDevice>) => {
         console.log('Received get-site-device data:', msg);
         siteDevice.value = msg
     })
 }
+
+const LogIn = async () => {
+    console.log(checkedSites.value)
+    // return
+    if (!checkedSites.value || !checkedSites.value.ipv4Address) return;
+    const params = {
+        username: form.username,
+        password: md5(form.password)
+    };
+    console.log('params =>', params)
+    let root;
+    if (form.enableHttps) {
+        root = 'https://' + checkedSites.value.ipv4Address + ':' + checkedSites.value.httpsPort;
+    } else {
+        root = 'http://' + checkedSites.value.ipv4Address + ':' + checkedSites.value.httpPort;
+    }
+    const res = await LoginApi(root, params, )
+    // console.log('Login res => ', res)
+    if (res.status == 200 && res.data.code == 0) {
+        const result = res.data.result;
+
+        const sessionRes = await LoginSessionApi(root, result.access_token);
+        if (sessionRes.status === 200 && sessionRes.data.code === 0) {
+            console.log(sessionRes.data.result.session)
+            window.ipcRenderer.invoke('site-device-login', {
+                ...checkedSites.value,
+                login: true,
+                access_token: result.access_token,
+                session: sessionRes.data.result.session
+            })
+            ElMessage({
+                message: '登录成功',
+                type: 'success',
+                duration: 2000
+            })
+            getSiteDevice();
+
+            const usersStr = localStorage.getItem('users');
+            let users = usersStr ? JSON.parse(usersStr) : [];
+            if (form.remPwd) {
+                const random = randomWord(11);
+                const encryption = random + Base64.encode(form.password);
+                let userIndex = users.findIndex((item: any) => item.ipv4Address == checkedSites.value.ipv4Address)
+                const user = {
+                    username: form.username,
+                    password: encryption,
+                    rememberPwd: form.remPwd,
+                    enableHttps: form.enableHttps,
+                    ipv4Address: checkedSites.value.ipv4Address
+                }
+                if (userIndex !== -1) {
+                    users[userIndex] = user
+                } else {
+                    users.push(user)
+                }
+                localStorage.setItem('users', JSON.stringify(users))
+            } else {
+                users = users.filter((item: any) => item.ipv4Address != checkedSites.value.ipv4Address)
+                localStorage.setItem('users', JSON.stringify(users))
+            }
+        }
+    }
+}
+const randomWord = (num:number) => {
+    var str = "",
+        arr = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+    let pos;
+    for (var i = 0; i < num; i++) {
+        pos = Math.round(Math.random() * (arr.length - 1));
+        str += arr[pos];
+    }
+    return str;
+}
 // 在组件挂载时启动定时器
 onMounted(() => {
+    // 查询记录的账号密码
+    const usersStr = localStorage.getItem('users');
+    rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];
+
     // 立即执行一次
     getSiteDevice();
     // 设置定时器，并保存引用
     timerRef.value = setInterval(() => {
         getSiteDevice();
     }, 10000);
-    // console.log(window.location.protocol)
 });
 onUnmounted(() => {
     if (timerRef.value) {
         clearInterval(timerRef.value);
         timerRef.value = null;
-        console.log('定时器已清除');
     }
 });
 </script>
@@ -119,7 +218,7 @@ onUnmounted(() => {
                 </el-radio-group>
                 <ul class="sites-list" v-if="activeName == 'all'">
                     <li v-for="item in siteDevice?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))"
-                        class="site-item" :class="{'active-item': (item.uuid == checkedSites.uuid)}"
+                        class="site-item" :class="{'active-item': (item.uuid == checkedSites.uuid), 'isLogin': item.login}"
                         @click="clickSite(item)">
                         <i class="iconfont icon-shebei"></i>
                         <span>{{ item.deviceName }}</span>
@@ -128,7 +227,7 @@ onUnmounted(() => {
                 </ul>
                 <ul class="sites-list" v-if="activeName == 'available'">
                     <li v-for="item in siteDevice?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))"
-                        v-show="item.enabled" class="site-item" :class="{'active-item': (item.uuid == checkedSites.uuid)}"
+                        v-show="item.enabled" class="site-item" :class="{'active-item': (item.uuid == checkedSites.uuid), 'isLogin': item.login}"
                         @click="clickSite(item)">
                         <i class="iconfont icon-shebei"></i>
                         <span>{{ item.deviceName }}</span>
@@ -146,10 +245,10 @@ onUnmounted(() => {
             <div class="login-right">
                 <el-form :model="form" label-position="top" style="width: 100%;">
                     <el-form-item label="Username">
-                        <el-input v-model="form.username"></el-input>
+                        <el-input v-model="form.username" placeholder="Username"></el-input>
                     </el-form-item>
                     <el-form-item label="Password">
-                        <el-input v-model="form.password" type="password" show-password></el-input>
+                        <el-input v-model="form.password" type="password" placeholder="Password" show-password></el-input>
                     </el-form-item>
                     <!-- <el-form-item></el-form-item> -->
                 </el-form>
@@ -157,7 +256,7 @@ onUnmounted(() => {
                     <el-checkbox v-model="form.enableHttps" label="Enable HTTPS" />
                     <el-checkbox v-model="form.remPwd" label="Remember password" />
                 </div>
-                <el-button class="login-submit" type="primary" >Log In</el-button>
+                <el-button class="login-submit" type="primary" @click="LogIn" :disabled="!checkedSites.ipv4Address || checkedSites.login">Log In</el-button>
             </div>
              <el-dialog v-model="addVisible" title="Add Site" width="340">
                 <el-form :model="addform" label-position="top">
@@ -222,9 +321,18 @@ onUnmounted(() => {
         .active-item {
             background-color: #4D5C70;
         }
+        .isLogin {
+            background-color: #0399FE;
+            .close {
+                color: #fff;
+            }
+        }
         .site-item:hover {
             background-color: #4D5C70;
             cursor: pointer;
+        }
+        .isLogin:hover {
+            background-color: #0399FE;
         }
     }
     .sites_select {

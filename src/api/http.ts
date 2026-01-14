@@ -1,5 +1,4 @@
 import axiosOriginal, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
-import { useStore } from '../store';
 
 // Create debounce function
 function debounce<T extends (...args: any[]) => void>(fn: T, wait: number = 1000): T {
@@ -23,18 +22,14 @@ const debouncedLogout = debounce(() => {
 }, 1000);
 
 // Create axios instance for direct data response
-const axiosData = axiosOriginal.create({
+const http = axiosOriginal.create({
     // You can set your custom configuration here
     // baseURL, timeout, etc.
 });
 
 // http request interceptor
-axiosData.interceptors.request.use(
+http.interceptors.request.use(
     (config) => {
-        const store = useStore();
-        if (store.access_token) {
-            config.headers.Authorization = `Bearer ${store.access_token}`;
-        }
         return config;
     },
     (error: any) => {
@@ -43,12 +38,10 @@ axiosData.interceptors.request.use(
 );
 
 // http response interceptor
-axiosData.interceptors.response.use(
+http.interceptors.response.use(
     (response: AxiosResponse) => {
         // Only return response.data
-        const store = useStore();
-        response.headers.Authorization = `Bearer ${store.access_token}`;
-        return response.data;
+        return response;
     },
     (error: AxiosError) => {
         if (error.response) {
@@ -63,5 +56,5 @@ axiosData.interceptors.response.use(
     }
 );
 
-// Export axiosData instance
-export default axiosData;
+// Export http instance
+export default http;
