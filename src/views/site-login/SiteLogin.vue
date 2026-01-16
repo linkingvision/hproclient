@@ -39,11 +39,10 @@ const handleClick = (tab: TabsPaneContext, event: Event) => {
 }
 
 const siteDevice = ref<Array<DiscoveredDevice>>([])
-function getSiteDevice() {
+const getSiteDevice = async () => {
     window.ipcRenderer.invoke('get-site-device').then((msg: Array<DiscoveredDevice>) => {
         console.log('Received get-site-device data:', msg);
         siteDevice.value = msg
-        // siteStore.setSiteDevices(msg)
     })
 }
 const timerRef = ref<NodeJS.Timeout | null>(null);
@@ -99,14 +98,14 @@ const delSite = (ip: string) => {
 }
 
 const LogIn = async () => {
-    console.log(checkedSites.value)
+    // console.log(checkedSites.value)
     // return
     if (!checkedSites.value || !checkedSites.value.ipv4Address) return;
     const params = {
         username: form.username,
         password: md5(form.password)
     };
-    console.log('params =>', params)
+    // console.log('params =>', params)
     let root;
     if (form.enableHttps) {
         root = 'https://' + checkedSites.value.ipv4Address + ':' + checkedSites.value.httpsPort;
@@ -132,8 +131,11 @@ const LogIn = async () => {
                 type: 'success',
                 duration: 2000
             })
-            getSiteDevice();
-
+            await getSiteDevice();
+            siteStore.setSiteDevices(siteDevice.value)
+            // const sites = siteStore.getSiteDevices();
+            // console.log('siteStore sites =>', sites)
+            // console.log('localstorage siteInfo =>', localStorage.getItem('siteInfo'))
             const usersStr = localStorage.getItem('users');
             let users = usersStr ? JSON.parse(usersStr) : [];
             if (form.remPwd) {
@@ -158,6 +160,12 @@ const LogIn = async () => {
                 localStorage.setItem('users', JSON.stringify(users))
             }
         }
+    } else {
+        ElMessage({
+            message: '登录失败',
+            type: 'error',
+            duration: 2000
+        })
     }
 }
 const randomWord = (num:number) => {

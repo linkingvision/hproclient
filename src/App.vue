@@ -1,8 +1,12 @@
 <script setup lang="ts">
   
 
-import { onMounted, watch } from "vue";
+import { onMounted, watch, onUnmounted } from "vue";
 import { useStore } from "./store";
+import { setupIPCListeners, destroyIPCListeners } from './utils/ipc'
+
+setupIPCListeners()
+
 
 const store = useStore();
 
@@ -29,6 +33,9 @@ watch(() => store.darkMode, (newVal: any) => {
 onMounted(() => {
   // updateBodyTheme(store.darkMode)
   console.log(store.darkMode, store.lang)
+})
+onUnmounted(() => {
+  destroyIPCListeners();
 })
 </script>
 

@@ -8,12 +8,9 @@ import './assets/icon/iconfont.js'
 import './assets/icon/iconfont.css'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
 import ContextMenu from '@imengyu/vue3-context-menu'
-import { createPinia } from 'pinia';
-import piniaPluginPersistedstate  from 'pinia-plugin-persistedstate'
+import pinia from './store/pinia';
 import i18n from './static/i18n';
 
-const pinia = createPinia();
-pinia.use(piniaPluginPersistedstate)
 
 createApp(App).use(ElementPlus)
   .use(ContextMenu)

@@ -37,5 +37,8 @@ export const useStore = defineStore('main', () => {
     setAccess_token,
   }
 }, {
-  persist: true
+  persist: {
+    key: 'main',
+    storage: localStorage,
+  }
 })
