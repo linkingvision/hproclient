@@ -38,13 +38,13 @@ const handleClick = (tab: TabsPaneContext, event: Event) => {
     console.log(tab, event)
 }
 
-const siteDevice = ref<Array<DiscoveredDevice>>([])
-const getSiteDevice = async () => {
-    window.ipcRenderer.invoke('get-site-device').then((msg: Array<DiscoveredDevice>) => {
-        console.log('Received get-site-device data:', msg);
-        siteDevice.value = msg
-    })
-}
+// const siteDevice = ref<Array<DiscoveredDevice>>([])
+// const getSiteDevice = async () => {
+//     window.ipcRenderer.invoke('get-site-device').then((msg: Array<DiscoveredDevice>) => {
+//         console.log('Received get-site-device data:', msg);
+//         siteDevice.value = msg
+//     })
+// }
 const timerRef = ref<NodeJS.Timeout | null>(null);
 
 //登录成功调用
@@ -71,7 +71,15 @@ const clickSite = (row: any) => {
 }
 const addSite = async () => {
     if (!addform.ip || !addform.port) return;
-    const root = window.location.protocol + '//' + addform.ip + ':' + addform.port;
+    let protocol;
+    if (addform.port == '16085') {
+        protocol = 'http:'
+    } else if (addform.port == '16445') {
+        protocol = 'https:'
+    } else {
+        return
+    }
+    const root = protocol + '//' + addform.ip + ':' + addform.port;
     const res = await GetSiteApi(root)
     if (res.status == 200 && res.data.code == 200) {
         const result = res.data.result;
@@ -83,7 +91,8 @@ const addSite = async () => {
             httpsPort: result.HttpsPort,
             softwareVersion: result.SoftwareVersion,
         }).then((msg: Array<DiscoveredDevice>) => {
-            siteDevice.value = msg;
+            // siteDevice.value = msg;
+            siteStore.setSiteDevices(msg)
         })
         addVisible.value = false;
     }
@@ -93,7 +102,8 @@ const delSite = (ip: string) => {
     console.log('Del Site => ', ip)
     window.ipcRenderer.invoke('delete-site-device', ip).then((msg: Array<DiscoveredDevice>) => {
         console.log('Received get-site-device data:', msg);
-        siteDevice.value = msg
+        // siteDevice.value = msg
+        siteStore.setSiteDevices(msg)
     })
 }
 
@@ -124,15 +134,17 @@ const LogIn = async () => {
                 ...checkedSites.value,
                 login: true,
                 access_token: result.access_token,
-                session: sessionRes.data.result.session
+                session: sessionRes.data.result.session,
+                enableHttps: form.enableHttps
             })
             ElMessage({
                 message: '登录成功',
                 type: 'success',
                 duration: 2000
             })
-            await getSiteDevice();
-            siteStore.setSiteDevices(siteDevice.value)
+            // await getSiteDevice();
+            // siteStore.setSiteDevices(siteDevice.value)
+            window.ipcRenderer.send('get-site-device');
             // const sites = siteStore.getSiteDevices();
             // console.log('siteStore sites =>', sites)
             // console.log('localstorage siteInfo =>', localStorage.getItem('siteInfo'))
@@ -185,11 +197,11 @@ onMounted(() => {
     rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];
 
     // 立即执行一次
-    getSiteDevice();
+    // getSiteDevice();
     // 设置定时器，并保存引用
-    timerRef.value = setInterval(() => {
-        getSiteDevice();
-    }, 10000);
+    // timerRef.value = setInterval(() => {
+    //     getSiteDevice();
+    // }, 10000);
 });
 onUnmounted(() => {
     if (timerRef.value) {
@@ -225,7 +237,7 @@ onUnmounted(() => {
                     <el-radio-button value="unavailable">Unavailable</el-radio-button>
                 </el-radio-group>
                 <ul class="sites-list" v-if="activeName == 'all'">
-                    <li v-for="item in siteDevice?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))"
+                    <li v-for="item in siteStore.siteDevices?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))"
                         class="site-item" :class="{'active-item': (item.uuid == checkedSites.uuid), 'isLogin': item.login}"
                         @click="clickSite(item)">
                         <i class="iconfont icon-shebei"></i>
@@ -234,7 +246,7 @@ onUnmounted(() => {
                     </li>
                 </ul>
                 <ul class="sites-list" v-if="activeName == 'available'">
-                    <li v-for="item in siteDevice?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))"
+                    <li v-for="item in siteStore.siteDevices?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))"
                         v-show="item.enabled" class="site-item" :class="{'active-item': (item.uuid == checkedSites.uuid), 'isLogin': item.login}"
                         @click="clickSite(item)">
                         <i class="iconfont icon-shebei"></i>
@@ -243,7 +255,7 @@ onUnmounted(() => {
                     </li>
                 </ul>
                 <ul class="sites-list" v-if="activeName == 'unavailable'">
-                    <li v-for="item in siteDevice?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))" v-show="!item.enabled" class="site-item">
+                    <li v-for="item in siteStore.siteDevices?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))" v-show="!item.enabled" class="site-item">
                         <i class="iconfont icon-shebei"></i>
                         <span>{{ item.deviceName }}</span>
                         <i class="iconfont icon-guanbi1 close" @click.stop="delSite(item.ipv4Address)"></i>
@@ -266,7 +278,7 @@ onUnmounted(() => {
                 </div>
                 <el-button class="login-submit" type="primary" @click="LogIn" :disabled="!checkedSites.ipv4Address || checkedSites.login">Log In</el-button>
             </div>
-             <el-dialog v-model="addVisible" title="Add Site" width="340">
+             <el-dialog v-model="addVisible" title="Add Site" width="340" align-center>
                 <el-form :model="addform" label-position="top">
                     <el-form-item label="IP">
                         <el-input v-model="addform.ip"></el-input>

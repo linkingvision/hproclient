@@ -6,8 +6,9 @@ import { useSiteInfo } from '../store/site-info';
 setActivePinia(pinia)
 const siteInfo = useSiteInfo();
 
-const siteDeviceHandler = (_event: any, ...args: any[]) => {
-  console.log('[ipc] site device:', ...args)
+const siteDeviceHandler = (_event: any, args: DiscoveredDevice[]) => {
+  console.log('[ipc] site device:', args)
+  siteInfo.setSiteDevices(args)
 }
 
 export const setupIPCListeners = () => {

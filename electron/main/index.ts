@@ -350,7 +350,6 @@ ipcMain.on('get-site-device', function (event, uuid) {
 //站点登录保存信息
 ipcMain.handle('site-device-login', function (event, data) {
   DiscoveryClient.setDevice(data);
-
 })
 
 //删除站点

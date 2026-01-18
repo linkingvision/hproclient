@@ -272,6 +272,7 @@ export class DiscoveryClient {
         device.login = data.login;
         device.session = data.session;
         device.access_token = data.access_token;
+        device.enableHttps = data.enableHttps;
     }
     /**
      * 获取设备数量

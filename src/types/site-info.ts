@@ -25,6 +25,9 @@ export interface DiscoveredDevice {
     enabled: boolean;
     login: boolean;
     lastSeen?: Date;
+    session?: string;
+    access_token?: string;
+    enableHttps?: boolean
 }
 
 export interface DiscoveryOptions {

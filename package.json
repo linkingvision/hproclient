@@ -25,6 +25,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/jquery": "^3.5.33",
     "@vitejs/plugin-vue": "^5.0.4",
     "electron": "^29.1.1",
     "electron-builder": "^24.13.3",
@@ -40,6 +41,7 @@
     "@imengyu/vue3-context-menu": "^1.4.4",
     "axios": "^1.13.2",
     "electron-log": "^5.2.4",
+    "jquery": "^3.7.1",
     "js-base64": "^3.7.8",
     "js-md5": "^0.8.3",
     "pinia": "^3.0.4",
