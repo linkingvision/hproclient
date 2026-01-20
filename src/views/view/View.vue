@@ -116,7 +116,12 @@ const getDeviceList = async () => {
                       type: 'device', // 通道也是device类型，但通过isDeviceChannel区分
                       data: channel,
                       isLeaf: true,
-                      isDeviceChannel: true // 标记为设备通道
+                      isDeviceChannel: true, // 标记为设备通道
+                      ipv4Address: site.ipv4Address,
+                      protocol: site.enableHttps ? 'https:' : 'http:',
+                      host: site.enableHttps ? site.httpsPort : site.httpPort,
+                      session: site.session,
+                      access_token: site.access_token
                     }));
                     
                     // 缓存数据
@@ -132,14 +137,14 @@ const getDeviceList = async () => {
                     // 设备没有通道时，删除children属性，这样就不会显示展开图标
                     delete item.children;
                     item.loaded = true;
-                    item.isLeaf = true; // 设置为叶子节点
+                    item.isLeaf = false; // 设置为叶子节点
                   }
                 } catch (error) {
                   console.error(`加载设备 ${item.data.devId} 的通道失败:`, error);
                   // 出错时也要清理占位符
                   delete item.children;
                   item.loaded = true;
-                  item.isLeaf = true;
+                  item.isLeaf = false;
                 }
               })
             )
@@ -414,10 +419,22 @@ const initGridLayout = (): void => {
     aspectRatio: [16, 9],
     animationDuration: 500,
     createIcons: {
-
+      playModeIcon: true,
+      playModeText: store.liveviewrtc,
+      informationIcon: true,
+      shouwhearIcon: true,
+      snapshotIcon: true,
+      recEnableIcon: true,
+      ptzcontrolIcon: true
     }
   })
 }
+
+const isLiveview = ref<boolean>(true);
+const isPlaying = ref<boolean>(false)
+const PlayingArr = ref<any[]>([])
+const PlayBackArr = ref<any[]>([])
+
 const isDrag = ref<boolean>(false)
 const drag = ref<any>({})
 const handleDragStart = (node: any) => {
@@ -426,14 +443,41 @@ const handleDragStart = (node: any) => {
   let conf = {};
   if (node.data.data.type == "H5_CH_DEV" || node.data.data.type == "H5_FILE") {
     console.log('handleDragStart channel =>', node.data)
-
+    conf = {
+      videoid: uuid(8),
+      protocol: node.data.protocol,
+      host: node.data.ipv4Address + ':' + node.data.host,
+      token: node.data.token,
+      session: node.data.session,
+      accessToken: node.data.access_token,
+      name: node.data.name,
+      label: node.data.label,
+      resourceUUID: node.data.data.uuid,
+      liveVideoType: 'WS2',
+      recording: node.data.data.recording,
+      playingId: node.data.id,  // 仅用于设备树显示状态
+      onPlaybackModeChange: (mode: string) => {
+        console.log('onPlaybackModeChange view =>', mode);
+        if (mode == 'live') {
+          isLiveview.value = true;
+          GridManager.value.changePlayModeText(store.liveviewrtc)
+        } else {
+          isLiveview.value = false;
+          GridManager.value.changePlayModeText(store.liveviewrtc1)
+        }
+      },
+      onError: (err: object) => {
+        console.warn('Play Error =>', err)
+      }
+    }
+    drag.value = conf;
   } else {
     if (node.data.type == 'view') {
-      console.log('handleDragStart view =>', node.data)
+      // console.log('handleDragStart view =>', node.data)
       drag.value.viewId = node.data.data.viewId;
       drag.value.playingId = node.data.id;
     } else if (node.data.type == 'map') {
-      console.log('handleDragStart map =>', node.data)
+      // console.log('handleDragStart map =>', node.data)
       // 暂时为map设置playingId，但不实现播放逻辑
       drag.value.mapId = node.data.data.mapId;
       drag.value.playingId = node.data.id;
@@ -446,7 +490,7 @@ const handleDragStart = (node: any) => {
 // 正在拖动
 const dragOver = (event: any) => {
   if (!isDrag.value || (!drag.value.viewId && !drag.value.videoid)) return;
-  console.log(!isDrag.value , !drag.value.viewId , !isDrag.value , !drag.value.videoid)
+  // console.log(!isDrag.value , !drag.value.viewId , !isDrag.value , !drag.value.videoid)
   // const container: Element | null = document.getElementById('video_hed');
   // const rect: any = container?.getBoundingClientRect();
   const eventX = event.pageX;
@@ -462,8 +506,50 @@ const dragOver = (event: any) => {
   GridManager.value.highlightCells(cellsToHighlight, "rgba(141,189,255,0.3)");
 }
 const dropTarget = async (event: any) => {
-  GridManager.value.hideLines()
-  GridManager.value.highlightCells([]);
+  if (!isDrag.value && !drag.value.viewId || !isDrag.value && !drag.value.videoid) {
+    GridManager.value.hideLines()
+    GridManager.value.highlightCells([]);
+    isDrag.value = false;
+    return
+  }
+  if (drag.value.videoid) {
+    let eventX = event.pageX;
+    let eventY = event.pageY;
+    let recEnable = false;
+    // const res = await RecEnableApi(drag.value.token);
+    // console.log('record =>', res)
+    // if (res.status == 200 && res.data.code == 0) {
+    //   recEnable = res.data.result.manualRecEnable;
+    // }
+    let conf = {
+      pageX: eventX,
+      pageY: eventY,
+      id: 'G' + drag.value.videoid,
+      recording: false,
+      recEnable,
+      audio: false,
+      camera: {
+        videoid: drag.value.videoid,
+        token: drag.value.token,
+        session: drag.value.session,
+        name: drag.value.name,
+        label: drag.value.name,
+        resourceUUID: drag.value.resourceUUID,
+        recording: drag.value.recording
+      }
+    }
+    GridManager.value.claimCellByCoordinates(conf);
+    isDrag.value = false;
+
+    const UPlayer = new UPlayerSDKClass(conf.id, drag.value)
+    UPlayerList.value.addPlayer(UPlayer);
+    PlayingArr.value.push(UPlayer)
+    PlayBackArr.value.push(UPlayer)
+    UPlayerList.value.playAll();
+    isPlaying.value = true;
+    // gridListener.changeMainSDKHandler?.({detail: conf.id})
+    // updatePlayingStatus('add', drag.value.playingId)
+  }
 }
 
 onMounted(() => {

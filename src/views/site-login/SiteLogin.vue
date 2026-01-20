@@ -39,12 +39,13 @@ const handleClick = (tab: TabsPaneContext, event: Event) => {
 }
 
 // const siteDevice = ref<Array<DiscoveredDevice>>([])
-// const getSiteDevice = async () => {
-//     window.ipcRenderer.invoke('get-site-device').then((msg: Array<DiscoveredDevice>) => {
-//         console.log('Received get-site-device data:', msg);
-//         siteDevice.value = msg
-//     })
-// }
+const getSiteDevice = async () => {
+    window.ipcRenderer.invoke('get-site-device').then((msg: Array<DiscoveredDevice>) => {
+        console.log('Received get-site-device data:', msg);
+        // siteDevice.value = msg
+        siteStore.setSiteDevices(msg)
+    })
+}
 const timerRef = ref<NodeJS.Timeout | null>(null);
 
 //登录成功调用
@@ -142,6 +143,12 @@ const LogIn = async () => {
                 type: 'success',
                 duration: 2000
             })
+            // window.ipcRenderer.send('keep-alive', {
+            //     root: root,
+            //     action: 'start',
+            //     token: result.access_token,
+            //     ipv4Address: checkedSites.value.ipv4Address
+            // })
             // await getSiteDevice();
             // siteStore.setSiteDevices(siteDevice.value)
             window.ipcRenderer.send('get-site-device');
@@ -197,11 +204,11 @@ onMounted(() => {
     rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];
 
     // 立即执行一次
-    // getSiteDevice();
+    getSiteDevice();
     // 设置定时器，并保存引用
-    // timerRef.value = setInterval(() => {
-    //     getSiteDevice();
-    // }, 10000);
+    timerRef.value = setInterval(() => {
+        getSiteDevice();
+    }, 60_000);
 });
 onUnmounted(() => {
     if (timerRef.value) {

@@ -21,10 +21,16 @@ export const useStore = defineStore('main', () => {
     sidebarShow.value = flag;
   }
 
-  const access_token = ref<string>('');
-  function setAccess_token(value: string) {
-    access_token.value = value;
+  const liveviewrtc = ref<string>('WS');
+  function setLiveviewrtc(value: string) {
+    liveviewrtc.value = value;
   }
+
+  const liveviewrtc1 = ref<string>('RTC');
+  function setLiveviewrtc1(value: string) {
+    liveviewrtc1.value = value;
+  }
+
 
   return {
     lang,
@@ -33,8 +39,10 @@ export const useStore = defineStore('main', () => {
     setDarkMode,
     sidebarShow,
     setSidebarShow,
-    access_token,
-    setAccess_token,
+    liveviewrtc,
+    setLiveviewrtc,
+    liveviewrtc1,
+    setLiveviewrtc1
   }
 }, {
   persist: {

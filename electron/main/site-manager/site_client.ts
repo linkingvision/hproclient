@@ -5,8 +5,11 @@ import log from 'electron-log';
 import {
     ProbeMatchResponse,
     DiscoveredDevice,
+    DiscoveredDeviceResponse,
     DiscoveryOptions,
 } from './site_types';
+import http from '../../http';
+import https from 'https'
 export class DiscoveryClient {
     private client: Socket;
     private discoveredDevices: Map<string, DiscoveredDevice>;
@@ -253,26 +256,78 @@ export class DiscoveryClient {
     /**
      * 获取设备列表
      */
-    public getDevices(): DiscoveredDevice[] {
-        return Array.from(this.discoveredDevices.values());
+    public getDevices(): DiscoveredDeviceResponse[] {
+        // log.info(Array.from(this.discoveredDevices.values()))
+        let devices: DiscoveredDeviceResponse[] = [];
+        devices = Array.from(this.discoveredDevices.values()).map(item => {
+            return {
+                type: item.type,
+                uuid: item.uuid,
+                deviceName: item.deviceName,
+                ipv4Address: item.ipv4Address,
+                httpPort: item.httpPort,
+                httpsPort: item.httpsPort,
+                softwareVersion: item.softwareVersion,
+                responseTime: item.responseTime,
+                enabled: item.enabled,
+                login: item.login,
+                lastSeen: item.lastSeen,
+                session: item.session,
+                access_token: item.access_token,
+                enableHttps: item.enableHttps
+            }
+        })
+        return devices;
     }
 
     /**
      * 获取设备
      */
-    public getDevice(ip: string): DiscoveredDevice | undefined {
+    public getDevice(ip: string): DiscoveredDeviceResponse | undefined {
         return this.discoveredDevices.get(ip);
     }
 
     /**
      * 修改设备
      */
-    public setDevice(data: DiscoveredDevice) {
+    public setDevice(data: DiscoveredDeviceResponse) {
         let device = this.discoveredDevices.get(data.ipv4Address);
         device.login = data.login;
         device.session = data.session;
         device.access_token = data.access_token;
         device.enableHttps = data.enableHttps;
+        if (data.login) {   // 登录，添加keepalive定时器
+            let root = (data.enableHttps ? 'https://' : 'http://') + data.ipv4Address + ':' + (data.enableHttps ? device.httpsPort : device.httpPort);
+            const url = root + '/uapi/v1/User/Keepalive'
+            log.info('[keep-alive] url =>', url)
+            if (device.keepAliveTimer) {
+                clearInterval(device.keepAliveTimer);
+                device.keepAliveTimer = null;
+                log.info('clear keep alive setInterval')
+            }
+            device.keepAliveTimer = setInterval(async () => {
+                log.info('keep-alive in setInterval');
+                try {
+                    // 为HTTPS请求创建自定义agent
+                    const httpsAgent = data.enableHttps 
+                        ? new https.Agent({ rejectUnauthorized: false })
+                        : undefined;
+                    const res = await http.get(url, {
+                        headers: {
+                            'Authorization': `Bearer ${data.access_token}`
+                        },
+                        httpsAgent: httpsAgent,
+                        timeout: 10000
+                    })
+                    log.info(`[ KeepAlive ] ${device.ipv4Address} success =>`, res.status)
+                } catch(err) {
+                    log.info('keepalive  error', err)
+                }
+            }, 60_000)
+        } else {    // 退出登录，清除keepalive定时器
+            clearInterval(device.keepAliveTimer);
+            device.keepAliveTimer = null;
+        }
     }
     /**
      * 获取设备数量

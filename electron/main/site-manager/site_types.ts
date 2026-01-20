@@ -28,6 +28,24 @@ export interface DiscoveredDevice {
     session?: string;
     access_token?: string;
     enableHttps?: boolean;
+    keepAliveTimer?: null | NodeJS.Timeout;
+}
+
+export interface DiscoveredDeviceResponse {
+    type: "manual" | "auto";
+    uuid: string;
+    deviceName: string;
+    ipv4Address: string;
+    httpPort: number;
+    httpsPort: number;
+    softwareVersion: string;
+    responseTime: Date;
+    enabled: boolean;
+    login: boolean;
+    lastSeen?: Date;
+    session?: string;
+    access_token?: string;
+    enableHttps?: boolean;
 }
 
 export interface DiscoveryOptions {

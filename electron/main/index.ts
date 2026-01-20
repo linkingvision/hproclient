@@ -7,6 +7,7 @@ import WindowPoolManager, { WindowPools } from './window_pool_manager';
 import { GetDiscoveryClient } from './site-manager/site_client';
 import "./log-config/index"
 import log from 'electron-log';
+import http from '../http';
 const DiscoveryClient = GetDiscoveryClient()
 
 // 示例：每30秒打印一次设备列表
@@ -351,7 +352,20 @@ ipcMain.on('get-site-device', function (event, uuid) {
 ipcMain.handle('site-device-login', function (event, data) {
   DiscoveryClient.setDevice(data);
 })
+//获取站点信息
+ipcMain.handle('get-site-device', async (event) => {
+  const devices = DiscoveryClient.getDevices();
+  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
 
+  if (devices.length > 0) {
+    devices.forEach((device, index) => {
+      const lastSeen = device.lastSeen || device.responseTime;
+      const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
+      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
+    });
+  }
+  return devices
+});
 //删除站点
 ipcMain.handle('delete-site-device', function (event, ipv4Address) {
   DiscoveryClient.clearDevice(ipv4Address)
@@ -443,20 +457,7 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
   arg.id = newWin.id;
   return arg;
 });
-//获取站点信息
-ipcMain.handle('get-site-device', async (event) => {
-  const devices = DiscoveryClient.getDevices();
-  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
 
-  if (devices.length > 0) {
-    devices.forEach((device, index) => {
-      const lastSeen = device.lastSeen || device.responseTime;
-      const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
-      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
-    });
-  }
-  return devices
-});
 
 // 接收 SideBar 信息, 切换页面
 ipcMain.on('sidebar-switch-tab', async (event, data) => {
