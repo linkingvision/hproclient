@@ -192,7 +192,7 @@ console.log('Header')
             cursor: pointer;
         }
         .icon-caidanlan {
-            font-size: 24px;
+            font-size: 22px;
         }
         img {
             height: 20px;

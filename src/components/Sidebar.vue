@@ -70,6 +70,7 @@ console.log('SideBar')
     border: none;
     i {
         margin-right: 10px;
+        font-size: 20px;
     }
   }
 }

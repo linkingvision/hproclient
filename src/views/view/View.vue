@@ -3,10 +3,12 @@ import $ from 'jquery'
 import { ref, onMounted, onUnmounted, watch, reactive, nextTick } from 'vue'
 import { useSiteInfo } from '../../store/site-info';
 import { useStore } from '../../store';
-import { GetPartitionApi, GetDeviceChannelsApi, RecEnableApi, GetRecordCalendar } from '../../api/channel';
+import { GetPartitionApi, GetDeviceChannelsApi, RecEnableApi, GetRecordCalendar, SetRecEnableApi, GetInformationDataApi, GetPresetsApi, PresetJumpApi, SetPresetApi, PtzApi } from '../../api/channel';
 import { Search } from '@element-plus/icons-vue'
 import { UPlayerSDK as UPlayerSDKClass, UPlayerList as UPlayerListClass, GridLayoutManager } from '@/assets/js/uplayersdk.esm.js';
+import { H5sPlayerAudBack } from '@/assets/js/h5splayer.js';
 import uuid from '@/assets/js/uuid.js';
+import { ElMessage } from 'element-plus';
 
 interface TreeNode {
   id: string;
@@ -511,9 +513,352 @@ const initGridLayout = (): void => {
   gridListener.changeMainSDKHandler = (event: CustomEvent<any>) => {
     changeMainSDK(event.detail)
   }
+  gridListener.recEnableHandler = (event: CustomEvent<any>) => {
+    DoManualRecordStart(event.detail.id, event.detail.recEnable)
+  }
+  gridListener.InformationHandler = (event: CustomEvent<any>) => {
+    Information(event.detail.id)
+  }
+  gridListener.SnapshotHandler = (event: CustomEvent<any>) => {
+    DoSnapshotWeb(event.detail.id)
+  }
+  gridListener.ShoutwheatHandler = (event: CustomEvent<any>) => {
+    Shoutwheat(event.detail.id, event.detail.audio)
+  }
+  gridListener.PtzControlShowHandler = (event: CustomEvent<any>) => {
+    PtzControlShow(event.detail.id)
+  }
+  gridListener.layoutLoadedFromCacheHandler = async (event: CustomEvent<any>) => {
+    console.log('layoutLoadedFromCacheHandler =>', event.detail)
+    await nextTick();
+    // 等待设备树数据加载完成的辅助函数
+    const waitForDeviceData = async (maxRetries = 10, delay = 500) => {
+      for (let i = 0; i < maxRetries; i++) {
+        if (channelData.value && channelData.value.length > 0) {
+          return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      return false;
+    };
+    
+    // 等待设备树数据加载完成
+    const deviceDataReady = await waitForDeviceData();
+    if (!deviceDataReady) {
+      console.warn('Device tree data not ready, skipping playing status update');
+    }
+
+    console.log('siteStore => ', siteStore.siteDevices)
+
+    event.detail.forEach((item: any) => {
+      item.forEach((row: any) => {
+        if (row && row.camera) {
+          const nodeId = deviceDataReady ? findNodeIdByToken(row.camera.token) : null;
+          const arr = row.camera.host.split(':');
+          const site = findSiteByIp(arr[0]);
+          if (!site) return;
+          const conf = {
+            videoid: row.camera.videoid,
+            protocol: row.camera.protocol,
+            host: row.camera.host,
+            token: row.camera.token,
+            session: site.session,
+            accessToken: site.access_token,
+            resourceUUID: row.camera.resourceUUID,
+            name: row.camera.name,
+            label: row.camera.label,
+            liveVideoType: store.liveviewrtc,
+            recording: row.camera.recording,
+            playingId: nodeId, // 添加playingId，用于关闭时更新设备树状态
+            onPlaybackModeChange: (mode: string) => {
+              console.log('onPlaybackModeChange =>', mode);
+              if (mode == 'live') {
+                isLiveview.value = true;
+                GridManager.value.changePlayModeText(store.liveviewrtc)
+              } else {
+                isLiveview.value = false;
+                GridManager.value.changePlayModeText(store.liveviewrtc1)
+              }
+            },
+            onError: (err: object) => {
+              console.warn('Play Error =>', err)
+            }
+          }
+          const UPlayer = new UPlayerSDKClass('G' + conf.videoid, conf);
+          UPlayerList.value.addPlayer(UPlayer)
+          PlayingArr.value.push(UPlayer);
+          PlayBackArr.value.push(UPlayer);
+          isPlaying.value = true;
+
+          // 更新播放状态
+          if (nodeId) {
+            updatePlayingStatus('add', nodeId);
+            console.log('Auto-play: Updated playing status for node:', nodeId, 'token:', row.camera.token);
+          } else {
+            console.warn('Auto-play: Could not find node for token:', row.camera.token);
+          }
+        }
+      })
+    })
+    UPlayerList.value.playAll();
+  }
 
   GridManager.value.addEventListener('closeCell', gridListener.closeCellHandler)
   GridManager.value.addEventListener('cellClick', gridListener.changeMainSDKHandler)
+  GridManager.value.addEventListener('recEnableClick', gridListener.recEnableHandler)
+  GridManager.value.addEventListener('Information', gridListener.InformationHandler)
+  GridManager.value.addEventListener('Snapshot', gridListener.SnapshotHandler)
+  GridManager.value.addEventListener('Shoutwheat', gridListener.ShoutwheatHandler)
+  GridManager.value.addEventListener('PtzControlShow', gridListener.PtzControlShowHandler)
+  GridManager.value.addEventListener('layoutLoadedFromCache', gridListener.layoutLoadedFromCacheHandler)
+}
+const findSiteByIp = (ip: string) => {
+  const site = siteStore.siteDevices.find(item => item.ipv4Address == ip);
+  if (!site) return null;
+  return site;
+}
+const findSDKById = (id: string) => {
+  const sdk = PlayingArr.value.find(item => item.conf.videoid === id);
+  if (!sdk) {
+    throw new Error(`未找到 id=${id}的 sdk`)
+  }
+  return sdk;
+}
+// 云台控制
+const ptzShow = ref<boolean>(false);
+const ptzToken = ref<string>('');
+const PresetData = reactive<any[]>([])
+const ptzvalue = ref<number>(0.5);
+const ptzRoot = ref<string>('')
+const ptzAccessToken = ref<string>('')
+const PtzControlShow = async (id: string) => {
+  const vid = id.slice(1)
+  const sdk = findSDKById(vid);
+  if (!sdk) return;
+  ptzShow.value = true;
+  ptzShow.value = true;
+  ptzToken.value = sdk.conf.token;
+  PresetData.splice(0);
+  ptzRoot.value = sdk.conf.protocol + '//' + sdk.conf.host
+  ptzAccessToken.value = sdk.conf.accessToken
+  const res = await GetPresetsApi(ptzRoot.value, ptzAccessToken.value, ptzToken.value);
+  if (res.status == 200) {
+    if (res.data && res.data.preset.length > 0) {
+      const preset = res.data.preset;
+      for(let i = 0; i < preset.length; i++) {
+        const newItem = {
+          strName: preset[i].strName,
+          strToken: preset[i].strToken
+        }
+        if (i >= 8) break;
+        PresetData.push(newItem);
+      }
+    }
+  }
+}
+const PtzAction = async (action: string, speed?: number) => {
+  const speedValue = speed || ptzvalue.value;
+  if (!ptzToken.value) return;
+  const res = await PtzApi(ptzRoot.value, ptzAccessToken.value, ptzToken.value, action, speedValue)
+  if (res.status == 200 && res.data.code == 0) {}
+}
+const preset_jump = async (token: string) => {
+  const res = await PresetJumpApi(ptzRoot.value, ptzAccessToken.value, ptzToken.value, token, ptzvalue.value)
+  if (res.status == 200 && res.data.code == 0) {}
+}
+const preset_set = async (token: string, event: MouseEvent) => {
+  const target = event.currentTarget as HTMLElement
+  const input = target.previousElementSibling?.previousElementSibling as HTMLInputElement
+  var input_val = input?.value;
+  const res = await SetPresetApi(ptzRoot.value, ptzAccessToken.value, ptzToken.value, input_val, token)
+  if (res.status == 200 && res.data.code == 0) {}
+}
+const closePtz = () => {
+  ptzShow.value = false;
+  ptzToken.value = '';
+  ptzRoot.value = '';
+  ptzAccessToken.value = '';
+  PresetData.splice(0);
+}
+// 点击语音
+const audioback = ref<any>(null)
+const Shoutwheat = (id: string, audio: boolean) => {
+  const vid = id.slice(1)
+  const sdk = findSDKById(vid);
+  if (!sdk) return;
+  const conf = {
+    protocol: sdk.conf.protocol,
+    host: sdk.conf.host,
+    rootpath: '/',
+    token: sdk.conf.token,
+    session: sdk.conf.session
+  }
+  if (audio) {
+    audioback.value.disconnect();
+    delete audioback.value;
+    audioback.value = null
+  } else {
+    if (audioback.value) {
+      audioback.value.disconnect();
+      delete audioback.value;
+      audioback.value = null
+    }
+    audioback.value = new H5sPlayerAudBack(conf);
+    audioback.value.connect();
+  }
+  GridManager.value.changeAudio(id, !audio)
+}
+// 本地抓图
+const DoSnapshotWeb = (id: string) => {
+  const vid = id.slice(1);
+  const sdk = findSDKById(vid);
+  if (sdk) return;
+  const date = new Date();
+  const fileName = `${sdk.conf.token}_${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}`;
+  let video: any;
+  if (isLiveview.value) {
+    video = $('#' + sdk.conf.videoid).get(0);
+  } else {
+    video = $('#playback' + vid).find('video[pos="0"]').get(0);
+  }
+  // ✅ 新增：跨域属性
+  if (video) video.crossOrigin = 'anonymous';
+  const canvas = document.createElement('canvas');
+  const ctx: any = canvas.getContext('2d');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  var imgURL = canvas.toDataURL("image/png");
+
+  var dlLink = document.createElement('a');
+  dlLink.download = fileName;
+  dlLink.href = imgURL;
+  document.body.appendChild(dlLink);
+  dlLink.click();
+  document.body.removeChild(dlLink);
+}
+// 打开 / 关闭仪表
+const Information = (id: string) => {
+  const vid = id.slice(1);
+  const sdk = findSDKById(vid);
+  if (informationshow.value) {
+    informationshow.value = false;
+    clearInterval(timerRunInfo.value);
+    timerRunInfo.value = null;
+  } else {
+    informationshow.value = true;
+    const root = sdk.conf.protocol + '//' + sdk.conf.host
+    Informationdata(root, sdk.conf.accessToken, sdk.conf.token);
+    timerRunInfo.value = setInterval(() => {
+      Informationdata(root, sdk.conf.accessToken, sdk.conf.token);
+    }, 8000)
+  }
+}
+// 获取码流信息
+const Informationdata = async (root: string, access_token: string, token: string) => {
+  const res = await GetInformationDataApi(root, access_token, token);
+  if (res.status == 200) {
+    const item = res.data;
+    informationAudio.value = [{
+      // name: '编码类型',
+      name: 'Codec',
+      data: item.strAudioType
+    }, {
+      // name: '采样率',
+      name: 'Sample Rate',
+      data: item.nAudioSampleRate
+    }, {
+      // name: '采样位宽',
+      name: 'Sample Bit',
+      data: item.nAudioSampleBit
+    }, {
+      // name: '声道数',
+      name: 'Channels',
+      data: item.nAudioChannels
+    }, {
+      // name: '码率',
+      name: 'Bitrate',
+      data: (item.nAudioBitrate / 1024).toFixed(1) + 'kpbs'
+    }];
+    informationVideo.value = [{
+      // name: '编码类型',
+      name: 'Codec',
+      data: item.strVideoType
+    }, {
+      // name: '宽',
+      name: 'Width',
+      data: item.nVideoWidth
+    }, {
+      // name: '高',
+      name: 'Height',
+      data: item.nVideoHeight
+    }, {
+      // name: '帧率',
+      name: 'FPS',
+      data: item.nVideoFPS
+    }, {
+      // name: '码率',
+      name: 'Bitrate',
+      data: (item.nVideoBitrate / 1024).toFixed(1) + 'kpbs'
+    }]
+  }
+}
+// 关闭仪表
+const closeInformation = (): void => {
+  informationshow.value = false;
+  if (timerRunInfo.value) {
+    clearInterval(timerRunInfo.value)
+    timerRunInfo.value = null;
+  }
+}
+// 开启 / 关闭手动录像
+const DoManualRecordStart = async (id: string, recEnable: boolean) => {
+  const vid = id.slice(1)
+  const sdk = findSDKById(vid);
+  if (!sdk) return;
+  // console.log('手动录像 id => ', root, access_token);
+  let manualRecEnable;
+  if (recEnable) {
+    manualRecEnable = false;
+  } else {
+    manualRecEnable = true;
+  }
+  const res = await SetRecEnableApi({
+    root: sdk.conf.protocol + '//' + sdk.conf.host,
+    access_token: sdk.conf.accessToken,
+    devUUID: sdk.conf.resourceUUID,
+    setting: { manualRecEnable }
+  });
+  if (res.status == 200 && res.data.code == 0) {
+    if (manualRecEnable) {
+      ElMessage({
+        message: '开启录像',
+        type: 'success',
+        duration: 2000
+      })
+    } else {
+      ElMessage({
+        message: '停止录像',
+        type: 'success',
+        duration: 2000
+      })
+    }
+    GridManager.value.changeRecEnable(id, manualRecEnable)
+  } else {
+    if (manualRecEnable) {
+      ElMessage({
+        message: '开启失败',
+        type: 'error',
+        duration: 2000
+      })
+    } else {
+      ElMessage({
+        message: '关闭失败',
+        type: 'error',
+        duration: 2000
+      })
+    }
+  }
 }
 // 关闭单个单元格
 const closePlayContainer = (id: string) => {
@@ -529,9 +874,9 @@ const closePlayContainer = (id: string) => {
     } else {
       currentSDK.destory()
     }
-    // if (currentSDK.conf.token === ptzToken.value) {
-    //   closePtz()
-    // }
+    if (currentSDK.conf.token === ptzToken.value) {
+      closePtz()
+    }
     PlayingArr.value = PlayingArr.value.filter(sdk => sdk.conf.videoid !== vid)
     PlayBackArr.value = PlayBackArr.value.filter(sdk => sdk.conf.videoid !== vid)
     if (!PlayingArr.value.length) {
@@ -566,6 +911,11 @@ const PlayingArr = ref<any[]>([])
 const PlayBackArr = ref<any[]>([])
 const selectCellId = ref<string>('')
 const mainSDKId = ref<string>('')
+const informationshow = ref<boolean>(false)
+const timerRunInfo = ref<any>(null)
+const informationAudio = ref<any[]>([])
+const informationVideo = ref<any[]>([])
+const Audioslider = ref<number>(0)
 
 // 切换主播放器
 const changeMainSDK = (id: string) => {
@@ -975,8 +1325,6 @@ const resume = () => {
   isPlaying.value = !isPlaying.value;
 }
 
-const Audioslider = ref<number>(0)
-
 onMounted(() => {
   getDeviceList();
   initGridLayout();
@@ -998,6 +1346,12 @@ onUnmounted(() => {
 
   GridManager.value.removeEventListener('closeCell', gridListener.closeCellHandler)
   GridManager.value.removeEventListener('cellClick', gridListener.changeMainSDKHandler)
+  GridManager.value.removeEventListener('recEnableClick', gridListener.recEnableHandler)
+  GridManager.value.removeEventListener('Information', gridListener.InformationHandler)
+  GridManager.value.removeEventListener('Snapshot', gridListener.SnapshotHandler)
+  GridManager.value.removeEventListener('Shoutwheat', gridListener.ShoutwheatHandler)
+  GridManager.value.removeEventListener('PtzControlShow', gridListener.PtzControlShowHandler)
+  GridManager.value.removeEventListener('layoutLoadedFromCache', gridListener.layoutLoadedFromCacheHandler)
   GridManager.value.destroy();
   GridManager.value = null;
 })
@@ -1090,7 +1444,25 @@ watch(isLiveview, (newVal) => {
       </el-collapse>
     </div>
     <div class="view-right">
-      <div class="video_hed" id="video_hed" @dragover.prevent="dragOver($event)" @drop="dropTarget($event)"></div>
+      <div class="video_hed" id="video_hed" @dragover.prevent="dragOver($event)" @drop="dropTarget($event)">
+        <div class="malv" :class="informationshow ? '' : 'malv-hide'" style="position: absolute;">
+          <div class="malv-close" @click="closeInformation">×</div>
+          <div class="malv-left">
+            <div class="information_title">{{ 'Video' }}</div>
+            <div class="information_content" v-for="(a, index) in informationVideo" :key="index">
+              <div class="information_content_left">{{ a.name }}</div>
+              <div class="information_content_right">{{ a.data }}</div>
+            </div>
+          </div>
+          <div class="malv-right">
+            <div class="information_title">{{ 'Audio' }}</div>
+            <div class="information_content" v-for="(a, index) in informationAudio" :key="index">
+              <div class="information_content_left">{{ a.name }}</div>
+              <div class="information_content_right">{{ a.data }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="control">
         <div class="timeline-box" >
           <svg id="timeline"></svg>
@@ -1136,6 +1508,60 @@ watch(isLiveview, (newVal) => {
     </div>
     <div v-if="IsTreeFold" class="TreeFold" @click="TreeFold">
       <i class="iconfont icon-liebiao"></i>
+    </div>
+    <div class="yuntai" :class="ptzShow ? '' : 'yuntai-hide'">
+      <div class="header">
+        <span>PTZ</span>
+        <i class="iconfont icon-zhankai2" @click="closePtz"></i>
+      </div>
+      <div class="controls">
+        <div class="left">
+          <i class="iconfont icon-jujiao2" @mousedown="PtzAction('focusin')" @mouseup="PtzAction('stop')"></i>
+          <i class="iconfont icon-jujiao1" @mousedown="PtzAction('focusout')" @mouseup="PtzAction('stop')"></i>
+          <i class="iconfont icon-guangquanjia" @mousedown="PtzAction('irisin')" @mouseup="PtzAction('stop')"></i>
+          <i class="iconfont icon-guangquanjian" @mousedown="PtzAction('irisout')" @mouseup="PtzAction('stop')"></i>
+          <i class="iconfont icon-light-open" @mousedown="PtzAction('lighton')" @mouseup="PtzAction('stop')"></i>
+          <i class="iconfont icon-light-close" @mousedown="PtzAction('lightoff')" @mouseup="PtzAction('stop')"></i>
+          <i class="iconfont icon-kaiyushua" @mousedown="PtzAction('wiperon')" @mouseup="PtzAction('stop')"></i>
+          <i class="iconfont icon-guanyushua" @mousedown="PtzAction('wiperoff')" @mouseup="PtzAction('stop')"></i>
+        </div>
+        <div class="right">
+          <div class="ptz-item corner"><div class="zs" @mousedown="PtzAction('upleft')" @mouseup="PtzAction('stop')">
+            <i class="iconfont icon-zuoshang"></i>
+          </div></div>
+          <div class="ptz-item shang" @mousedown="PtzAction('up')" @mouseup="PtzAction('stop')"><i class="iconfont icon-shang"></i></div>
+          <div class="ptz-item corner"><div class="ys" @mousedown="PtzAction('upright')" @mouseup="PtzAction('stop')">
+            <i class="iconfont icon-youshang"></i>
+          </div></div>
+          <div class="ptz-item zuo" @mousedown="PtzAction('left')" @mouseup="PtzAction('stop')"><i class="iconfont icon-zuo"></i></div>
+          <div class="ptz-item center"></div>
+          <div class="ptz-item you" @mousedown="PtzAction('right')" @mouseup="PtzAction('stop')"><i class="iconfont icon-you"></i></div>
+          <div class="ptz-item corner"><div class="zx" @mousedown="PtzAction('downleft')" @mouseup="PtzAction('stop')">
+            <i class="iconfont icon-zuoxia"></i>
+          </div></div>
+          <div class="ptz-item xia" @mousedown="PtzAction('down')" @mouseup="PtzAction('stop')"><i class="iconfont icon-xia"></i></div>
+          <div class="ptz-item corner" ><div class="yx" @mousedown="PtzAction('downright')" @mouseup="PtzAction('stop')">
+            <i class="iconfont icon-youxia"></i>
+          </div></div>
+        </div>
+      </div>
+      <div class="ptz-slider">
+        <span>{{ ptzvalue }}</span>
+        <el-slider v-model="ptzvalue" :show-tooltip="false" :max="1" :min="0.1" :step="0.1"></el-slider>
+      </div>
+      <el-timeline>
+        <el-timeline-item placement="top" v-for="Pre in PresetData" :key="Pre.strName">
+          <el-card>
+            <div class="preset_bgc">
+              <input type="text" class="preset_input" :value="Pre.strName" />
+              <button type="button" class="iconfont icon-RectangleCopy1"
+                @click="preset_jump(Pre.strToken)"></button>
+              <button type="button" class="iconfont icon-icon-test1"
+                @click="preset_set(Pre.strToken, $event)"></button>
+            </div>
+          </el-card>
+        </el-timeline-item>
+      </el-timeline>
     </div>
   </div>
 </template>
@@ -1237,7 +1663,60 @@ watch(isLiveview, (newVal) => {
       background-size: 22%;
       background-repeat: no-repeat;
       background-position: center center;
-        position: relative;
+      position: relative;
+
+      .malv {
+        position: absolute;
+        top: 20px;
+        right: 16px;
+        z-index: 100;
+        width: 400px;
+        height: 150px;
+        // background-color: grey;
+        display: flex;
+        transition: 0.2s;
+        .malv-close {
+          position: absolute;
+          top: 3px;
+          right: 8px;
+          font-size: 16px;
+          cursor: pointer;
+        }
+        .malv-left, .malv-right {
+          width: 50%;
+          height: 100%;
+          background-color: rgba($color: #333, $alpha: 0.5);
+          .information_title {
+            width: 100%;
+            height: 30px;
+            line-height: 30px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 0 10px;
+          }
+          .information_content {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+
+            .information_content_left {
+              width: 50%;
+              color: #3ABBFE;
+              text-align: left;
+            }
+
+            .information_content_right {
+              width: 50%;
+              color: #3ABBFE;
+              text-align: left;
+            }
+
+          }
+        }
+      }
+      .malv-hide {
+        right: -400px;
+      }
     }
 
     .control {
@@ -1388,6 +1867,224 @@ watch(isLiveview, (newVal) => {
     cursor: pointer;
     i {
       font-size: 18px;
+    }
+  }
+  .yuntai {
+    position: absolute;
+    left: 5px;
+    bottom: 0;
+    width: 275px;
+    height: 550px;
+    transition: 0.3s;
+    background-color: rgba($color: #323232, $alpha: 1);
+    .header {
+      width: 100%;
+      height: 32px;
+      padding: 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba($color: #2A2A2A, $alpha: 1);
+      i {
+        display: block;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        text-align: center;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 10px;
+        background-color: #232323;
+      }
+    }
+    :deep(.el-timeline) {
+      padding: 0 20px;
+      margin-top: 10px;
+      .el-timeline-item {
+        padding: 0;
+      }
+      .el-timeline-item__wrapper {
+        .el-timeline-item__timestamp {
+          margin: 0;
+          padding: 0;
+        }
+        .el-card {
+          background-color: transparent;
+          border: none;
+        }
+        .el-card__body {
+          height: 26px;
+          margin-bottom: 4px;
+          padding: 0;
+          background-color: rgba($color: #E5E7EB, $alpha: 0.12) !important;
+        }
+        .preset_bgc {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background-color: transparent;
+          padding: 0 10px;
+          .preset_input{
+            width: 150px;
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            padding-left: 10px;
+            color: #fff !important;
+          }
+          button {
+            background-color: transparent;
+            border: none;
+            color: #fff !important;
+            font-size: 16px;
+            cursor: pointer;
+          }
+        }
+      }
+    }
+    .ptz-slider {
+      width: 100%;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      .el-slider {
+        width: 100%;
+      }
+    }
+    .controls {
+      width: 100%;
+      height: 144px;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      margin: 20px 0;
+      .left {
+        width: 70px;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, 32px);
+        grid-template-rows: repeat(4, 32px);
+        grid-column-gap: 5px;
+        grid-row-gap: 5px;
+        i {
+          display: flex;           // 用 flex 让文字居中
+          align-items: center;
+          justify-content: center;
+          background-color: rgba($color: #E5E7EB, $alpha: 0.12);
+          border-radius: 4px;
+          width: 32px;
+          height: 32px;
+          font-size: 20px;
+          cursor: pointer;
+        }
+        i:active {
+          color: #0399FE;
+        }
+      }
+      .right {
+        width: 144px;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        grid-column-gap: 0px;
+        grid-row-gap: 0px;
+        .ptz-item {
+          background-color: rgba($color: #E5E7EB, $alpha: 0.12);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: relative;
+
+          i {
+            font-size: 22px;
+          }
+        }
+        .shang {border-radius: 4px 4px 0 0; cursor: pointer;}
+        .zuo {border-radius: 4px 0 0 4px; cursor: pointer;}
+        .you {border-radius: 0 4px 4px 0; cursor: pointer;}
+        .xia {border-radius: 0 0 4px 4px; cursor: pointer;}
+        .corner {
+          background-color: transparent;
+          .zs, .ys, .zx, .yx {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background-color: rgba($color: #E5E7EB, $alpha: 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            i {
+              font-size: 20px;
+            }
+          }
+          .zs {
+            top: 0;
+            left: 0;
+          }
+          .ys {
+            top: 0;
+            right: 0;
+          }
+          .zx {
+            left: 0;
+            bottom: 0;
+          }
+          .yx {
+            right: 0;
+            bottom: 0;
+          }
+        }
+        .ptz-item:active {
+          i {
+            color: #0399FE;
+          }
+        }
+      }
+    }
+  }
+  .yuntai-hide {
+    bottom: -550px;
+
+  }
+  .Audio_slider-bottom {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    width: 210px;
+
+    i {
+      // color: #999999;
+      font-size: 20px;
+    }
+
+    .el-slider__runway {
+      height: 3px;
+      background-color: rgba(73, 74, 76, 0.5) !important;
+
+      .el-slider__bar {
+        height: 3px;
+      }
+
+      .el-slider__button-wrapper {
+        height: 34px;
+        width: 36px;
+
+        .el-slider__button {
+          width: 4px;
+          border: 1px solid #409EFF;
+          height: 12px;
+          background-color: #409eff;
+          border-radius: 0px;
+        }
+      }
     }
   }
 }

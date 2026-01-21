@@ -6,6 +6,146 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "7549827",
+      "name": "发布",
+      "font_class": "RectangleCopy1",
+      "unicode": "e6a9",
+      "unicode_decimal": 59049
+    },
+    {
+      "icon_id": "8776873",
+      "name": "setting",
+      "font_class": "icon-test1",
+      "unicode": "e63f",
+      "unicode_decimal": 58943
+    },
+    {
+      "icon_id": "9269179",
+      "name": "灯光-开",
+      "font_class": "light-open",
+      "unicode": "e630",
+      "unicode_decimal": 58928
+    },
+    {
+      "icon_id": "9269190",
+      "name": "灯光-关",
+      "font_class": "light-close",
+      "unicode": "e631",
+      "unicode_decimal": 58929
+    },
+    {
+      "icon_id": "9410230",
+      "name": "关雨刷",
+      "font_class": "guanyushua",
+      "unicode": "e67c",
+      "unicode_decimal": 59004
+    },
+    {
+      "icon_id": "9410246",
+      "name": "开雨刷",
+      "font_class": "kaiyushua",
+      "unicode": "e681",
+      "unicode_decimal": 59009
+    },
+    {
+      "icon_id": "10834261",
+      "name": "聚焦",
+      "font_class": "jujiao1",
+      "unicode": "e615",
+      "unicode_decimal": 58901
+    },
+    {
+      "icon_id": "11107656",
+      "name": "聚焦 ",
+      "font_class": "jujiao2",
+      "unicode": "e617",
+      "unicode_decimal": 58903
+    },
+    {
+      "icon_id": "11529760",
+      "name": "光圈减",
+      "font_class": "guangquanjian",
+      "unicode": "e6e8",
+      "unicode_decimal": 59112
+    },
+    {
+      "icon_id": "11529762",
+      "name": "光圈加",
+      "font_class": "guangquanjia",
+      "unicode": "e6ea",
+      "unicode_decimal": 59114
+    },
+    {
+      "icon_id": "38804411",
+      "name": "左上",
+      "font_class": "zuoshang",
+      "unicode": "e822",
+      "unicode_decimal": 59426
+    },
+    {
+      "icon_id": "38804415",
+      "name": "右上",
+      "font_class": "youshang",
+      "unicode": "e821",
+      "unicode_decimal": 59425
+    },
+    {
+      "icon_id": "38804417",
+      "name": "左下",
+      "font_class": "zuoxia",
+      "unicode": "e828",
+      "unicode_decimal": 59432
+    },
+    {
+      "icon_id": "38804422",
+      "name": "右下",
+      "font_class": "youxia",
+      "unicode": "e827",
+      "unicode_decimal": 59431
+    },
+    {
+      "icon_id": "38804427",
+      "name": "上",
+      "font_class": "shang",
+      "unicode": "e826",
+      "unicode_decimal": 59430
+    },
+    {
+      "icon_id": "38804430",
+      "name": "右",
+      "font_class": "you",
+      "unicode": "e825",
+      "unicode_decimal": 59429
+    },
+    {
+      "icon_id": "38804435",
+      "name": "下",
+      "font_class": "xia",
+      "unicode": "e824",
+      "unicode_decimal": 59428
+    },
+    {
+      "icon_id": "38804436",
+      "name": "左",
+      "font_class": "zuo",
+      "unicode": "e823",
+      "unicode_decimal": 59427
+    },
+    {
+      "icon_id": "42464503",
+      "name": "收起",
+      "font_class": "shouqi2",
+      "unicode": "e8b4",
+      "unicode_decimal": 59572
+    },
+    {
+      "icon_id": "42464504",
+      "name": "展开",
+      "font_class": "zhankai2",
+      "unicode": "e8b2",
+      "unicode_decimal": 59570
+    },
+    {
       "icon_id": "38288290",
       "name": "右箭头",
       "font_class": "youjiantou",
