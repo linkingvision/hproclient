@@ -296,38 +296,65 @@ export class DiscoveryClient {
         device.session = data.session;
         device.access_token = data.access_token;
         device.enableHttps = data.enableHttps;
-        if (data.login) {   // 登录，添加keepalive定时器
-            let root = (data.enableHttps ? 'https://' : 'http://') + data.ipv4Address + ':' + (data.enableHttps ? device.httpsPort : device.httpPort);
-            const url = root + '/uapi/v1/User/Keepalive'
-            log.info('[keep-alive] url =>', url)
-            if (device.keepAliveTimer) {
-                clearInterval(device.keepAliveTimer);
-                device.keepAliveTimer = null;
-                log.info('clear keep alive setInterval')
-            }
-            device.keepAliveTimer = setInterval(async () => {
-                log.info('keep-alive in setInterval');
-                try {
-                    // 为HTTPS请求创建自定义agent
-                    const httpsAgent = data.enableHttps 
-                        ? new https.Agent({ rejectUnauthorized: false })
-                        : undefined;
-                    const res = await http.get(url, {
-                        headers: {
-                            'Authorization': `Bearer ${data.access_token}`
-                        },
-                        httpsAgent: httpsAgent,
-                        timeout: 10000
-                    })
-                    log.info(`[ KeepAlive ] ${device.ipv4Address} success =>`, res.status)
-                } catch(err) {
-                    log.info('keepalive  error', err)
-                }
-            }, 60_000)
-        } else {    // 退出登录，清除keepalive定时器
+        if (data.login) {
+            this.keepAlive(device);
+        } else {
+            this.clearKeepAlive(device);
+        }
+    }
+    /**
+     * keepalive
+     * @param device 
+     */
+
+    private keepAlive(device: DiscoveredDevice) {
+        if (device.keepAliveTimer != null) {
+            return;
+        }
+        let root = (device.enableHttps ? 'https://' : 'http://') + device.ipv4Address + ':' + (device.enableHttps ? device.httpsPort : device.httpPort);
+        const url = root + '/uapi/v1/User/Keepalive'
+        log.info('[keep-alive] url =>', url)
+        if (device.keepAliveTimer) {
             clearInterval(device.keepAliveTimer);
             device.keepAliveTimer = null;
+            log.info('clear keep alive setInterval')
         }
+        device.keepAliveTimer = setInterval(async () => {
+            log.info('keep-alive in setInterval');
+            try {
+                // 为HTTPS请求创建自定义agent
+                const httpsAgent = device.enableHttps
+                    ? new https.Agent({ rejectUnauthorized: false })
+                    : undefined;
+                const res = await http.get(url, {
+                    headers: {
+                        'Authorization': `Bearer ${device.access_token}`
+                    },
+                    httpsAgent: httpsAgent,
+                    timeout: 10000
+                })
+                log.info(`[ KeepAlive ] ${device.ipv4Address} success =>`, res.status)
+            } catch (err) {
+                log.info('keepalive  error', err)
+                // 发生错误时，清除定时器修改登录状态
+                // this.clearKeepAlive(device);
+                // device.login = false;
+                // device.session = undefined;
+                // device.access_token = undefined;
+                // log.info(`[ KeepAlive ] ${device.ipv4Address} 失败，已清除登录状态`);
+            }
+        }, 60_000)
+    }
+    /**
+     * 清除keepalive定时器
+     * @param device 
+     */
+    private clearKeepAlive(device: DiscoveredDevice) {
+        if (device.keepAliveTimer == null) {
+            return;
+        }
+        clearInterval(device.keepAliveTimer);
+        device.keepAliveTimer = null;
     }
     /**
      * 获取设备数量

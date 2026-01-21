@@ -21,7 +21,7 @@ export const useStore = defineStore('main', () => {
     sidebarShow.value = flag;
   }
 
-  const liveviewrtc = ref<string>('WS');
+  const liveviewrtc = ref<string>('WS2');
   function setLiveviewrtc(value: string) {
     liveviewrtc.value = value;
   }

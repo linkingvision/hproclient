@@ -104,4 +104,56 @@ body.c-dark-theme {
     --el-dialog-bg-color: #333333;
   }
   --el-color-primary: #0399FE;
+  .el-popper {
+    --el-bg-color-overlay: #212121;
+    --el-border-color-light: #212121;
+    --el-fill-color-light: #121212;
+  }
+  .el-select {
+    .el-select__wrapper {
+      // background-color: #121212;
+      border: 1px solid #4A4A4A;
+      box-shadow: none;
+    }
+  }
+  .el-select {
+    --el-text-color-regular: #fff;
+  }
+  .el-select {
+    --el-fill-color-blank: transparent;
+    .is-disabled {
+      --el-fill-color-light: transparent;
+    }
+    .el-select__selected-item {
+      .el-tag {
+        --el-tag-bg-color: #333333;
+        --el-tag-text-color: #fff;
+      }
+    }
+  }
+  .el-select-dropdown__list {
+    .el-select-dropdown__item {
+      span {
+        color: #606266;
+      }
+    }
+    .is-selected {
+      span {
+        color: #0399FE;
+      }
+    }
+  }
+  .el-picker__popper {
+    --el-bg-color-overlay: #2b2b2b;
+    --el-border-color-lighter: #4A4A4A;
+    --el-border-color-light: transparent;
+    .el-date-picker__header {
+      --el-datepicker-icon-color: #fff;
+      --el-text-color-regular: #fff;
+    }
+    .el-picker-panel__content {
+      --el-datepicker-text-color: #fff;
+      --el-datepicker-inrange-bg-color: rgba(3, 153, 254, 0.2);
+    }
+  }
 }
