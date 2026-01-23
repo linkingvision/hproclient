@@ -1,8 +1,8 @@
 {
   "name": "hproclient",
-  "version": "1.1.1201",
+  "version": "1.1.0",
   "main": "dist/main/index.js",
-  "description": "Electron + Vue + Vite.",
+  "description": "1.1.0122.26",
   "author": "linkingvision",
   "license": "MIT",
   "private": true,

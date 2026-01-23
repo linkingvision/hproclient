@@ -216,7 +216,7 @@ const splashScreen = () => {
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
 
     webPreferences: {
-      devTools: true,
+      devTools: false,
       preload,
       nodeIntegration: false,
     },
@@ -330,13 +330,6 @@ ipcMain.on('get-site-device', function (event, uuid) {
   const devices = DiscoveryClient.getDevices();
   log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
 
-  if (devices.length > 0) {
-    devices.forEach((device, index) => {
-      const lastSeen = device.lastSeen || device.responseTime;
-      const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
-      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
-    });
-  }
   mainWinArray.forEach(win => {
     win.webContents.send("site-device", devices)
     let win_children = win.getChildWindows()
@@ -468,4 +461,14 @@ ipcMain.on('sidebar-switch-tab', async (event, data) => {
   const mainWin = senderWindow.getParentWindow()
   // mainWinArray.get('header')?.webContents.send('header-switch-tab', data)
   mainWin?.webContents.send('header-switch-tab', data)
+})
+
+// 页面中操作打开新页面
+ipcMain.on('go-tab', async (event, data) => {
+  const sender = event.sender;
+  // 通过 WebContents 找到对应的 BrowserWindow
+  const senderWindow = BrowserWindow.fromWebContents(sender);
+  const mainWin = senderWindow.getParentWindow()
+
+  mainWin?.webContents.send('header-new-tab', data)
 })

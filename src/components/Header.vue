@@ -140,33 +140,60 @@ let closeWindow = () => {
     window.ipcRenderer.send("window-close");
 }
 
-onMounted(() => {
-    window.ipcRenderer.on('header-switch-tab', async(_, data) => {
-        console.log('header-switch-tab =>', data, tabs)
-        const tabItem = tabs.find(item => item.key == data);
-        if (tabItem) {
-            window.ipcRenderer.send('switch-tabs', tabItem.id)
-            tab.value = tabItem.key;
-        } else {
-            window.ipcRenderer.invoke('open-win-tabs', {
-                label: 'Site Login',
-                key: 'sitelogin',
-                path: "SiteLogin",
-            }).then((msg: any) => {
-                if (msg) {
-                    tabRef.value.addTab({
-                        label: msg.label,
-                        key: msg.key,
-                        path: msg.path,
-                        icon: "",
-                        id: msg.id
-                    });
+const openSiteLogin = async(_: any, data: any) => {
+    console.log('header-switch-tab =>', data, tabs)
+    const tabItem = tabs.find(item => item.key == data);
+    if (tabItem) {
+        window.ipcRenderer.send('switch-tabs', tabItem.id)
+        tab.value = tabItem.key;
+    } else {
+        window.ipcRenderer.invoke('open-win-tabs', {
+            label: 'Site Login',
+            key: 'sitelogin',
+            path: "SiteLogin",
+        }).then((msg: any) => {
+            if (msg) {
+                tabRef.value.addTab({
+                    label: msg.label,
+                    key: msg.key,
+                    path: msg.path,
+                    icon: "",
+                    id: msg.id
+                });
 
-                    tab.value = msg.key;
-                }
+                tab.value = msg.key;
+            }
+        })
+    }
+}
+
+const goPage = async (_: any, data: any) => {
+    window.ipcRenderer.invoke('open-win-tabs', {
+        label: data.label,
+        key: data.key,
+        path: data.path
+    }).then((msg: any) => {
+        if (msg) {
+            tabRef.value.addTab({
+                label: msg.label,
+                key: msg.key,
+                path: msg.path,
+                icon: "",
+                id: msg.id
             })
+            tab.value = msg.key;
         }
     })
+}
+
+onMounted(() => {
+    window.ipcRenderer.on('header-switch-tab', openSiteLogin)
+    window.ipcRenderer.on('header-new-tab', goPage)
+})
+
+onUnmounted(() => {
+    window.ipcRenderer.off('header-switch-tab', openSiteLogin)
+    window.ipcRenderer.off('header-new-tab', goPage)
 })
 
 console.log('Header')

@@ -406,13 +406,13 @@ const getNodeIcon = (node: TreeNode) => {
     case 'device':
       // 如果是设备通道（叶子节点），使用摄像机图标
       if (node.isLeaf || node.isDeviceChannel) {
-        // if (node.data.recording) {
-        //   if (store.darkMode) {
-        //     return '#icon-baishexiangji'
-        //   } else {
-        //     return '#icon-heishexiangji'
-        //   }
-        // }
+        if (node.data.recording) {
+          if (store.darkMode) {
+            return '#icon-baishexiangji'
+          } else {
+            return '#icon-heishexiangji'
+          }
+        }
         return 'icon-shexiangjizaixian';
       }
       // dev里的设备使用icon-Device
@@ -1329,6 +1329,7 @@ onMounted(() => {
   getDeviceList();
   initGridLayout();
   initUPlayerList();
+  window.addEventListener('click', menuHide)
 })
 
 onUnmounted(() => {
@@ -1354,6 +1355,8 @@ onUnmounted(() => {
   GridManager.value.removeEventListener('layoutLoadedFromCache', gridListener.layoutLoadedFromCacheHandler)
   GridManager.value.destroy();
   GridManager.value = null;
+
+  window.removeEventListener('click', menuHide)
 })
 
 watch(isLiveview, (newVal) => {
@@ -1379,13 +1382,40 @@ watch(isLiveview, (newVal) => {
     }
   }
 })
+
+const menuVisible = ref<boolean>(false);
+const x = ref<number>(0)
+const y = ref<number>(0)
+const menuShow = (event: MouseEvent) => {
+  event.preventDefault();
+  x.value = event.clientX;
+  y.value = event.clientY;
+  menuVisible.value = true;
+}
+const menuHide = () => {
+  menuVisible.value = false;
+}
+const goSetup = () => {
+  menuVisible.value = false;
+  window.ipcRenderer.send('go-tab', {
+    label: 'Setup',
+    key: "Setup" + uuid(4),
+    path: "Setup",
+  })
+  // window.ipcRenderer.send('did-finish-load', '10.168.1.12000')
+}
+const onRightClick = (e: MouseEvent, data: any) => {
+  if (data.type !== 'site') return;
+  console.log('onRightClick =>', data)
+  menuShow(e);
+}
 </script>
 
 <template>
   <div class="view-page">
     <div class="view-left">
       <div class="input-div">
-        <el-input v-model="filterText" placeholder="请输入关键字进行过滤" :suffix-icon="Search"></el-input>
+        <el-input v-model="filterText" placeholder="Keywords Filter" :suffix-icon="Search"></el-input>
         <i class="iconfont icon-liebiao"  @click="TreeFold"></i>
       </div>
       <el-collapse v-model="activeCollapse">
@@ -1393,7 +1423,7 @@ watch(isLiveview, (newVal) => {
           <template #title>
             <div
               style="display: flex; justify-content: space-between; width: 90%; align-items: center; padding-left: 10px;">
-              <div class="title-text" style="white-space: nowrap;">{{ '分区' }}</div>
+              <div class="title-text" style="white-space: nowrap;">{{ 'Partition' }}</div>
               <div class="liveview-colltitle" style="align-items: center;">
                 <div @click.stop="refresh"><i class="iconfont icon-shuaxin"></i></div>
               </div>
@@ -1413,10 +1443,10 @@ watch(isLiveview, (newVal) => {
                 draggable="true"
                 @dragstart="handleDragStart(node)"
                 style="width: 100%; display: flex; align-items: center; position: relative;"
-                :class="getNodeClass(data)">
+                :class="getNodeClass(data)" @contextmenu="onRightClick($event, data)">
                 <!-- 字体图标 - 用于非录像状态 -->
                 <svg v-if="data.data && data.data.recording" class="icon" aria-hidden="true" :style="{
-                  marginRight: '8px'
+                  marginRight: '0'
                 }">
                   <use :xlink:href="getRecordingIcon(data)"></use>
                 </svg>
@@ -1563,6 +1593,9 @@ watch(isLiveview, (newVal) => {
         </el-timeline-item>
       </el-timeline>
     </div>
+    <div v-if="menuVisible" class="context-menu" :style="{ left: x + 'px', top: y + 'px' }">
+      <div class="menu-item" @click="goSetup">Set Up</div>
+    </div>
   </div>
 </template>
 
@@ -1572,7 +1605,25 @@ watch(isLiveview, (newVal) => {
   height: 100%;
   display: flex;
   justify-content: space-between;
-
+  position: relative;
+  .context-menu {
+    width: 140px;
+    padding: 10px 0;
+    background-color: #3A3A3A;
+    position: absolute;
+    border-radius: 4px;
+    .menu-item {
+      width: 100%;
+      height: 37px;
+      font-size: 14px;
+      text-align: center;
+      line-height: 37px;
+      cursor: pointer;
+    }
+    .menu-item:hover {
+      background-color: #555555;
+    }
+  }
   .view-left {
     height: 100%;
     width: 280px;
@@ -1604,6 +1655,13 @@ watch(isLiveview, (newVal) => {
         font-size: 22px;
         cursor: pointer;
       }
+    }
+    .icon {
+      width: 18px;
+      height: 18px;
+      // vertical-align: 15px;
+      fill: currentColor;
+      overflow: hidden;
     }
     :deep(.el-collapse) {
       // background-color: #424242;

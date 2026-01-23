@@ -11,6 +11,7 @@ import { md5 } from 'js-md5';
 import { Base64 } from 'js-base64';
 import { LoginApi, GetSiteApi, LoginSessionApi } from '../../api/login';
 import { ElMessage } from 'element-plus';
+import uuid from '@/assets/js/uuid.js';
 
 const store = useStore()
 const siteStore = useSiteInfo();
@@ -87,7 +88,7 @@ const addSite = async () => {
         window.ipcRenderer.invoke('add-site-device', {
             uuid: result.UUID,
             deviceName: result.DeviceName,
-            ipv4Address: result.IPv4Address,
+            ipv4Address: addform.ip,
             httpPort: result.HttpPort,
             httpsPort: result.HttpsPort,
             softwareVersion: result.SoftwareVersion,
@@ -139,7 +140,7 @@ const LogIn = async () => {
                 enableHttps: form.enableHttps
             })
             ElMessage({
-                message: '登录成功',
+                message: 'Login Success',
                 type: 'success',
                 duration: 2000
             })
@@ -178,10 +179,22 @@ const LogIn = async () => {
                 users = users.filter((item: any) => item.ipv4Address != checkedSites.value.ipv4Address)
                 localStorage.setItem('users', JSON.stringify(users))
             }
+
+            window.ipcRenderer.send('go-tab', {
+                label: 'View',
+                key: "view" + uuid(4),
+                path: "View"
+            })
+        } else {
+            ElMessage({
+                message: 'Login Error',
+                type: 'error',
+                duration: 2000
+            })
         }
     } else {
         ElMessage({
-            message: '登录失败',
+            message: 'Login Error',
             type: 'error',
             duration: 2000
         })
@@ -208,7 +221,7 @@ onMounted(() => {
     // 设置定时器，并保存引用
     timerRef.value = setInterval(() => {
         getSiteDevice();
-    }, 60_000);
+    }, 20_000);
 });
 onUnmounted(() => {
     if (timerRef.value) {

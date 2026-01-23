@@ -12,12 +12,14 @@
     "node_modules/**/*",
   ],
   "mac": {
+    "icon": "./public/favicon.ico",
     "target": [
       "dmg"
     ],
-    "artifactName": "hproclient-client-mac-${version}.${ext}"
+    "artifactName": "hproclient-mac-${description}.${ext}"
   },
   "win": {
+    "icon": "./public/favicon.ico",
     "target": [
       {
         "target": "nsis",
@@ -26,18 +28,19 @@
         ]
       }
     ],
-    "artifactName": "hproclient-client-win64-${version}.${ext}"
+    "artifactName": "hproclient-win64-${description}.${ext}"
   },
   "nsis": {
     "oneClick": false,
-    "perMachine": false,
+    "perMachine": true,
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false
   },
   "linux": {
+    "icon": "./public/favicon.ico",
     "target": [
       "AppImage"
     ],
-    "artifactName": "hproclient-client-linux-${version}.${ext}"
+    "artifactName": "hproclient-linux-${description}.${ext}"
   }
 }

@@ -28,6 +28,10 @@ let basicRoutes: RouteRecordRaw[] = [
         path: '/Sidebar',
         name: 'Sidebar',
         component: () => import('../components/Sidebar.vue'),
+    }, {
+        path: '/Setup',
+        name: 'Setup',
+        component: () => import('../views/setup/Setup.vue')
     }
 ]
 

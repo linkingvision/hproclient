@@ -9,7 +9,6 @@ import {
     DiscoveryOptions,
 } from './site_types';
 import http from '../../http';
-import https from 'https'
 export class DiscoveryClient {
     private client: Socket;
     private discoveredDevices: Map<string, DiscoveredDevice>;
@@ -139,7 +138,7 @@ export class DiscoveryClient {
                     result.ProbeMatch as ProbeMatchResponse,
                     rinfo
                 );
-
+                device.ipv4Address = rinfo.address;
                 // 检查设备是否已存在
                 const existingDevice = this.discoveredDevices.get(device.ipv4Address);
 
@@ -322,15 +321,10 @@ export class DiscoveryClient {
         device.keepAliveTimer = setInterval(async () => {
             log.info('keep-alive in setInterval');
             try {
-                // 为HTTPS请求创建自定义agent
-                const httpsAgent = device.enableHttps
-                    ? new https.Agent({ rejectUnauthorized: false })
-                    : undefined;
                 const res = await http.get(url, {
                     headers: {
                         'Authorization': `Bearer ${device.access_token}`
                     },
-                    httpsAgent: httpsAgent,
                     timeout: 10000
                 })
                 log.info(`[ KeepAlive ] ${device.ipv4Address} success =>`, res.status)
