@@ -1397,12 +1397,15 @@ const menuHide = () => {
 }
 const goSetup = () => {
   menuVisible.value = false;
-  window.ipcRenderer.send('go-tab', {
-    label: 'Setup',
-    key: "Setup" + uuid(4),
-    path: "Setup",
+  window.ipcRenderer.send('open-new-tab', {
+    data: {
+      label: 'Setup',
+      key: "Setup" + uuid(4),
+      path: "Setup",
+    },
+    type: 'setup',
+    ip: '10.168.1.120'
   })
-  // window.ipcRenderer.send('did-finish-load', '10.168.1.12000')
 }
 const onRightClick = (e: MouseEvent, data: any) => {
   if (data.type !== 'site') return;

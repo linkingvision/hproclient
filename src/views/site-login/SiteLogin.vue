@@ -180,10 +180,13 @@ const LogIn = async () => {
                 localStorage.setItem('users', JSON.stringify(users))
             }
 
-            window.ipcRenderer.send('go-tab', {
-                label: 'View',
-                key: "view" + uuid(4),
-                path: "View"
+            window.ipcRenderer.send('open-new-tab', {
+                data: {
+                    label: 'View',
+                    key: "view" + uuid(4),
+                    path: "view",
+                },
+                type: 'view'
             })
         } else {
             ElMessage({

@@ -454,7 +454,6 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
 
 // 接收 SideBar 信息, 切换页面
 ipcMain.on('sidebar-switch-tab', async (event, data) => {
-  console.log('sidebar-switch-tab =>', data)
   const sender = event.sender;
   // 通过 WebContents 找到对应的 BrowserWindow
   const senderWindow = BrowserWindow.fromWebContents(sender);
@@ -464,11 +463,49 @@ ipcMain.on('sidebar-switch-tab', async (event, data) => {
 })
 
 // 页面中操作打开新页面
-ipcMain.on('go-tab', async (event, data) => {
+ipcMain.on('open-new-tab', async (event, arg) => {
+  const newWin = winManager.openWindow().window;
+  newWin.resizable = false;
   const sender = event.sender;
   // 通过 WebContents 找到对应的 BrowserWindow
-  const senderWindow = BrowserWindow.fromWebContents(sender);
-  const mainWin = senderWindow.getParentWindow()
+  const senderWindow = BrowserWindow.fromWebContents(sender).getParentWindow();
+  if (!senderWindow) {
+    return null;
+  };
+  let clientBounds = senderWindow.getContentBounds();  // 获取内容区域的边界
+  // 设置新窗口的大小边界
+  newWin.setBounds({
+    x: clientBounds.x + 1,
+    y: clientBounds.y + 40,
+    width: clientBounds.width - 2,
+    height: clientBounds.height - 41
+  });
+  newWin.setParentWindow(senderWindow);
+  let routerPath = arg.data.path;
+  if (VITE_DEV_SERVER_URL) {
+    // newWin.webContents.openDevTools()
+    newWin.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`)
+  } else {
+    newWin.loadFile(indexHtml, { hash: routerPath })
+  };
+  
 
-  mainWin?.webContents.send('header-new-tab', data)
+  // 通知 header
+  senderWindow.webContents.send('create-new-tab', {...arg.data, id: newWin.id})
+
+  newWin.once('ready-to-show', () => {
+    newWin.show();
+  })
+
+  newWin.webContents.on('did-finish-load', () => {
+    const message = {
+      type: arg.type,
+      data: {
+        ip: arg.ip
+      }
+    }
+    // 主动测试向渲染器推送消息
+    log.info('[open-new-tab] message =>', message)
+    newWin?.webContents.send('main-process-message', message)
+  })
 })

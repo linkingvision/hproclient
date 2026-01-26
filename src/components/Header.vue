@@ -167,33 +167,27 @@ const openSiteLogin = async(_: any, data: any) => {
     }
 }
 
-const goPage = async (_: any, data: any) => {
-    window.ipcRenderer.invoke('open-win-tabs', {
-        label: data.label,
-        key: data.key,
-        path: data.path
-    }).then((msg: any) => {
-        if (msg) {
-            tabRef.value.addTab({
-                label: msg.label,
-                key: msg.key,
-                path: msg.path,
-                icon: "",
-                id: msg.id
-            })
-            tab.value = msg.key;
-        }
-    })
+const createTab = async (_: any, data: any) => {
+    if (data) {
+        tabRef.value.addTab({
+            label: data.label,
+            key: data.key,
+            path: data.path,
+            icon: "",
+            id: data.id
+        })
+        tab.value = data.key;
+    }
 }
 
 onMounted(() => {
     window.ipcRenderer.on('header-switch-tab', openSiteLogin)
-    window.ipcRenderer.on('header-new-tab', goPage)
+    window.ipcRenderer.on('create-new-tab', createTab)
 })
 
 onUnmounted(() => {
     window.ipcRenderer.off('header-switch-tab', openSiteLogin)
-    window.ipcRenderer.off('header-new-tab', goPage)
+    window.ipcRenderer.off('create-new-tab', createTab)
 })
 
 console.log('Header')

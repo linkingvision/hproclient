@@ -5,6 +5,7 @@ import { useSiteInfo } from '../../store/site-info';
 import { useStore } from '../../store';
 import { GetPartitionApi, GetDeviceChannelsApi } from '../../api/channel';
 import { Search } from '@element-plus/icons-vue'
+import { useTempStore } from '../../store/temp';
 
 interface TreeNode {
   id: string;
@@ -20,6 +21,7 @@ interface TreeNode {
 
 const store = useStore();
 const siteStore = useSiteInfo();
+const tempStore = useTempStore()
 
 const filterText = ref<string>('')
 const activeCollapse = ref<string>('partition')
@@ -397,6 +399,7 @@ const refresh = () => {
 
 onMounted(() => {
   getDeviceList()
+  console.log('tempIP => ', tempStore.tempIP)
 })
 
 onUnmounted(() => {
