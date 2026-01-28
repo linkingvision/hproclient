@@ -6,6 +6,7 @@ import { useStore } from '../../store';
 import { GetPartitionApi, GetDeviceChannelsApi } from '../../api/channel';
 import { Search } from '@element-plus/icons-vue'
 import { useTempStore } from '../../store/temp';
+import { useRouter } from 'vue-router';
 
 interface TreeNode {
   id: string;
@@ -22,6 +23,7 @@ interface TreeNode {
 const store = useStore();
 const siteStore = useSiteInfo();
 const tempStore = useTempStore()
+const $router = useRouter()
 
 const filterText = ref<string>('')
 const activeCollapse = ref<string>('partition')
@@ -323,6 +325,14 @@ const getAllKeys = (data: any) => {
   }
   return keys;
 }
+// 点击节点
+const clickSite = (node: TreeNode) => {
+  console.log(node)
+  if (node.type == 'site' && node.data.ipv4Address) {
+    tempStore.setTempIP(node.data.ipv4Address);
+    $router.push('/Setup')
+  }
+}
 // 获取节点样式类
 const getNodeClass = (node: TreeNode) => {
   const classes = ['tree-node'];
@@ -335,6 +345,9 @@ const getNodeClass = (node: TreeNode) => {
     } else {
       classes.push('device-offline');
     }
+  }
+  if (node.data.ipv4Address == tempStore.tempIP) {
+    classes.push('site-checked')
   }
   return classes.join(' ');
 };
@@ -399,8 +412,8 @@ const refresh = () => {
 
 onMounted(() => {
   getDeviceList()
-  console.log('tempIP => ', tempStore.tempIP)
-})
+  // console.log('tempIP => ', tempStore.tempIP)
+}) 
 
 onUnmounted(() => {
   
@@ -433,12 +446,13 @@ onUnmounted(() => {
             :default-expanded-keys="expandedKeys"
             node-key="id"
             :height="770"
+            :expand-on-click-node="false"
           >
             <template #default="{ node, data }">
               <div
                 draggable="true"
                 style="width: 100%; display: flex; align-items: center; position: relative;"
-                :class="getNodeClass(data)">
+                :class="getNodeClass(data)" @click="clickSite(data)">
                 <!-- 字体图标 - 用于非录像状态 -->
                 <svg v-if="data.data && data.data.recording" class="icon" aria-hidden="true" :style="{
                   marginRight: '0'
@@ -462,7 +476,9 @@ onUnmounted(() => {
         </el-collapse-item>
       </el-collapse>
     </div>
-    <div class="setup-right"></div>
+    <div class="setup-right">
+      <router-view></router-view>
+    </div>
     <div v-if="IsTreeFold" class="TreeFold" @click="TreeFold">
       <i class="iconfont icon-liebiao"></i>
     </div>
@@ -479,7 +495,7 @@ onUnmounted(() => {
   .setup-left {
     height: 100%;
     width: 280px;
-    margin-right: 8px;
+    // margin-right: 8px;
     background-color: #252525;
     overflow: hidden;
 
@@ -544,6 +560,9 @@ onUnmounted(() => {
         background-color: transparent;
         border: 0;
       }
+      .el-tree-node:has(.site-checked) {
+        background-color: rgba($color: #8DBDFF, $alpha: 0.3);
+      }
       .el-tree {
         background-color: transparent;
         .el-tree-node:focus>.el-tree-node__content {
@@ -561,7 +580,7 @@ onUnmounted(() => {
     // background-color: #282828;
     display: flex;
     flex-direction: column;
-    padding: 0 5px 5px 0;
+    // padding: 0 5px 5px 0;
   }
   .TreeFold {
     position: absolute;

@@ -70,7 +70,7 @@ body.c-dark-theme {
       .el-menu-item.is-active {
         color: #FFFFFF;
         border-right: 5px solid #0399FE;
-        background: url("../imgs/sidebar1.png") no-repeat;
+        background: url("../image/sidebar1.png") no-repeat;
         background-color: #202020;
       }
       .el-menu-item:hover {
@@ -79,10 +79,153 @@ body.c-dark-theme {
     }
   }
 
+  .meta-storage,
+  .image-storage,
+  .local-object-storage {
+    .disk-item {
+      background-color: #2B2B2B;
+
+      .used {
+        color: #409EFF;
+      }
+
+      .el-progress-bar__outer {
+        background-color: #464646 !important;
+
+        .el-progress-bar__inner {
+          background-color: #0399FE;
+        }
+      }
+    }
+    .active {
+      background-color: #3B424D;
+      border: 1px solid #409EFF;
+    }
+
+    .count {
+      .used {
+        color: #409EFF;
+      }
+    }
+    .el-progress-bar__outer {
+      background-color: #464646 !important;
+
+      .el-progress-bar__inner {
+        background-color: #0399FE;
+      }
+    }
+  }
+  // 存储状态组件
+  .storage-state, .record_status {
+    .DatePicker {
+      background-color: #2b2b2b;
+      .radio-button {
+        .el-button {
+          width: 60px;
+          height: 28px;
+          margin-left: 20px;
+          --el-button-bg-color: transpanent;
+          --el-button-text-color: #0399FE;
+          --el-button-border-color: #0399FE;
+          span {
+            color: #0399FE;
+          }
+        }
+        .active_button {
+          --el-button-bg-color: #0399FE;
+          --el-button-text-color: #fff;
+          --el-button-border-color: #0399FE;
+          --el-button-hover-bg-color: #0399FE;
+          --el-button-hover-border-color: #0399FE;
+          --el-button-hover-text-color: #fff;
+          span {
+            color: #fff;
+          }
+        }
+      }
+    }
+    .render {
+      background-color: #2b2b2b;
+    }
+    .pagination-box {
+      background-color: #2b2b2b;
+    }
+  }
+
 
   p, span, i, div, h1, h2, h3, h4, h5, h6, button, input {
     color: #fff;
     font-size: 14px;
+  }
+
+  .el-message-box {
+    background-color: #202020;
+    padding: 0;
+    .el-message-box__header {
+      background-color: #2c2c2c;
+      margin: 0;
+      padding: 10px;
+    }
+    .el-message-box__content {
+      padding: 20px;
+      .warn-tip {
+        color: #fe5003;
+        font-size: 24px;
+      }
+      .el-message-box__errormsg {
+        color: #fe5003;
+      }
+    }
+    .el-message-box__btns {
+      padding: 0 10px 10px 0;
+      .warn-cannel-btn {
+        width: 60px;
+        background-color: transparent;
+        border: 1px solid #fe5003;
+        span {
+          color: #fe5003;
+        }
+      }
+      .warn-confirm-btn {
+        width: 60px;
+        background-color: #fe5003;
+        border: 0;
+      }
+    }
+  }
+
+  .pagination-box {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    .el-pagination {
+      .btn-prev, .btn-next {
+        background-color: transparent;
+        border: 1px solid #4A4A4A;
+      }
+      .btn-prev:disabled, .btn-next:disabled {
+        background-color: transparent;
+        border: 1px solid #4A4A4A;
+      }
+      .el-pager {
+        .number {
+          background-color: transparent;
+          border: 1px solid #4A4A4A;
+          color: #a8abb2;
+        }
+        .more {
+          background-color: transparent;
+          border: 1px solid #4A4A4A;
+          color: #a8abb2;
+        }
+        .is-active {
+          background-color: #0399FE;
+          border: none;
+          color: #fff;
+        }
+      }
+    }
   }
 
   .el-radio-group {
@@ -96,6 +239,12 @@ body.c-dark-theme {
     --el-input-border-color: #5B5B5B;
     --el-fill-color-blank: #5B5B5B;
     --el-input-hover-border-color: #5B5B5B;
+  }
+  .is-disabled {
+    .el-input__wrapper {
+      --el-disabled-bg-color: #5B5B5B;
+      --el-disabled-border-color: #5B5B5B;
+    }
   }
   .el-form {
     --el-text-color-regular: #fff;
@@ -154,6 +303,52 @@ body.c-dark-theme {
     .el-picker-panel__content {
       --el-datepicker-text-color: #fff;
       --el-datepicker-inrange-bg-color: rgba(3, 153, 254, 0.2);
+    }
+  }
+  .el-menu {
+    --el-menu-bg-color: #1E1E1E;
+    --el-menu-border-color: #1E1E1E;
+    .el-menu-item.is-active {
+        color: #FFFFFF;
+        border-right: 5px solid #0399FE;
+        background: url("../image/sidebar1.png") no-repeat;
+        background-color: #202020;
+    }
+    .el-menu-item:hover {
+      background: url("../image/sidebar1.png") no-repeat;
+    }
+  }
+  .el-button--default.cannel {
+    --el-button-bg-color: transparent;
+    --el-button-border-color: #0399FE;
+    --el-button-hover-bg-color: rgba(255, 255, 255, 0.2);
+    --el-button-hover-border-color: #0399FE;
+    span {
+      color: #0399FE;
+    }
+  }
+  .el-button--primary {
+    --el-button-bg-color: #0399FE;
+    span {
+      color: #fff;
+    }
+  }
+  .el-button--text {
+    span {
+      color: #0399FE;
+    }
+  }
+  .el-table {
+    --el-table-bg-color: #181818;
+    --el-table-header-bg-color: #2A2A2A;
+    --el-table-tr-bg-color: #202020;
+    --el-table-border-color: transparent;
+    --el-table-row-hover-bg-color: #2A2A2A;
+    .el-table__header-wrapper {
+      height: 48px;
+      .el-table__header {
+        height: 100%;
+      }
     }
   }
 }

@@ -19,8 +19,7 @@
             </template>
         </vue3-tabs-chrome>
         <div class="header-right">
-            <span @click.stop="addNewWindow" class="" style="font-size: 14px;width: 100px;" v-if="afterAdd">new
-                win</span>
+            <span @click.stop="addNewWindow" class="" style="font-size: 14px;width: 100px;" v-if="afterAdd">new win</span>
             <span class="iconfont icon-xiazai"></span>
             <span class="iconfont icon-lingdang"></span>
             <span class="iconfont icon-androidgengduo"></span>

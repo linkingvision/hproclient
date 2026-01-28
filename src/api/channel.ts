@@ -120,3 +120,12 @@ export const PtzApi = (root: string, access_token: string, ptzToken: string, act
     Authorization: `Bearer ${access_token}`
   }
 })
+
+export const GetChannels = (root: string, access_token: string, data: any) => http({
+  url: root + '/uapi/v1/Device/Channels',
+  method: 'POST',
+  data: data,
+  headers: {
+    Authorization: `Bearer ${access_token}`
+  }
+})

@@ -1,8 +1,8 @@
 @font-face {
   font-family: "iconfont"; /* Project id 5079699 */
-  src: url('iconfont.woff2?t=1768987234094') format('woff2'),
-       url('iconfont.woff?t=1768987234094') format('woff'),
-       url('iconfont.ttf?t=1768987234094') format('truetype');
+  src: url('iconfont.woff2?t=1769591990111') format('woff2'),
+       url('iconfont.woff?t=1769591990111') format('woff'),
+       url('iconfont.ttf?t=1769591990111') format('truetype');
 }
 
 .iconfont {
@@ -11,6 +11,42 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-a-S3Storage:before {
+  content: "\ea27";
+}
+
+.icon-a-StorageMode:before {
+  content: "\ea24";
+}
+
+.icon-a-LocalObjectStorage:before {
+  content: "\ea25";
+}
+
+.icon-a-MetaStorage:before {
+  content: "\ea26";
+}
+
+.icon-shipinpeizhi:before {
+  content: "\e8a5";
+}
+
+.icon-cunchupeizhi:before {
+  content: "\e986";
+}
+
+.icon-yonghupeizhi_xian:before {
+  content: "\ea22";
+}
+
+.icon-yonghupeizhi_mian:before {
+  content: "\ea21";
+}
+
+.icon-yonghupeizhi:before {
+  content: "\ea20";
 }
 
 .icon-RectangleCopy1:before {

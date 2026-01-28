@@ -1384,6 +1384,7 @@ watch(isLiveview, (newVal) => {
 })
 
 const menuVisible = ref<boolean>(false);
+const setupIP = ref<string>('')
 const x = ref<number>(0)
 const y = ref<number>(0)
 const menuShow = (event: MouseEvent) => {
@@ -1393,6 +1394,7 @@ const menuShow = (event: MouseEvent) => {
   menuVisible.value = true;
 }
 const menuHide = () => {
+  setupIP.value = '';
   menuVisible.value = false;
 }
 const goSetup = () => {
@@ -1404,12 +1406,14 @@ const goSetup = () => {
       path: "Setup",
     },
     type: 'setup',
-    ip: '10.168.1.120'
+    ip: setupIP.value
   })
+  setupIP.value = '';
 }
 const onRightClick = (e: MouseEvent, data: any) => {
   if (data.type !== 'site') return;
   console.log('onRightClick =>', data)
+  setupIP.value = data.data.ipv4Address;
   menuShow(e);
 }
 </script>

@@ -6,6 +6,69 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "46766644",
+      "name": "S3 Storage",
+      "font_class": "a-S3Storage",
+      "unicode": "ea27",
+      "unicode_decimal": 59943
+    },
+    {
+      "icon_id": "46761823",
+      "name": "Storage Mode",
+      "font_class": "a-StorageMode",
+      "unicode": "ea24",
+      "unicode_decimal": 59940
+    },
+    {
+      "icon_id": "46761821",
+      "name": "Local Object Storage",
+      "font_class": "a-LocalObjectStorage",
+      "unicode": "ea25",
+      "unicode_decimal": 59941
+    },
+    {
+      "icon_id": "46761820",
+      "name": "Meta Storage",
+      "font_class": "a-MetaStorage",
+      "unicode": "ea26",
+      "unicode_decimal": 59942
+    },
+    {
+      "icon_id": "42412365",
+      "name": "视频配置",
+      "font_class": "shipinpeizhi",
+      "unicode": "e8a5",
+      "unicode_decimal": 59557
+    },
+    {
+      "icon_id": "43596775",
+      "name": "存储配置",
+      "font_class": "cunchupeizhi",
+      "unicode": "e986",
+      "unicode_decimal": 59782
+    },
+    {
+      "icon_id": "46742993",
+      "name": "用户配置_线",
+      "font_class": "yonghupeizhi_xian",
+      "unicode": "ea22",
+      "unicode_decimal": 59938
+    },
+    {
+      "icon_id": "46742992",
+      "name": "用户配置_面",
+      "font_class": "yonghupeizhi_mian",
+      "unicode": "ea21",
+      "unicode_decimal": 59937
+    },
+    {
+      "icon_id": "46740795",
+      "name": "用户配置",
+      "font_class": "yonghupeizhi",
+      "unicode": "ea20",
+      "unicode_decimal": 59936
+    },
+    {
       "icon_id": "7549827",
       "name": "发布",
       "font_class": "RectangleCopy1",

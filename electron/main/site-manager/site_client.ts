@@ -329,13 +329,13 @@ export class DiscoveryClient {
                 })
                 log.info(`[ KeepAlive ] ${device.ipv4Address} success =>`, res.status)
             } catch (err) {
-                log.info('keepalive  error', err)
+                device.login = false;
+                device.session = undefined;
+                device.access_token = undefined;
+                device.enableHttps = false;
                 // 发生错误时，清除定时器修改登录状态
-                // this.clearKeepAlive(device);
-                // device.login = false;
-                // device.session = undefined;
-                // device.access_token = undefined;
-                // log.info(`[ KeepAlive ] ${device.ipv4Address} 失败，已清除登录状态`);
+                this.clearKeepAlive(device);
+                log.info(`[ KeepAlive ]-------------------------------------------- ${device.ipv4Address} 失败，已清除登录状态`);
             }
         }, 60_000)
     }

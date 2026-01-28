@@ -40,6 +40,7 @@
   "dependencies": {
     "@imengyu/vue3-context-menu": "^1.4.4",
     "axios": "^1.13.2",
+    "d3": "^7.9.0",
     "electron-log": "^5.2.4",
     "jquery": "^3.7.1",
     "js-base64": "^3.7.8",

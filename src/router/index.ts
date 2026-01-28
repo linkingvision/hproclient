@@ -31,7 +31,77 @@ let basicRoutes: RouteRecordRaw[] = [
     }, {
         path: '/Setup',
         name: 'Setup',
-        component: () => import('../views/setup/Setup.vue')
+        component: () => import('../views/setup/Setup.vue'),
+        redirect: '/Setup/Index',
+        children: [{
+            path: 'Index',
+            name: 'SetupIndex',
+            component: () => import('../views/setup/index.vue')
+        }, {
+            path: 'StorageSetting',
+            name: 'StorageSetting',
+            component: () => import('../views/setup/Storage/StorageSetting.vue'),
+            redirect: 'StorageSetting/StorageMode',
+            children: [{
+                path: 'StorageMode',
+                name: 'StorageMode',
+                component: () => import('../views/setup/Storage/StorageMode.vue')
+            }, {
+                path: 'MetaStorage',
+                name: 'MetaStorage',
+                component: () => import('../views/setup/Storage/MetaStorage.vue')
+            }, {
+                path: 'LocalStorage',
+                name: 'LocalStorage',
+                component: () => import('../views/setup/Storage/LocalStorage.vue')
+            }, {
+                path: 'S3Storage',
+                name: 'S3Storage',
+                component: () => import('../views/setup/Storage/S3Storage.vue')
+            },]
+        }, {
+            path: 'User',
+            name: 'User',
+            component: () => import('../views/setup/User/User.vue'),
+            redirect: 'User/UserConfig',
+            children: [{
+                path: 'UserConfig',
+                name: 'UserConfig',
+                component: () => import('../views/setup/User/UserConfig.vue')
+            }]
+        }, {
+            path: 'DeviceManagement',
+            name: 'DeviceManagement',
+            component: () => import('../views/setup/Device/VideoDevice.vue'),
+            redirect: 'DeviceManagement/VideoDevice',
+            children: [{
+                path: 'VideoDevice',
+                name: 'VideoDevice',
+                component: () => import('../views/setup/Device/VideoDevice.vue')
+            }, {
+                path: 'AccessControlDevice',
+                name: 'AccessControlDevice',
+                component: () => import('../views/setup/Device/AccessControlDevice.vue')
+            }]
+        },{
+            path: 'VideoConfiguration',
+            name: 'VideoConfiguration',
+            component: () => import('../views/setup/VideoConfig/VideoConfiguration.vue'),
+            redirect: 'VideoConfiguration/ChannelSetting',
+            children: [{
+                path: 'ChannelSetting',
+                name: 'ChannelSetting',
+                component: () => import('../views/setup/VideoConfig/ChannelSetting.vue')
+            }, {
+                path: 'RecordingStatus',
+                name: 'RecordingStatus',
+                component: () => import('../views/setup/VideoConfig/RecordingStatus.vue')
+            }, {
+                path: 'CameraPoint',
+                name: 'CameraPoint',
+                component: () => import('../views/setup/VideoConfig/CameraPoint.vue')
+            }]
+        }]
     }
 ]
 
