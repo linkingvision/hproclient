@@ -1,43 +1,50 @@
 <script setup lang="ts">
+import $ from 'jquery';
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const $router = useRouter();
 
-const active = ref<string>('/Setup/StorageSetting/StorageMode')
+const active = ref<string>('/StorageSetting/StorageMode')
 
 const handleSelect = (index: string) => {
   active.value = index;
   $router.push(index)
+}
+
+const isCollapse = ref<boolean>(false)
+const collapse = () => {
+  isCollapse.value = !isCollapse.value;
+  if (isCollapse.value) {
+    $('.left').width('64px')
+  } else {
+    $('.left').width('200px')
+  }
 }
 </script>
 
 <template>
   <div class="storage-settings">
     <div class="left">
-      <el-menu :default-active="active" @select="handleSelect">
-        <el-menu-item index="/Setup/StorageSetting/StorageMode">
-          <i class="iconfont icon-a-StorageMode"></i>
-          <span>StorageMode</span>
-        </el-menu-item>
-        <el-menu-item index="/Setup/StorageSetting/MetaStorage">
-          <i class="iconfont icon-a-MetaStorage"></i>
-          <span>MetaStorage</span>
-        </el-menu-item>
-        <el-menu-item index="/Setup/StorageSetting/LocalStorage">
-          <i class="iconfont icon-a-LocalObjectStorage"></i>
-          <span>Local Object Storage</span>
-        </el-menu-item>
-        <el-menu-item index="/Setup/StorageSetting/S3Storage">
-          <i class="iconfont icon-a-S3Storage"></i>
-          <span>S3 Storage</span>
-        </el-menu-item>
+      <div class="collapse" @click="collapse">
+        <i class="iconfont icon-liebiao"></i>
+      </div>
+      <el-menu :default-active="active" @select="handleSelect" :collapse="isCollapse" :teleported="false">
+        <el-sub-menu index="/StorageSetting/StorageMode">
+          <template #title>
+            <i class="iconfont icon-cunchupeizhi"></i>
+            <span>StorageSetting</span>
+          </template>
+          <el-menu-item index="/StorageSetting/StorageMode"><span>StorageMode</span></el-menu-item>
+          <el-menu-item index="/StorageSetting/MetaStorage"><span>MetaStorage</span></el-menu-item>
+          <el-menu-item index="/StorageSetting/LocalStorage"><span>Local Object Storage</span></el-menu-item>
+          <el-menu-item index="/StorageSetting/S3Storage"><span>S3 Storage</span></el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </div>
     <div class="right">
       <router-view></router-view>
     </div>
-    
   </div>
 </template>
 
@@ -50,11 +57,25 @@ const handleSelect = (index: string) => {
     width: 200px;
     height: 100%;
     background-color: #1E1E1E;
-    .el-menu-item {
+    .el-menu-item, .el-sub-menu {
       i {
         font-size: 20px;
         margin-right: 8px;
       }
+    }
+    .collapse {
+      width: 100%;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      cursor: pointer;
+      i {
+        font-size: 20px;
+      }
+    }
+    .collapse:hover {
+      background: url("../../../assets/image/sidebar1.png") no-repeat;
     }
   }
   .right {

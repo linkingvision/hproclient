@@ -413,7 +413,7 @@ const refresh = () => {
 onMounted(() => {
   getDeviceList()
   // console.log('tempIP => ', tempStore.tempIP)
-}) 
+})
 
 onUnmounted(() => {
   

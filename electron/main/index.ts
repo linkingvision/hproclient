@@ -491,7 +491,7 @@ ipcMain.on('open-new-tab', async (event, arg) => {
   
 
   // 通知 header
-  senderWindow.webContents.send('create-new-tab', {...arg.data, id: newWin.id})
+  senderWindow.webContents.send('create-new-tab', {...arg.data, id: newWin.id, type: arg.type})
 
   newWin.once('ready-to-show', () => {
     newWin.show();

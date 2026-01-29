@@ -168,15 +168,26 @@ const openSiteLogin = async(_: any, data: any) => {
 
 const createTab = async (_: any, data: any) => {
     if (data) {
-        tabRef.value.addTab({
+        const newTabData = {
             label: data.label,
             key: data.key,
             path: data.path,
             icon: "",
             id: data.id
-        })
+        }
+        if (data.type == 'view') {
+            newTabData.icon = 'icon-shitu'
+        } else {}
+        switch(data.type) {
+            case 'view': newTabData.icon = 'icon-shitu'; break;
+            case 'setup': newTabData.icon = 'icon-a-SetUp'; break;
+            case "StorageSetting": newTabData.icon = 'icon-a-StorageSetting'; break;
+            default: newTabData.icon = ''
+        }
+        tabRef.value.addTab(newTabData)
         tab.value = data.key;
     }
+    console.log('header tabs =>', tabs)
 }
 
 onMounted(() => {

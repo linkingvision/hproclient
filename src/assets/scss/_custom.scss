@@ -308,17 +308,32 @@ body.c-dark-theme {
   .el-menu {
     --el-menu-bg-color: #1E1E1E;
     --el-menu-border-color: #1E1E1E;
+    .el-sub-menu__title:hover {
+      background: url("../image/sidebar1.png") no-repeat;
+      --el-menu-hover-bg-color: transparent;
+    }
     .el-menu-item.is-active {
-        color: #FFFFFF;
-        border-right: 5px solid #0399FE;
-        background: url("../image/sidebar1.png") no-repeat;
-        background-color: #202020;
+      border-right: 5px solid #0399FE;
+      background: url("../image/sidebar1.png") no-repeat;
+      background-color: #202020;
+      span {
+        color: #0399FE;
+      }
     }
     .el-menu-item:hover {
       background: url("../image/sidebar1.png") no-repeat;
     }
   }
   .el-button--default.cannel {
+    --el-button-bg-color: transparent;
+    --el-button-border-color: #0399FE;
+    --el-button-hover-bg-color: rgba(255, 255, 255, 0.2);
+    --el-button-hover-border-color: #0399FE;
+    span {
+      color: #0399FE;
+    }
+  }
+  .el-button.cancel {
     --el-button-bg-color: transparent;
     --el-button-border-color: #0399FE;
     --el-button-hover-bg-color: rgba(255, 255, 255, 0.2);
@@ -350,5 +365,26 @@ body.c-dark-theme {
         height: 100%;
       }
     }
+  }
+  .el-checkbox {
+    .el-checkbox__inner {
+      background-color: #494b4e ;
+      border: #0399FE 1px solid;
+    }
+  }
+  .is-checked {
+    .el-checkbox__inner {
+      background-color: #0399FE;
+    }
+  }
+  .el-tree-node {
+    --el-tree-text-color: #fff;
+    --el-text-color-regular: #fff;
+    --el-tree-expand-icon-color: #fff;
+    color: #fff;
+  }
+  .el-tree {
+    --el-fill-color-blank: transparent;
+    --el-tree-node-hover-bg-color: #222;
   }
 }

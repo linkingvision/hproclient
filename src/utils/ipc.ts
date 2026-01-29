@@ -18,7 +18,7 @@ export const setupIPCListeners = () => {
 
   window.ipcRenderer.on('main-process-message', (_event, ...args) => {
     console.log('[ipc] main process message:', ...args, args[0])
-    if (args && args[0] && args[0].type == 'setup') {
+    if (args && args[0]) {
       tempStore.setTempIP(args[0].data.ip);
     }
   })

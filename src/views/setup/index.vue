@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useTempStore } from '../../store/temp';
 import { useSiteInfo } from '../../store/site-info';
 import { useRouter } from 'vue-router';
+import uuid from '@/assets/js/uuid.js';
 
 const tempStore = useTempStore();
 const siteStore = useSiteInfo()
@@ -11,7 +12,16 @@ const $router = useRouter()
 const site = ref<any>({})
 
 const goPage = (url: string) => {
-  $router.push(url)
+  // $router.push(url)
+  window.ipcRenderer.send('open-new-tab', {
+    data: {
+      label: url,
+      key: url + uuid(4),
+      path: "/" + url,
+    },
+    type: url,
+    ip: tempStore.tempIP
+  })
 }
 
 watch(() => tempStore.tempIP, (newVal) => {
@@ -36,11 +46,11 @@ onMounted(() => {
         <div class="setup-item">
           <div class="title">Basic</div>
           <div class="boxes">
-            <div class="box" @click="goPage('/Setup/StorageSetting')">
+            <div class="box" @click="goPage('StorageSetting')">
               <i class="iconfont icon-cunchupeizhi"></i>
               <span>Storage Settings</span>
             </div>
-            <div class="box" @click="goPage('/Setup/User')">
+            <div class="box" @click="goPage('User')">
               <i class="iconfont icon-yonghupeizhi_xian"></i>
               <span>User Config</span>
             </div>
@@ -49,11 +59,11 @@ onMounted(() => {
         <div class="setup-item">
           <div class="title">Device</div>
           <div class="boxes">
-            <div class="box" @click="goPage('/Setup/DeviceManagement')">
+            <div class="box" @click="goPage('DeviceManagement')">
               <i class="iconfont icon-shebeiguanli"></i>
               <span>Device Management</span>
             </div>
-            <div class="box" @click="goPage('/Setup/VideoConfiguration')">
+            <div class="box" @click="goPage('VideoConfiguration')">
               <i class="iconfont icon-shipinpeizhi"></i>
               <span>Video Configuration</span>
             </div>

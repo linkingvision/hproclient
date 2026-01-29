@@ -59,7 +59,7 @@ const onSubmit = async () => {
 }
 
 onMounted(() => {
-  // console.log('StorageMode', site)
+  console.log('StorageMode', site, tempStore.tempIP)
   Node();
 })
 </script>
