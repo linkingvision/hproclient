@@ -273,7 +273,8 @@ export class DiscoveryClient {
                 lastSeen: item.lastSeen,
                 session: item.session,
                 access_token: item.access_token,
-                enableHttps: item.enableHttps
+                enableHttps: item.enableHttps,
+                username: item.username
             }
         })
         return devices;
@@ -295,6 +296,7 @@ export class DiscoveryClient {
         device.session = data.session;
         device.access_token = data.access_token;
         device.enableHttps = data.enableHttps;
+        device.username = data.username;
         if (data.login) {
             this.keepAlive(device);
         } else {

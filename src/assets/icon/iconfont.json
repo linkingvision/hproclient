@@ -6,6 +6,13 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "46790147",
+      "name": "Log in",
+      "font_class": "a-Login",
+      "unicode": "ea28",
+      "unicode_decimal": 59944
+    },
+    {
       "icon_id": "46766644",
       "name": "S3 Storage",
       "font_class": "a-S3Storage",

@@ -29,6 +29,7 @@ export interface DiscoveredDevice {
     access_token?: string;
     enableHttps?: boolean;
     keepAliveTimer?: null | NodeJS.Timeout;
+    username?: string;
 }
 
 export interface DiscoveredDeviceResponse {
@@ -46,6 +47,7 @@ export interface DiscoveredDeviceResponse {
     session?: string;
     access_token?: string;
     enableHttps?: boolean;
+    username?: string;
 }
 
 export interface DiscoveryOptions {

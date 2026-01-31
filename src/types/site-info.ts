@@ -28,6 +28,7 @@ export interface DiscoveredDevice {
     session?: string;
     access_token?: string;
     enableHttps?: boolean
+    username?: string;
 }
 
 export interface DiscoveryOptions {

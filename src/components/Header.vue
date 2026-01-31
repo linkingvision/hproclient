@@ -36,6 +36,13 @@ import "vue3-tabs-chrome/dist/vue3-tabs-chrome.css";
 import { useStore } from '../store';
 import LogoBlackEN from '../assets/image/HPro-black-en.svg'
 import LogoWhiteEN from '../assets/image/HPro-white-en.svg'
+import LoginImg from './favicos/Login.png'
+import viewImg from './favicos/view.png'
+import UserImg from './favicos/User.png';
+import setupImg from './favicos/setup.png';
+import StorageImg from './favicos/StorageSetting.png'
+import DeviceImg from './favicos/DeviceManagement.png'
+import VideoImg from './favicos/VideoConfiguration.png'
 
 const store = useStore()
 
@@ -63,6 +70,7 @@ window.ipcRenderer.invoke('open-win-tabs', {
             key: msg.key,
             path: msg.path,
             icon: "",
+            favico: LoginImg,
             id: msg.id
         });
 
@@ -108,12 +116,13 @@ const handleAdd = () => {
                 label: msg.label + viewIndex,
                 key: msg.key + viewIndex,
                 path: msg.path,
-                icon: "",
-                id: msg.id
+                id: msg.id,
+                favico: viewImg
             });
 
             tab.value = msg.key + viewIndex;
         }
+        console.log('header tabs =>', tabs)
     })
 }
 
@@ -157,7 +166,8 @@ const openSiteLogin = async(_: any, data: any) => {
                     key: msg.key,
                     path: msg.path,
                     icon: "",
-                    id: msg.id
+                    id: msg.id,
+                    favico:LoginImg 
                 });
 
                 tab.value = msg.key;
@@ -172,17 +182,17 @@ const createTab = async (_: any, data: any) => {
             label: data.label,
             key: data.key,
             path: data.path,
-            icon: "",
+            favico: "",
             id: data.id
         }
-        if (data.type == 'view') {
-            newTabData.icon = 'icon-shitu'
-        } else {}
         switch(data.type) {
-            case 'view': newTabData.icon = 'icon-shitu'; break;
-            case 'setup': newTabData.icon = 'icon-a-SetUp'; break;
-            case "StorageSetting": newTabData.icon = 'icon-a-StorageSetting'; break;
-            default: newTabData.icon = ''
+            case 'view': newTabData.favico = viewImg; break;
+            case 'setup': newTabData.favico = setupImg; break;
+            case "StorageSetting": newTabData.favico = StorageImg; break;
+            case 'User': newTabData.favico = UserImg; break;
+            case 'DeviceManagement': newTabData.favico = DeviceImg; break;
+            case 'VideoConfiguration': newTabData.favico = VideoImg; break;
+            default: newTabData.favico = ''
         }
         tabRef.value.addTab(newTabData)
         tab.value = data.key;
@@ -253,6 +263,9 @@ console.log('Header')
             background-color: #A8C7FA;
             border-radius: 50%;
             cursor: pointer;
+        }
+        .tabs-favico {
+            height: 22px;
         }
     }
 

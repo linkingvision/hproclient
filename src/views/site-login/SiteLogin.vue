@@ -137,7 +137,8 @@ const LogIn = async () => {
                 login: true,
                 access_token: result.access_token,
                 session: sessionRes.data.result.session,
-                enableHttps: form.enableHttps
+                enableHttps: form.enableHttps,
+                username: encodeURIComponent(form.username)
             })
             ElMessage({
                 message: 'Login Success',

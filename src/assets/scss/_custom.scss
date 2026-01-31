@@ -248,6 +248,12 @@ body.c-dark-theme {
   }
   .el-form {
     --el-text-color-regular: #fff;
+    .el-form-item {
+      .el-input__wrapper {
+        --el-input-bg-color: transparent;
+        --el-input-border-color: #5B5B5B;
+      }
+    }
   }
   .el-dialog {
     --el-dialog-bg-color: #333333;
