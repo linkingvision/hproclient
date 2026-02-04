@@ -38,6 +38,16 @@ let basicRoutes: RouteRecordRaw[] = [
             name: 'SetupIndex',
             component: () => import('../views/setup/index.vue')
         }]
+    },{
+        path: '/General',
+        name: 'Gereral',
+        component: () => import('../views/setup/General/Index.vue'),
+        redirect: '/General/General',
+        children: [{
+            path: 'General',
+            name: 'GeneralChild',
+            component: () => import('../views/setup/General/General.vue')
+        }]
     }, {
         path: '/StorageSetting',
         name: 'StorageSetting',

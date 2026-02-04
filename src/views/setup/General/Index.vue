@@ -5,14 +5,13 @@ import { useRouter } from 'vue-router';
 import { useTempStore } from '../../../store/temp';
 import { useSiteInfo } from '../../../store/site-info';
 
-
 const $router = useRouter();
 const siteStore = useSiteInfo();
 const tempStore = useTempStore();
 
 const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 
-const active = ref<string>('/VideoConfiguration/ChannelSetting')
+const active = ref<string>('/General/General')
 
 const handleSelect = (index: string) => {
   active.value = index;
@@ -30,35 +29,31 @@ const collapse = () => {
 </script>
 
 <template>
-  <div class="User">
+  <div class="general-container">
     <div class="left">
       <div class="collapse" @click="collapse">
         <i class="iconfont icon-liebiao"></i>
       </div>
-      <div class="site-name">
+      <div v-if="!isCollapse" class="site-name">
         <i class="iconfont icon-shebeiguanli"></i>
         <span>{{ site?.deviceName }}</span>
       </div>
       <el-menu :default-active="active" @select="handleSelect" :collapse="isCollapse" :teleported="false">
-        <el-sub-menu index="/VideoConfiguration/ChannelSetting">
-          <template #title>
-            <i class="iconfont icon-shipinpeizhi"></i>
-            <span>Video Configuration</span>
-          </template>
-          <el-menu-item index="/VideoConfiguration/ChannelSetting"><span>Channel Setting</span></el-menu-item>
-          <el-menu-item index="/VideoConfiguration/RecordingStatus"><span>Recording Status</span></el-menu-item>
-          <el-menu-item index="/VideoConfiguration/CameraPoint"><span>Camera Point</span></el-menu-item>
-        </el-sub-menu>
+        <el-menu-item index="/General/General">
+          <i class="iconfont icon-icon-test1"></i>
+          <span>General</span>
+        </el-menu-item>
       </el-menu>
     </div>
     <div class="right">
       <router-view></router-view>
     </div>
+    
   </div>
 </template>
 
 <style scoped lang="scss">
-.User {
+.general-container {
   width: 100%;
   height: 100%;
   display: flex;
@@ -66,6 +61,7 @@ const collapse = () => {
     width: 200px;
     height: 100%;
     background-color: #1E1E1E;
+    transition: all;
     .collapse {
       width: 100%;
       height: 56px;

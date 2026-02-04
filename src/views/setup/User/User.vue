@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import $ from 'jquery';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTempStore } from '../../../store/temp';
 import { useSiteInfo } from '../../../store/site-info';
@@ -10,7 +10,7 @@ const $router = useRouter();
 const siteStore = useSiteInfo();
 const tempStore = useTempStore();
 
-const site = siteStore.getSiteDevice(tempStore.tempIP)
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 
 const active = ref<string>('/User/UserConfig')
 

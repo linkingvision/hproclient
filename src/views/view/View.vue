@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import $ from 'jquery'
-import { ref, onMounted, onUnmounted, watch, reactive, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, reactive, nextTick, computed } from 'vue'
 import { useSiteInfo } from '../../store/site-info';
 import { useStore } from '../../store';
 import { GetPartitionApi, GetDeviceChannelsApi, RecEnableApi, GetRecordCalendar, SetRecEnableApi, GetInformationDataApi, GetPresetsApi, PresetJumpApi, SetPresetApi, PtzApi } from '../../api/channel';
@@ -65,6 +65,7 @@ const getDeviceList = async () => {
   try {
     channelData.value = [];
     const channelArr = [];
+    console.log('localStorage siteStore =>', localStorage.getItem('siteStore'))
     for (const site of siteStore.siteDevices) {
       if (site.login) {
         const siteData: any = {
@@ -547,8 +548,6 @@ const initGridLayout = (): void => {
     if (!deviceDataReady) {
       console.warn('Device tree data not ready, skipping playing status update');
     }
-
-    console.log('siteStore => ', siteStore.siteDevices)
 
     event.detail.forEach((item: any) => {
       item.forEach((row: any) => {
@@ -1330,6 +1329,7 @@ onMounted(() => {
   initGridLayout();
   initUPlayerList();
   window.addEventListener('click', menuHide)
+  siteStore.startListening();
 })
 
 onUnmounted(() => {
@@ -1357,6 +1357,7 @@ onUnmounted(() => {
   GridManager.value = null;
 
   window.removeEventListener('click', menuHide)
+  siteStore.stopListening()
 })
 
 watch(isLiveview, (newVal) => {

@@ -6,6 +6,20 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "46791430",
+      "name": "General1",
+      "font_class": "General1",
+      "unicode": "ea29",
+      "unicode_decimal": 59945
+    },
+    {
+      "icon_id": "46791429",
+      "name": "General",
+      "font_class": "General",
+      "unicode": "ea2a",
+      "unicode_decimal": 59946
+    },
+    {
       "icon_id": "46790147",
       "name": "Log in",
       "font_class": "a-Login",

@@ -103,7 +103,7 @@ export class DiscoveryClient {
                     log.debug(`发送Probe失败: ${error.message}`);
                     return;
                 }
-                log.info(`发送Probe请求到 ${this.options.broadcastAddress}:${this.options.port}`);
+                // log.info(`发送Probe请求到 ${this.options.broadcastAddress}:${this.options.port}`);
             }
         );
 
@@ -152,6 +152,7 @@ export class DiscoveryClient {
 
                     log.info(` 设备:${device.ipv4Address} 已存在. 更新设备信息...`);
                     existingDevice.lastSeen = new Date();
+                    existingDevice.deviceName = device.deviceName;
                     this.discoveredDevices.set(device.ipv4Address, existingDevice);
                 }
             }
@@ -189,7 +190,7 @@ export class DiscoveryClient {
      */
     private printDeviceInfo(device: DiscoveredDevice, prefix: string = ''): void {
         const timeStr = new Date().toLocaleTimeString();
-        log.info(`\n[${timeStr}] ${prefix} 发现设备: ${device.deviceName}`);
+        log.info(`[${timeStr}] ${prefix} 发现设备: ${device.deviceName}`);
         log.info(`   IP地址: ${device.ipv4Address}`);
         log.info(`   uuid: ${device.uuid}`);
         log.info(`   httpPort: ${device.httpPort}`);
@@ -329,7 +330,7 @@ export class DiscoveryClient {
                     },
                     timeout: 10000
                 })
-                log.info(`[ KeepAlive ] ${device.ipv4Address} success =>`, res.status)
+                log.info(`[KeepAlive] ${device.ipv4Address} success =>`, res.status)
             } catch (err) {
                 device.login = false;
                 device.session = undefined;
@@ -337,7 +338,7 @@ export class DiscoveryClient {
                 device.enableHttps = false;
                 // 发生错误时，清除定时器修改登录状态
                 this.clearKeepAlive(device);
-                log.info(`[ KeepAlive ]-------------------------------------------- ${device.ipv4Address} 失败，已清除登录状态`);
+                log.info(`[KeepAlive]-------------------------------------------- ${device.ipv4Address} 失败，已清除登录状态`);
             }
         }, 60_000)
     }

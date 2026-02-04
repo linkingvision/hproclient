@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import $ from 'jquery'
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { GetUsernameApi, GetUserConfigApi, GetDefaultPartitionApi, UpdateUserConfigApi } from '../../../api/user';
 import getOppositeColor from '../../../utils/OppositeColor'
 import { useSiteInfo } from '../../../store/site-info';
@@ -11,7 +11,7 @@ const siteStore = useSiteInfo();
 const tempStore = useTempStore();
 const store = useStore()
 
-const site = siteStore.getSiteDevice(tempStore.tempIP);
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP));
 const root = ref<string>('');
 
 const avatar = ref<any>();
@@ -19,8 +19,8 @@ const acronym = ref<any>();
 const background = ref<any>()
 // 获取用户头像
 const userList = async () => {
-  if (!site || !site.access_token || !site.username) return;
-  const res = await GetUsernameApi(root.value, site.access_token, site.username)
+  if (!site.value || !site.value.access_token || !site.value.username) return;
+  const res = await GetUsernameApi(root.value, site.value.access_token, site.value.username)
   if (res.status === 200 && res.data.msg === 'Success') {
     var item = res.data.result;
     acronym.value = item.acronym;
@@ -32,8 +32,8 @@ const userList = async () => {
 }
 
 const GetDefaultPartition = async (userId: number) => {
-  if (!site || !site.access_token) return;
-  const res = await GetDefaultPartitionApi(root.value, site.access_token, userId)
+  if (!site.value || !site.value.access_token) return;
+  const res = await GetDefaultPartitionApi(root.value, site.value.access_token, userId)
   console.log(res);
 }
 
@@ -74,8 +74,8 @@ const displayOption = [{
 
 
 onMounted(() => {
-  if (!site || !site.access_token) return;
-  root.value = (site.enableHttps ? 'https://' : 'http://') + site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort)
+  if (!site.value || !site.value.access_token) return;
+  root.value = (site.value.enableHttps ? 'https://' : 'http://') + site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort)
 
   userList();
 })

@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { BrowserWindow, BrowserWindowConstructorOptions } from 'electron';
+import log from 'electron-log';
 
 export type WindowPools = {
   id: number,
@@ -25,7 +26,7 @@ class WindowPoolManager {
 
   private initPool() {
     for (let i = 0; i < this.windowPoolSize; i++) {
-      this.createPoolWindow({
+      const windowOptions: BrowserWindowConstructorOptions = {
         title: "Hpro client",
         width: 800,
         height: 600,
@@ -33,13 +34,22 @@ class WindowPoolManager {
         show: false, // 窗口默认隐藏
         hasShadow: false,
         transparent: true, // 窗口透明
+        focusable: true,  // 保证窗口可以获得焦点
         icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
         webPreferences: {
           devTools: true,
           preload: this.preload,
           nodeIntegration: true,
         },
-      });
+      };
+
+      // Mac平台特殊配置
+      if (process.platform === 'darwin') {
+        windowOptions.acceptFirstMouse = true; // 允许第一次点击就激活窗口
+        windowOptions.skipTaskbar = false;
+      }
+
+      this.createPoolWindow(windowOptions);
     }
   }
 
@@ -72,9 +82,11 @@ class WindowPoolManager {
     const activeCount = poolsArray.reduce(
       (count, pool) => count + (pool.active ? 1 : 0), 0
     );
-    if (activeCount < 2) {
+    if (poolsArray.length - activeCount < 2) {
       this.initPool();
     }
+
+    log.info(`[WindowPool] 总窗口池: ${poolsArray.length}, 活跃窗口数量: ${activeCount}`);
     return win;
   }
 

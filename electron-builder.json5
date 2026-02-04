@@ -3,13 +3,14 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "linkingvision.hpro-client",
   "asar": true,
-  "productName": "Hpro Client",
+  "productName": "HProClient",
   "directories": {
     "output": "release"
   },
   "files": [
     "dist/**/*",
     "node_modules/**/*",
+    "build/icons/**/*"
   ],
   "mac": {
     "icon": "./public/favicon.ico",
@@ -37,10 +38,16 @@
     "deleteAppDataOnUninstall": false
   },
   "linux": {
-    "icon": "./public/favicon.ico",
+    "icon": "./build/icons",
+    "category": "Utility",
     "target": [
-      "AppImage"
+      "AppImage",
+      "deb"
     ],
     "artifactName": "hproclient-linux-${description}.${ext}"
+  },
+  "deb": {
+    "packageCategory": "utils",
+    "priority": "optional"
   }
 }

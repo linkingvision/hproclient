@@ -43,6 +43,7 @@ import setupImg from './favicos/setup.png';
 import StorageImg from './favicos/StorageSetting.png'
 import DeviceImg from './favicos/DeviceManagement.png'
 import VideoImg from './favicos/VideoConfiguration.png'
+import General from './favicos/General.png'
 
 const store = useStore()
 
@@ -192,6 +193,7 @@ const createTab = async (_: any, data: any) => {
             case 'User': newTabData.favico = UserImg; break;
             case 'DeviceManagement': newTabData.favico = DeviceImg; break;
             case 'VideoConfiguration': newTabData.favico = VideoImg; break;
+            case 'General': newTabData.favico = General; break;
             default: newTabData.favico = ''
         }
         tabRef.value.addTab(newTabData)

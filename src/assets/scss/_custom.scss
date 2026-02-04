@@ -232,6 +232,7 @@ body.c-dark-theme {
     .el-radio-button__inner {
       --el-fill-color-blank: #414141;
       border-color: #414141;
+      outline: none;
     }
   }
   .el-input {

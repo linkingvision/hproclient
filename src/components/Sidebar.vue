@@ -18,6 +18,9 @@ const gotoPage = (page: string) => {
 }
 
 console.log('SideBar')
+onUnmounted(() => {
+    console.log('sideBar')
+})
 </script>
 
 <template>

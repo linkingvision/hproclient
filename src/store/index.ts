@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-export const useStore = defineStore('main', () => {
+export const useStore = defineStore('mainStore', () => {
   // 多语言类型
   const lang = ref<"en" | "zhchs" | "zhcht" | "pt" | "es">('en');
   function changeLang(newLang: "en" | "zhchs" | "zhcht" | "pt" | "es") {
+    console.log('changeLang =>', newLang)
     lang.value = newLang;
   }
 
@@ -31,6 +32,31 @@ export const useStore = defineStore('main', () => {
     liveviewrtc1.value = value;
   }
 
+  // 监听 localStorage 变化
+  const storageKey = 'mainStore';
+  const handleStorageChange = (event: StorageEvent): void => {
+    if (event.key === storageKey && event.newValue) {
+      try {
+        const storedData = JSON.parse(event.newValue)
+        lang.value = storedData.lang
+        darkMode.value = storedData.darkMode
+        sidebarShow.value = storedData.sidebarShow
+        liveviewrtc.value = storedData.liveviewrtc
+        liveviewrtc1.value = storedData.liveviewrtc1
+      } catch (error) {
+        console.error('Failed to parse localStorage data:', error)
+      }
+    }
+  }
+  // 启动监听
+  const startListening = (): void => {
+    window.addEventListener('storage', handleStorageChange)
+  }
+
+  // 停止监听
+  const stopListening = (): void => {
+    window.removeEventListener('storage', handleStorageChange)
+  }
 
   return {
     lang,
@@ -42,11 +68,13 @@ export const useStore = defineStore('main', () => {
     liveviewrtc,
     setLiveviewrtc,
     liveviewrtc1,
-    setLiveviewrtc1
+    setLiveviewrtc1,
+    startListening,
+    stopListening
   }
 }, {
   persist: {
-    key: 'main',
+    key: 'mainStore',
     storage: localStorage,
   }
 })

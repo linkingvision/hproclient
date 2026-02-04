@@ -412,11 +412,12 @@ const refresh = () => {
 
 onMounted(() => {
   getDeviceList()
+  siteStore.startListening()
   // console.log('tempIP => ', tempStore.tempIP)
 })
 
 onUnmounted(() => {
-  
+  siteStore.stopListening()
 })
 </script>
 

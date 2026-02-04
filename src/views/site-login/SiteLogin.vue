@@ -226,6 +226,9 @@ onMounted(() => {
     timerRef.value = setInterval(() => {
         getSiteDevice();
     }, 20_000);
+    store.changeLang('en')
+    console.log('mainStore =>', localStorage.getItem('mainStore'))
+    console.log('siteStore =>', localStorage.getItem('siteStore'))
 });
 onUnmounted(() => {
     if (timerRef.value) {

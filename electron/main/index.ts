@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, BrowserWindowConstructorOptions } from 'electron';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -13,7 +13,7 @@ const DiscoveryClient = GetDiscoveryClient()
 // 示例：每30秒打印一次设备列表
 setInterval(() => {
   const devices = DiscoveryClient.getDevices();
-  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
+  log.info(`[site] 当前在线设备: ${devices.length} 台`);
 
   if (devices.length > 0) {
     devices.forEach((device, index) => {
@@ -69,6 +69,7 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     frame: false,
     show: false, // 窗口默认隐藏
     // alwaysOnTop: true, // 保持在最顶层
+    focusable: true,  // 保证窗口可以获得焦点
     transparent: true, // 窗口透明
     resizable: false, // 禁止调整窗
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
@@ -105,7 +106,7 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
 
 //主窗口
 async function createWindow(childPath: string) {
-  let mainWin = new BrowserWindow({
+  const windowOptions: BrowserWindowConstructorOptions = {
     title: "Hpro client main",
     width: 800,
     height: 600,
@@ -116,7 +117,15 @@ async function createWindow(childPath: string) {
       preload,
       nodeIntegration: false,
     },
-  })
+  };
+
+  // Mac平台特殊配置
+  if (process.platform === 'darwin') {
+    windowOptions.acceptFirstMouse = true; // 允许第一次点击就激活窗口
+    windowOptions.skipTaskbar = false;
+  }
+
+  let mainWin = new BrowserWindow(windowOptions);
   if (VITE_DEV_SERVER_URL) {
     mainWin.webContents.openDevTools()
     mainWin.loadURL(VITE_DEV_SERVER_URL)
@@ -152,6 +161,14 @@ async function createWindow(childPath: string) {
     //全屏模式 
     if (!mainWin.isMaximized()) {
       mainWin.maximize();
+    }
+    
+    // Mac平台特殊处理：确保主窗口获得焦点
+    if (process.platform === 'darwin') {
+      setTimeout(() => {
+        mainWin.focus();
+        app.focus({ steal: true });
+      }, 100);
     }
   })
   mainWin.on('minimize', () => {
@@ -212,6 +229,7 @@ const splashScreen = () => {
     show: false,
     // transparent: true,
     // alwaysOnTop: true, // 保证启动图像在最前面
+    focusable: true,  // 保证窗口可以获得焦点
     resizable: false, // 禁止调整窗
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
 
@@ -325,10 +343,24 @@ ipcMain.on('sidebar-show', function (event, id) {
   sidebarWindows?.show();
 })
 
+// Mac平台焦点修复：专门处理header窗口焦点问题
+ipcMain.on('mac-focus-fix', function (event) {
+  if (process.platform === 'darwin') {
+    const sender = event.sender;
+    const win = BrowserWindow.fromWebContents(sender);
+    
+    // 强制激活应用并聚焦窗口
+    app.focus({ steal: true });
+    setTimeout(() => {
+      win.focus();
+      win.moveTop();
+    }, 10);
+  }
+})
+
 //发送给所有窗口站点信息
 ipcMain.on('get-site-device', function (event, uuid) {
   const devices = DiscoveryClient.getDevices();
-  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
 
   mainWinArray.forEach(win => {
     win.webContents.send("site-device", devices)
@@ -348,30 +380,12 @@ ipcMain.handle('site-device-login', function (event, data) {
 //获取站点信息
 ipcMain.handle('get-site-device', async (event) => {
   const devices = DiscoveryClient.getDevices();
-  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
-
-  if (devices.length > 0) {
-    devices.forEach((device, index) => {
-      const lastSeen = device.lastSeen || device.responseTime;
-      const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
-      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
-    });
-  }
   return devices
 });
 //删除站点
 ipcMain.handle('delete-site-device', function (event, ipv4Address) {
   DiscoveryClient.clearDevice(ipv4Address)
   const devices = DiscoveryClient.getDevices();
-  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
-
-  if (devices.length > 0) {
-    devices.forEach((device, index) => {
-      const lastSeen = device.lastSeen || device.responseTime;
-      const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
-      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
-    });
-  }
   return devices
 })
 
@@ -379,15 +393,6 @@ ipcMain.handle('delete-site-device', function (event, ipv4Address) {
 ipcMain.handle('add-site-device', function (event, data) {
   DiscoveryClient.addDevice(data)
   const devices = DiscoveryClient.getDevices();
-  log.info(`\n[${new Date().toLocaleTimeString()}] 当前在线设备: ${devices.length} 台`);
-
-  if (devices.length > 0) {
-    devices.forEach((device, index) => {
-      const lastSeen = device.lastSeen || device.responseTime;
-      const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
-      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
-    });
-  }
   return devices
 })
 //切换标签
@@ -400,6 +405,18 @@ ipcMain.on('switch-tabs', function (event, data) {
     win_children.forEach(child => {
       if (child.id == data) {
         child.show();
+        // Mac平台特殊处理：确保窗口获得焦点
+        if (process.platform === 'darwin') {
+          // 延迟聚焦，确保窗口完全显示后再聚焦
+          setTimeout(() => {
+            child.focus();
+            // 如果仍然无法聚焦，尝试激活应用
+            if (!child.isFocused()) {
+              app.focus({ steal: true });
+              child.focus();
+            }
+          }, 10);
+        }
       } else {
         child.hide();
       }
@@ -446,6 +463,16 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
 
   newWin.once('ready-to-show', () => {
     newWin.show();
+    // Mac平台特殊处理：确保新窗口获得焦点
+    if (process.platform === 'darwin') {
+      setTimeout(() => {
+        newWin.focus();
+        // 确保父窗口也能正常响应焦点
+        if (senderWindow && !senderWindow.isFocused()) {
+          senderWindow.focus();
+        }
+      }, 50);
+    }
   })
   arg.id = newWin.id;
   return arg;
@@ -488,13 +515,23 @@ ipcMain.on('open-new-tab', async (event, arg) => {
   } else {
     newWin.loadFile(indexHtml, { hash: routerPath })
   };
-  
+
 
   // 通知 header
-  senderWindow.webContents.send('create-new-tab', {...arg.data, id: newWin.id, type: arg.type})
+  senderWindow.webContents.send('create-new-tab', { ...arg.data, id: newWin.id, type: arg.type })
 
   newWin.once('ready-to-show', () => {
     newWin.show();
+    // Mac平台特殊处理：确保新窗口获得焦点
+    if (process.platform === 'darwin') {
+      setTimeout(() => {
+        newWin.focus();
+        // 确保父窗口也能正常响应焦点
+        if (senderWindow && !senderWindow.isFocused()) {
+          senderWindow.focus();
+        }
+      }, 50);
+    }
   })
 
   newWin.webContents.on('did-finish-load', () => {

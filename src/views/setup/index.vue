@@ -46,6 +46,10 @@ onMounted(() => {
         <div class="setup-item">
           <div class="title">Basic</div>
           <div class="boxes">
+            <div class="box" @click="goPage('General')">
+              <i class="iconfont icon-icon-test1"></i>
+              <span>General</span>
+            </div>
             <div class="box" @click="goPage('StorageSetting')">
               <i class="iconfont icon-cunchupeizhi"></i>
               <span>Storage Settings</span>

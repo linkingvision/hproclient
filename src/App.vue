@@ -4,11 +4,11 @@
 import { onMounted, watch, onUnmounted } from "vue";
 import { useStore } from "./store";
 import { setupIPCListeners, destroyIPCListeners } from './utils/ipc'
-
-setupIPCListeners()
+import { useSiteInfo } from "./store/site-info";
 
 
 const store = useStore();
+const siteStore = useSiteInfo();
 
 let prevClass: string | null = null;
 const updateBodyTheme = (theme: string) => {
@@ -33,6 +33,7 @@ watch(() => store.darkMode, (newVal: any) => {
 onMounted(() => {
   // updateBodyTheme(store.darkMode)
   console.log(store.darkMode, store.lang)
+  setupIPCListeners()
 })
 onUnmounted(() => {
   destroyIPCListeners();
