@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { GetWorkServerListApi, GetStorageModeApi, SetStorageModeApi } from '../../../api/storage';
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useTempStore } from '../../../store/temp';
 import { useSiteInfo } from '../../../store/site-info';
@@ -19,13 +19,13 @@ const storageModeList = [{
   value: 'USC_STORAGE_MODE_S3',
   label: 'S3 Storage'
 }]
-const site = siteStore.getSiteDevice(tempStore.tempIP)
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 const root = ref<string>('')
 
 const Node = async () => {
-  if (!site || !site.access_token) return;
-  root.value = (site.enableHttps ? 'https://' : 'http://') + site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort)
-  const res = await GetWorkServerListApi(root.value, site.access_token)
+  if (!site.value || !site.value.access_token) return;
+  root.value = (site.value.enableHttps ? 'https://' : 'http://') + site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort)
+  const res = await GetWorkServerListApi(root.value, site.value.access_token)
   if (res.data.result.list && res.data.result.list.length > 0) {
     form.nodeId = res.data.result.list[0].nodeId;
     GetStorageMode(form.nodeId)
@@ -33,16 +33,16 @@ const Node = async () => {
 }
 
 const GetStorageMode = async (nodeId: string) => {
-  if (!site || !site.access_token) return
-  const res = await GetStorageModeApi(root.value, site.access_token, nodeId);
+  if (!site.value || !site.value.access_token) return
+  const res = await GetStorageModeApi(root.value, site.value.access_token, nodeId);
   if (res.status == 200 && res.data.code == 0) {
     form.mode = res.data.result.mode;
   }
 }
 
 const onSubmit = async () => {
-  if (!site || !site.access_token) return
-  const res = await SetStorageModeApi(root.value, site.access_token, form);
+  if (!site.value || !site.value.access_token) return
+  const res = await SetStorageModeApi(root.value, site.value.access_token, form);
   if (res.status == 200 && res.data.code == 0) {
     ElMessage({
       message: 'Modify Success',
@@ -59,7 +59,7 @@ const onSubmit = async () => {
 }
 
 onMounted(() => {
-  console.log('StorageMode', site, tempStore.tempIP)
+  console.log('StorageMode', site.value, tempStore.tempIP)
   Node();
 })
 </script>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RecordingStatus } from '@/utils/localRecordingStatus.js';
 import { GetChannels } from '../../../../api/channel'
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { useStore } from '../../../../store';
 import { useSiteInfo } from '../../../../store/site-info';
 import { useTempStore } from '../../../../store/temp';
@@ -15,7 +15,7 @@ const store = useStore();
 const siteStore = useSiteInfo();
 const tempStore = useTempStore();
 
-const site = siteStore.getSiteDevice(tempStore.tempIP)
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 const root = ref<string>('')
 
 const currentPage = ref<number>(1);
@@ -75,13 +75,13 @@ const renderPartition = (date: Date | null) => {
 }
 
 const getChannels = async () => {
-  if (!site || !site.access_token) return;
+  if (!site.value || !site.value.access_token) return;
   let chanNo: any[] = [];
   if (props.objPartitions.chRec && props.objPartitions.chRec.length > 0) {
     props.objPartitions.chRec.map((item: any) => chanNo.push(item.nChan))
   }
-  root.value = (site.enableHttps ? 'https://' : 'http://') + site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort);
-  const res = await GetChannels(root.value, site.access_token, {chanNo, all: true});
+  root.value = (site.value.enableHttps ? 'https://' : 'http://') + site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort);
+  const res = await GetChannels(root.value, site.value.access_token, {chanNo, all: true});
   if (res.data.result.length > 0) {
     props.objPartitions.chRec.forEach((item: any) => {
       item.record = [{

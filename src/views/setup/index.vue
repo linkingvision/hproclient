@@ -9,7 +9,7 @@ const tempStore = useTempStore();
 const siteStore = useSiteInfo()
 const $router = useRouter()
 
-const site = ref<any>({})
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 
 const goPage = (url: string) => {
   // $router.push(url)
@@ -24,12 +24,6 @@ const goPage = (url: string) => {
   })
 }
 
-watch(() => tempStore.tempIP, (newVal) => {
-  site.value = siteStore.siteDevices.find(item => item.ipv4Address == newVal)
-}, {
-  immediate: true
-})
-
 onMounted(() => {
   // console.log('Setup Index ', tempStore.tempIP)
 })
@@ -39,7 +33,7 @@ onMounted(() => {
   <div class="setup-index">
     <div class="setup-header">
       <i class="iconfont icon-shebeiguanli"></i>
-      <span>{{ site.deviceName }}</span>
+      <span>{{ site?.deviceName }}</span>
     </div>
     <div class="setup-body">
       <div class="setup-list">

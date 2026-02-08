@@ -3,6 +3,7 @@ import $ from 'jquery'
 import { ref, onMounted, onUnmounted, watch, reactive, nextTick, computed } from 'vue'
 import { useSiteInfo } from '../../store/site-info';
 import { useStore } from '../../store';
+import { useTempStore } from '../../store/temp';
 import { GetPartitionApi, GetDeviceChannelsApi, RecEnableApi, GetRecordCalendar, SetRecEnableApi, GetInformationDataApi, GetPresetsApi, PresetJumpApi, SetPresetApi, PtzApi } from '../../api/channel';
 import { Search } from '@element-plus/icons-vue'
 import { UPlayerSDK as UPlayerSDKClass, UPlayerList as UPlayerListClass, GridLayoutManager } from '@/assets/js/uplayersdk.esm.js';
@@ -34,6 +35,7 @@ interface gridListenerType {
 
 const store = useStore();
 const siteStore = useSiteInfo();
+const tempStore = useTempStore();
 
 const filterText = ref<string>('')
 const activeCollapse = ref<string>('partition')
@@ -1415,6 +1417,7 @@ const onRightClick = (e: MouseEvent, data: any) => {
   if (data.type !== 'site') return;
   console.log('onRightClick =>', data)
   setupIP.value = data.data.ipv4Address;
+  tempStore.setTempIP(setupIP.value)
   menuShow(e);
 }
 </script>

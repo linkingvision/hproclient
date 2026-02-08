@@ -6,7 +6,6 @@ import { useStore } from '../../store';
 import { GetPartitionApi, GetDeviceChannelsApi } from '../../api/channel';
 import { Search } from '@element-plus/icons-vue'
 import { useTempStore } from '../../store/temp';
-import { useRouter } from 'vue-router';
 
 interface TreeNode {
   id: string;
@@ -23,7 +22,6 @@ interface TreeNode {
 const store = useStore();
 const siteStore = useSiteInfo();
 const tempStore = useTempStore()
-const $router = useRouter()
 
 const filterText = ref<string>('')
 const activeCollapse = ref<string>('partition')
@@ -330,7 +328,7 @@ const clickSite = (node: TreeNode) => {
   console.log(node)
   if (node.type == 'site' && node.data.ipv4Address) {
     tempStore.setTempIP(node.data.ipv4Address);
-    $router.push('/Setup')
+    // $router.push('/Setup')
   }
 }
 // 获取节点样式类

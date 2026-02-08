@@ -464,14 +464,20 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
   newWin.once('ready-to-show', () => {
     newWin.show();
     // Mac平台特殊处理：确保新窗口获得焦点
+    // if (process.platform === 'darwin') {
+    //   setTimeout(() => {
+    //     newWin.focus();
+    //     // 确保父窗口也能正常响应焦点
+    //     if (senderWindow && !senderWindow.isFocused()) {
+    //       senderWindow.focus();
+    //     }
+    //   }, 50);
+    // }
+  })
+  newWin.on('show', () => {
+    // Mac平台特殊处理：确保新窗口获得焦点
     if (process.platform === 'darwin') {
-      setTimeout(() => {
         newWin.focus();
-        // 确保父窗口也能正常响应焦点
-        if (senderWindow && !senderWindow.isFocused()) {
-          senderWindow.focus();
-        }
-      }, 50);
     }
   })
   arg.id = newWin.id;
@@ -523,17 +529,23 @@ ipcMain.on('open-new-tab', async (event, arg) => {
   newWin.once('ready-to-show', () => {
     newWin.show();
     // Mac平台特殊处理：确保新窗口获得焦点
+    // if (process.platform === 'darwin') {
+    //   setTimeout(() => {
+    //     newWin.focus();
+    //     // 确保父窗口也能正常响应焦点
+    //     if (senderWindow && !senderWindow.isFocused()) {
+    //       senderWindow.focus();
+    //     }
+    //   }, 50);
+    // }
+  })
+  newWin.on('show', () => {
+    // Mac平台特殊处理：确保新窗口获得焦点
     if (process.platform === 'darwin') {
-      setTimeout(() => {
         newWin.focus();
-        // 确保父窗口也能正常响应焦点
-        if (senderWindow && !senderWindow.isFocused()) {
-          senderWindow.focus();
-        }
-      }, 50);
     }
   })
-
+  
   newWin.webContents.on('did-finish-load', () => {
     const message = {
       type: arg.type,

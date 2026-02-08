@@ -6,11 +6,12 @@ import { GetS3BucketsApi, AddS3BucketApi, EditS3BucketApi, DeleteS3BucketApi, Ge
 import { useSiteInfo } from '../../../store/site-info';
 import { useTempStore } from '../../../store/temp';
 import StorageState from './components/StorageStatus.vue';
+import { computed } from 'vue';
 
 const siteStore = useSiteInfo();
 const tempStore = useTempStore();
 
-const site = siteStore.getSiteDevice(tempStore.tempIP)
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 const root = ref<string>('')
 
 const tableData = ref<any[]>([]);
@@ -39,9 +40,9 @@ const hasIndex = ref<number[]>([])
 const nodeId = ref<string>('')
 
 const Node = async () => {
-  if (!site || !site.access_token) return;
-  root.value = (site.enableHttps ? 'https://' : 'http://') + site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort)
-  const res = await GetWorkServerListApi(root.value, site.access_token);
+  if (!site.value || !site.value.access_token) return;
+  root.value = (site.value.enableHttps ? 'https://' : 'http://') + site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort)
+  const res = await GetWorkServerListApi(root.value, site.value.access_token);
   if (res.status == 200 && res.data.code == 0) {
     nodeId.value = res.data.result.list[0].nodeId;
     GetS3Buckets();
@@ -49,8 +50,8 @@ const Node = async () => {
 }
 
 const GetS3Buckets = async () => {
-  if (!site || !site.access_token) return;
-  const res = await GetS3BucketsApi(root.value, site.access_token, nodeId.value);
+  if (!site.value || !site.value.access_token) return;
+  const res = await GetS3BucketsApi(root.value, site.value.access_token, nodeId.value);
   hasIndex.value = [];
   if (res.status === 200 && res.data.code === 0) {
     if (res.data.result.bucket) {
@@ -73,10 +74,10 @@ const add = () => {
   addVisiable.value = true;
 }
 const addSubmit = async () => {
-  if (!site || !site.access_token) return;
+  if (!site.value || !site.value.access_token) return;
   addForm.value.nIndex = Number(addForm.value.nIndex)
   addForm.value.nodeId = nodeId.value;
-  const res = await AddS3BucketApi(root.value, site.access_token, addForm.value)
+  const res = await AddS3BucketApi(root.value, site.value.access_token, addForm.value)
   if (res.status == 200 && res.data.code == 0) {
     ElMessage({
       message: 'Add Successfully!',
@@ -107,9 +108,9 @@ const edit = (row: any) => {
   editVisiable.value = true;
 }
 const editSubmit = async () => {
-  if (!site || !site.access_token) return;
+  if (!site.value || !site.value.access_token) return;
   editForm.value.nIndex = Number(editForm.value.nIndex)
-  const res = await EditS3BucketApi(root.value, site.access_token, editForm.value)
+  const res = await EditS3BucketApi(root.value, site.value.access_token, editForm.value)
   if (res.status == 200 && res.data.code == 0) {
     ElMessage({
       message: 'Modify Successfully!',
@@ -146,8 +147,8 @@ const delRow = (row: any) => {
       return value === row.nIndex.toString() ? true : 'Does not match the index to be deleted, please re-enter.';
     }
   }).then(async () => {
-    if (!site || !site.access_token) return;
-    const res = await DeleteS3BucketApi(root.value, site.access_token, params);
+    if (!site.value || !site.value.access_token) return;
+    const res = await DeleteS3BucketApi(root.value, site.value.access_token, params);
     if (res.status == 200 && res.data.code == 0) {
       ElMessage({
         message: 'Delete Successfully!',

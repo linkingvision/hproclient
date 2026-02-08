@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ArrowRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { GetWorkServerListApi, GetDiskPartitionApi, GetMetaStorageApi, SetMetaStorageApi } from '../../../api/storage';
 import { useTempStore } from '../../../store/temp';
 import { useSiteInfo } from '../../../store/site-info';
@@ -9,16 +9,16 @@ import { useSiteInfo } from '../../../store/site-info';
 const tempStore = useTempStore();
 const siteStore = useSiteInfo();
 
-const site = siteStore.getSiteDevice(tempStore.tempIP)
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 const root = ref<string>('')
 const nodeId = ref<string>('')
 const tableData = ref<any[]>([])
 const diskData = ref<any[]>([])
 
 const Node = async () => {
-  if (!site || !site.access_token) return;
-  root.value = (site.enableHttps ? 'https://' : 'http://') + site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort)
-  const res = await GetWorkServerListApi(root.value, site.access_token)
+  if (!site.value || !site.value.access_token) return;
+  root.value = (site.value.enableHttps ? 'https://' : 'http://') + site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort)
+  const res = await GetWorkServerListApi(root.value, site.value.access_token)
   if (res.data.result.list && res.data.result.list.length > 0) {
     nodeId.value = res.data.result.list[0].nodeId;
     GetMetaStorage();
@@ -26,14 +26,14 @@ const Node = async () => {
 }
 
 const GetMetaStorage = async () => {
-  if (!site || !site.access_token) return;
+  if (!site.value || !site.value.access_token) return;
   tableData.value = [];
   const arr = [];
-  const res = await GetMetaStorageApi(root.value, site.access_token, nodeId.value)
+  const res = await GetMetaStorageApi(root.value, site.value.access_token, nodeId.value)
   if (res.status == 200 && res.data.code == 0) {
     arr[0] = res.data.result;
   }
-  const result = await GetDiskPartitionApi(root.value, site.access_token, nodeId.value);
+  const result = await GetDiskPartitionApi(root.value, site.value.access_token, nodeId.value);
   if (result.status == 200 && result.data.code == 0) {
     arr[0].partition = result.data.result.partition;
     diskData.value = result.data.result.partition;
@@ -63,7 +63,7 @@ const changeDisk = (device: string, point: string) => {
 }
 
 const submit = async () => {
-  if (!site || !site.access_token) return;
+  if (!site.value || !site.value.access_token) return;
   const params = {
     nodeId: nodeId.value,
     bEnableMetaStorage: editData.value.bEnableMetaStorage,
@@ -72,7 +72,7 @@ const submit = async () => {
     nMetaRetentionInDay: Number(editData.value.nMetaRetentionInDay)
   }
   // console.log(root.value, site.access_token, params)
-  const res = await SetMetaStorageApi(root.value, site.access_token, params);
+  const res = await SetMetaStorageApi(root.value, site.value.access_token, params);
   if (res.status == 200 && res.data.code == 0) {
     ElMessage({
       message: '修改成功',

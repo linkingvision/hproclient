@@ -8,7 +8,7 @@ import { ElMessage } from 'element-plus';
 const siteStore = useSiteInfo();
 const tempStore = useTempStore();
 
-const site = siteStore.getSiteDevice(tempStore.tempIP)
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 const root = ref<string>('');
 
 const form = ref<any>({
@@ -17,8 +17,8 @@ const form = ref<any>({
 
 
 const GetHProConfig = async () => {
-  if (!site || !site.access_token) return;
-  const res = await GetHProConfigApi(root.value, site.access_token);
+  if (!site.value || !site.value.access_token) return;
+  const res = await GetHProConfigApi(root.value, site.value.access_token);
   if (res.status == 200 && res.data.code == 0) {
     console.log('General => ', res.data.result);
     const item = res.data.result.find((item: any) => item.key == "ComputerDeviceName");
@@ -27,8 +27,8 @@ const GetHProConfig = async () => {
 }
 
 const onSubmit = async () => {
-  if (!site || !site.access_token) return;
-  const res = await UpdateHProConfigApi(root.value, site.access_token, {
+  if (!site.value || !site.value.access_token) return;
+  const res = await UpdateHProConfigApi(root.value, site.value.access_token, {
     key: 'ComputerDeviceName',
     value: form.value.ComputerDeviceName
   })
@@ -38,12 +38,7 @@ const onSubmit = async () => {
       message: 'Save Success!',
       duration: 2000
     })
-    siteStore.updateSiteName(site.ipv4Address, form.value.ComputerDeviceName)
-    setTimeout(() => {
-      console.log(localStorage.getItem('siteStore'))
-    }, 0)
-    console.log('sites =>', JSON.stringify(site))
-
+    siteStore.updateSiteName(site.value.ipv4Address, form.value.ComputerDeviceName)
   } else {
     ElMessage({
       type: 'error',
@@ -54,8 +49,8 @@ const onSubmit = async () => {
 }
 
 onMounted(() => {
-  if (!site || !site.access_token) return;
-  root.value = (site.enableHttps ? 'https://' : 'http://') + site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort)
+  if (!site.value || !site.value.access_token) return;
+  root.value = (site.value.enableHttps ? 'https://' : 'http://') + site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort)
   GetHProConfig();
 
   siteStore.startListening()

@@ -245,6 +245,7 @@ body.c-dark-theme {
     .el-input__wrapper {
       --el-disabled-bg-color: #5B5B5B;
       --el-disabled-border-color: #5B5B5B;
+      --el-disabled-bg-color: transparent;
     }
   }
   .el-form {

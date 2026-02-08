@@ -16,7 +16,11 @@ export const GetUserConfigApi = (root: string, access_token: string) => http({
   }
 })
 
-export const UpdateUserConfigApi = (root: string, access_token: string, data: any[]) => http({
+export interface UpdateUserConfigParams {
+  key: string;
+  value: string;
+}
+export const UpdateUserConfigApi = (root: string, access_token: string, data: UpdateUserConfigParams) => http({
   url: root + '/uapi/v1/UserConfig/Item',
   method: 'PUT',
   data,
@@ -27,6 +31,22 @@ export const UpdateUserConfigApi = (root: string, access_token: string, data: an
 
 export const GetDefaultPartitionApi = (root: string, access_token: string, userId: number | string) => http({
   url: root + '/uapi/v1/User/DefaultPartition?userId=' + userId,
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${access_token}`
+  }
+})
+
+export const GetMapListApi = (root: string, access_token: string) => http({
+  url: root + '/uapi/v1/Map/List',
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${access_token}`
+  }
+})
+
+export const GetLogicPartitionApi = (root: string, access_token: string) => http({
+  url: root + '/uapi/v1/LogicPartition/List?pageSize=100000',
   method: 'GET',
   headers: {
     Authorization: `Bearer ${access_token}`

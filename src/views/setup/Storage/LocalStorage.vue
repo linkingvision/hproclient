@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, h } from 'vue';
+import { onMounted, ref, h, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { ArrowRight } from '@element-plus/icons-vue'
 import { GetObjPartitionsApi, AddObjPartitionApi, DelObjPartitionApi, GetWorkServerListApi } from '../../../api/storage';
@@ -10,14 +10,14 @@ import StorageState from './components/StorageStatus.vue';
 const siteStore = useSiteInfo();
 const tempStore = useTempStore();
 
-const site = siteStore.getSiteDevice(tempStore.tempIP)
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 const root = ref<string>('')
 const nodeId = ref<string>('')
 
 const Node = async () => {
-  if (!site || !site.access_token) return;
-  root.value = (site.enableHttps ? 'https://' : 'http://') + site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort)
-  const res = await GetWorkServerListApi(root.value, site.access_token)
+  if (!site.value || !site.value.access_token) return;
+  root.value = (site.value.enableHttps ? 'https://' : 'http://') + site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort)
+  const res = await GetWorkServerListApi(root.value, site.value.access_token)
   if (res.data.result.list && res.data.result.list.length > 0) {
     nodeId.value = res.data.result.list[0].nodeId;
     GetObjPartitions();
@@ -32,8 +32,8 @@ const hasIndex = ref<number[]>([])
 const diskData = ref<any[]>([])
 
 const GetObjPartitions = async () => {
-  if (!site || !site.access_token) return;
-  const res = await GetObjPartitionsApi(root.value, site.access_token, nodeId.value);
+  if (!site.value || !site.value.access_token) return;
+  const res = await GetObjPartitionsApi(root.value, site.value.access_token, nodeId.value);
   let objList = [];
   hasIndex.value = [];
   if (res.status == 200 && res.data.code == 0) {
@@ -72,8 +72,8 @@ const changeDisk = (partition: any) => {
   addData.value.strMountpoint = partition.strMountpoint;
 }
 const submit = async () => {
-  if (!site || !site.access_token) return;
-  const res = await AddObjPartitionApi(root.value, site.access_token, {
+  if (!site.value || !site.value.access_token) return;
+  const res = await AddObjPartitionApi(root.value, site.value.access_token, {
     nodeId: nodeId.value,
     nIndex: nIndex.value,
     strDevice: addData.value.strDevice,
@@ -113,8 +113,8 @@ const delRow = (row: any) => {
       return value === row.obj[0].nIndex.toString() ? true : 'Does not match the index to be deleted, please re-enter.';
     }
   }).then(async () => {
-    if (!site || !site.access_token) return;
-    const res = await DelObjPartitionApi(root.value, site.access_token, {
+    if (!site.value || !site.value.access_token) return;
+    const res = await DelObjPartitionApi(root.value, site.value.access_token, {
       nodeId: nodeId.value,
       nIndex: row.obj[0].nIndex,
       strMountpoint: row.strMountpoint

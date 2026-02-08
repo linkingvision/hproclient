@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import $ from 'jquery';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTempStore } from '../../../store/temp';
 import { useSiteInfo } from '../../../store/site-info';
@@ -27,6 +27,13 @@ const collapse = () => {
     $('.left').width('200px')
   }
 }
+
+onMounted(() => {
+  siteStore.startListening()
+})
+onUnmounted(() => {
+  siteStore.stopListening();
+})
 </script>
 
 <template>

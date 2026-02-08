@@ -6,6 +6,76 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "36877218",
+      "name": "3宫格",
+      "font_class": "a-3gongge",
+      "unicode": "e7ef",
+      "unicode_decimal": 59375
+    },
+    {
+      "icon_id": "36877219",
+      "name": "1宫格",
+      "font_class": "a-1gongge",
+      "unicode": "e7ee",
+      "unicode_decimal": 59374
+    },
+    {
+      "icon_id": "36877220",
+      "name": "4宫格",
+      "font_class": "a-4gongge",
+      "unicode": "e7ed",
+      "unicode_decimal": 59373
+    },
+    {
+      "icon_id": "36877221",
+      "name": "6宫格",
+      "font_class": "a-6gongge",
+      "unicode": "e7ec",
+      "unicode_decimal": 59372
+    },
+    {
+      "icon_id": "36877222",
+      "name": "9宫格",
+      "font_class": "a-9gongge",
+      "unicode": "e7de",
+      "unicode_decimal": 59358
+    },
+    {
+      "icon_id": "36877223",
+      "name": "7宫格",
+      "font_class": "a-7gongge",
+      "unicode": "e7e5",
+      "unicode_decimal": 59365
+    },
+    {
+      "icon_id": "36877224",
+      "name": "16宫格",
+      "font_class": "a-16gongge",
+      "unicode": "e7eb",
+      "unicode_decimal": 59371
+    },
+    {
+      "icon_id": "36877225",
+      "name": "25宫格",
+      "font_class": "a-25gongge",
+      "unicode": "e7e6",
+      "unicode_decimal": 59366
+    },
+    {
+      "icon_id": "36877226",
+      "name": "13宫格",
+      "font_class": "a-13gongge",
+      "unicode": "e7df",
+      "unicode_decimal": 59359
+    },
+    {
+      "icon_id": "36877231",
+      "name": "四宫格",
+      "font_class": "sigongge",
+      "unicode": "e7e0",
+      "unicode_decimal": 59360
+    },
+    {
       "icon_id": "46791430",
       "name": "General1",
       "font_class": "General1",

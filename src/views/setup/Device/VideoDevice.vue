@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref, nextTick } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref, nextTick, computed } from 'vue';
 import { GetDeviceListApi, GetDevFileApi, GetDevPartitionApi, AddOnfstgApi, AddRTSPApi, AddFileApi, GetNodeApi, EditDevApi, DelDeviceApi } from '../../../api/device';
 import type { editDevice, delDeviceParams } from '../../../api/device'
 import { Search,ArrowRight } from '@element-plus/icons-vue'
@@ -15,7 +15,7 @@ const { t } = useI18n()
 const tempStore = useTempStore();
 const siteStore = useSiteInfo();
 
-const site = siteStore.getSiteDevice(tempStore.tempIP)
+const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 const root = ref<string>('')
 
 const options = reactive<any[]>([{
@@ -125,8 +125,8 @@ const filterMethod2 = (value: any, data: any) => {
 }
 
 const GetDeviceList = async () => {
-  if (!site || !site.access_token) return;
-  const res = await GetDeviceListApi(root.value, site.access_token)
+  if (!site.value || !site.value.access_token) return;
+  const res = await GetDeviceListApi(root.value, site.value.access_token)
   // console.log(res)
   if (res.status == 200 && res.data.code == 0) {
     if (res.data.result.list && res.data.result.list.length) {
@@ -138,8 +138,8 @@ const GetDeviceList = async () => {
 }
 
 const GetDevPartition = async () => {
-  if (!site || !site.access_token) return;
-  const res = await GetDevPartitionApi(root.value, site.access_token);
+  if (!site.value || !site.value.access_token) return;
+  const res = await GetDevPartitionApi(root.value, site.value.access_token);
   if (res.status == 200 && res.data.code === 0) {
     // console.log('GetDevPartition => ', res)
     devData = res.data.result;
@@ -147,8 +147,8 @@ const GetDevPartition = async () => {
 }
 
 const DevFile = async () => {
-  if (!site || !site.access_token) return;
-  const res = await GetDevFileApi(root.value, site.access_token);
+  if (!site.value || !site.value.access_token) return;
+  const res = await GetDevFileApi(root.value, site.value.access_token);
   if (res.status == 200 && res.data.code == 0) {
     // console.log('DevFileList => ', res)
     fileData = [];
@@ -224,8 +224,8 @@ const addOnSubmit = async () => {
       devPartitionId: Number(addForm.value.devPartitionId),
       nodeId: encodeURIComponent(addForm.value.nodeId)
     }
-    if (!site || !site.access_token) return;
-    const res = await AddOnfstgApi(root.value, site.access_token, params);
+    if (!site.value || !site.value.access_token) return;
+    const res = await AddOnfstgApi(root.value, site.value.access_token, params);
     if (res.status == 200 && res.data.code == 0) {
       ElMessage({
         message: t('CommTableEdit.comm_add_successfully'),
@@ -259,8 +259,8 @@ const addOnSubmit = async () => {
       strUrlSub: addForm.value.strUrlSub,
       h5RTSPConnectType: addForm.value.h5RTSPConnectType,
     }
-    if (!site || !site.access_token) return;
-    const res = await AddRTSPApi(root.value, site.access_token, params)
+    if (!site.value || !site.value.access_token) return;
+    const res = await AddRTSPApi(root.value, site.value.access_token, params)
     if (res.status == 200 && res.data.code == 0) {
       ElMessage({
         message: t('CommTableEdit.comm_add_successfully'),
@@ -289,8 +289,8 @@ const addOnSubmit = async () => {
       enabled: true,
       devPartitionId: Number(addForm.value.devPartitionId)
     }
-    if (!site || !site.access_token) return;
-    const res = await AddFileApi(root.value, site.access_token, params);
+    if (!site.value || !site.value.access_token) return;
+    const res = await AddFileApi(root.value, site.value.access_token, params);
     if (res.status == 200 && res.data.code == 0) {
       ElMessage({
         message: t('CommTableEdit.comm_add_successfully'),
@@ -446,8 +446,8 @@ const editOnSubmit = async () => {
     params.strUrl = editForm.value.DevFile_Url;
   }
   // console.log(editForm.value.type, '=>>', params);
-  if (!site || !site.access_token) return;
-  const res = await EditDevApi(root.value, site.access_token, params);
+  if (!site.value || !site.value.access_token) return;
+  const res = await EditDevApi(root.value, site.value.access_token, params);
   if (res.status == 200 && res.data.code == 0) {
      ElMessage({
       message: t('CommTableEdit.comm_modify_success'),
@@ -479,8 +479,8 @@ const delRow = (id: string) => {
     const params: delDeviceParams = {
       ids: [Number(id)]
     }
-    if (!site || !site.access_token) return;
-    const res = await DelDeviceApi(root.value, site.access_token, params);
+    if (!site.value || !site.value.access_token) return;
+    const res = await DelDeviceApi(root.value, site.value.access_token, params);
     if (res.status == 200 && res.data.code == 0) {
         ElMessage({
           message: t('CommTableEdit.comm_delete_successfully'),
@@ -511,8 +511,8 @@ const delAll = () => {
     const params = {
       ids: selectRows.value
     }
-    if (!site || !site.access_token) return;
-    const res = await DelDeviceApi(root.value, site.access_token, params);
+    if (!site.value || !site.value.access_token) return;
+    const res = await DelDeviceApi(root.value, site.value.access_token, params);
     if (res.status == 200 && res.data.code == 0) {
       ElMessage({
         message: t('CommTableEdit.comm_delete_successfully'),
@@ -586,14 +586,14 @@ const onvifsearch = () => {
   const pbconf = {
     callback: EventbackCB
   }
-  if (!site) return
+  if (!site.value) return
   const conf = {
-    protocol: site.enableHttps ? 'https:' : 'http:',
-    host: site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort),
+    protocol: site.value.enableHttps ? 'https:' : 'http:',
+    host: site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort),
     rootpath: '/',
     apipath: "uapi/v1/h5sonvifsearchapi",
     userdata: null,
-    session: site.session,
+    session: site.value.session,
     consolelog: 'true',
     pbconf
   }
@@ -614,8 +614,8 @@ const EventbackCB = (event: any, userdata: any) => {
 }
 
 const Node = async () => {
-  if (!site || !site.access_token) return
-  const res = await GetNodeApi(root.value, site.access_token);
+  if (!site.value || !site.value.access_token) return
+  const res = await GetNodeApi(root.value, site.value.access_token);
   if (res.status == 200 && res.data.code == 0) {
     addForm.value.nodeId = res.data.result.list[0].nodeId;
   }
@@ -623,8 +623,8 @@ const Node = async () => {
 
 onMounted(() => {
   // console.log('Device SDK', site)
-  if (!site || !site.access_token) return;
-  root.value = (site.enableHttps ? 'https://' : 'http://') + site.ipv4Address + ':' + (site.enableHttps ? site.httpsPort : site.httpPort)
+  if (!site.value || !site.value.access_token) return;
+  root.value = (site.value.enableHttps ? 'https://' : 'http://') + site.value.ipv4Address + ':' + (site.value.enableHttps ? site.value.httpsPort : site.value.httpPort)
   Node();
   GetDeviceList()
   GetDevPartition()
