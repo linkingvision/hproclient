@@ -34,9 +34,11 @@ onMounted(() => {
   // updateBodyTheme(store.darkMode)
   console.log(store.darkMode, store.lang)
   setupIPCListeners()
+  store.startListening();
 })
 onUnmounted(() => {
   destroyIPCListeners();
+  store.stopListening();
 })
 </script>
 

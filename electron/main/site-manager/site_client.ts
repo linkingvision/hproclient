@@ -363,6 +363,8 @@ export class DiscoveryClient {
      * 清除设备
      */
     public clearDevice(ip: string) {
+        let device = this.discoveredDevices.get(ip);
+        this.clearKeepAlive(device);
         this.discoveredDevices.delete(ip);
     }
 

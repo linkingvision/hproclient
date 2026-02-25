@@ -29,6 +29,14 @@ let basicRoutes: RouteRecordRaw[] = [
         name: 'Sidebar',
         component: () => import('../components/Sidebar.vue'),
     }, {
+        path: '/HeaderMore',
+        name: 'HeaderMore',
+        component: () => import('../components/HeaderMore.vue'),
+    }, {
+        path: '/About',
+        name: 'About',
+        component: () => import('../components/About.vue'),
+    }, {
         path: '/Setup',
         name: 'Setup',
         component: () => import('../views/setup/Setup.vue'),

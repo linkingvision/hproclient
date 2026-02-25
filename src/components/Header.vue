@@ -19,10 +19,10 @@
             </template>
         </vue3-tabs-chrome>
         <div class="header-right">
-            <span @click.stop="addNewWindow" class="" style="font-size: 14px;width: 100px;" v-if="afterAdd">new win</span>
-            <span class="iconfont icon-xiazai"></span>
-            <span class="iconfont icon-lingdang"></span>
-            <span class="iconfont icon-androidgengduo"></span>
+            <!-- <span @click.stop="addNewWindow" class="" style="font-size: 14px;width: 100px;" v-if="afterAdd">New Win</span> -->
+            <!-- <span class="iconfont icon-xiazai"></span> -->
+            <!-- <span class="iconfont icon-lingdang"></span> -->
+            <span class="iconfont icon-androidgengduo" @click="DropDown"></span>
             <span @click.stop="minimizeWindow" class="iconfont icon-zuixiaohua"></span>
             <span @click.stop="toggleMaximizeWindow" class="iconfont" :class="toggleMaximize"></span>
             <span @click.stop="closeWindow" class="close iconfont icon-guanbibiaoqian"></span>
@@ -133,9 +133,6 @@ window.ipcRenderer.on('header-minimize', (_, data) => {
     toggleMaximize.value = data
 });
 
-let addNewWindow = () => {
-    window.ipcRenderer.send("open-new-win");
-}
 // 最小化窗口
 let minimizeWindow = () => {
     window.ipcRenderer.send("window-min");
@@ -200,6 +197,11 @@ const createTab = async (_: any, data: any) => {
         tab.value = data.key;
     }
     console.log('header tabs =>', tabs)
+}
+
+const DropDown = () => {
+    console.log('header drop-down')
+    window.ipcRenderer.send('header-drop-down')
 }
 
 onMounted(() => {

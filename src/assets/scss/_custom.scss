@@ -266,6 +266,10 @@ body.c-dark-theme {
     --el-border-color-light: #212121;
     --el-fill-color-light: #121212;
   }
+  .el-popper:has(.theme-options) {
+    --el-bg-color-overlay: #333333;
+    --el-border-color-light: transparent;
+  }
   .el-select {
     .el-select__wrapper {
       // background-color: #121212;

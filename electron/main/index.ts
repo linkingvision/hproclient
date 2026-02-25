@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, BrowserWindowConstructorOptions } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, BrowserWindowConstructorOptions, screen } from 'electron';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -80,7 +80,7 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     },
   })
   if (VITE_DEV_SERVER_URL) {
-    sidebarWin.webContents.openDevTools()
+    // sidebarWin.webContents.openDevTools()
     sidebarWin.loadURL(`${VITE_DEV_SERVER_URL}#Sidebar`)
     // Open devTool if the app is not packaged
   } else {
@@ -103,6 +103,60 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     sidebarWin.hide()
   })
 };
+
+// header 更多设置窗口
+// let headerMoreWin: BrowserWindow | null = null;
+async function createHeaderMoreWindow(parentWin: BrowserWindow) {
+  const headerMoreWin = new BrowserWindow({
+    title: 'HPro Client Header More',
+    frame: false,
+    show: false,
+    focusable: true,  // 保证窗口可以获得焦点
+    transparent: true, // 窗口透明
+    resizable: false, // 禁止调整窗
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+    parent: parentWin,
+    webPreferences: {
+      preload,
+      nodeIntegration: false,
+    },
+  })
+  if (VITE_DEV_SERVER_URL) {
+    headerMoreWin.loadURL(`${VITE_DEV_SERVER_URL}#HeaderMore`)
+  } else {
+    headerMoreWin.loadFile(indexHtml, { hash: "HeaderMore" })
+  }
+  headerMoreWin.on('blur', () => {
+    headerMoreWin?.hide()
+  })
+  headerMoreWin.setAlwaysOnTop(true);
+}
+
+async function createAboutWindow(parentWin: BrowserWindow) {
+  const aboutWin = new BrowserWindow({
+    title: 'HPro Client About',
+    frame: false,
+    show: false,
+    focusable: true,  // 保证窗口可以获得焦点
+    transparent: true, // 窗口透明
+    resizable: false, // 禁止调整窗
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+    parent: parentWin,
+    webPreferences: {
+      preload,
+      nodeIntegration: false,
+    },
+  })
+  if (VITE_DEV_SERVER_URL) {
+    aboutWin.loadURL(`${VITE_DEV_SERVER_URL}#About`)
+  } else {
+    aboutWin.loadFile(indexHtml, { hash: "About" })
+  }
+  aboutWin.on('blur', () => {
+    aboutWin?.hide()
+  })
+  aboutWin.setAlwaysOnTop(true);
+}
 
 //主窗口
 async function createWindow(childPath: string) {
@@ -158,6 +212,8 @@ async function createWindow(childPath: string) {
   mainWin.once('ready-to-show', () => {
     mainWin.show();
     createSidebarWindow(mainWin)
+    createHeaderMoreWindow(mainWin)
+    createAboutWindow(mainWin)
     //全屏模式 
     if (!mainWin.isMaximized()) {
       mainWin.maximize();
@@ -210,6 +266,10 @@ async function createWindow(childPath: string) {
         if (child.getTitle() == "Hpro client sidebar") {
           // 更新子窗口的位置，使其跟随主窗口
           child.setBounds({ x: clientBounds.x, y: clientBounds.y, width: 250, height: clientBounds.height });
+        }else if (child.getTitle() == 'HPro Client Header More') {
+          child.setBounds({ x: 0, y: 0, width: 270, height: 170 });
+        } else if (child.getTitle() == 'HPro Client About') {
+          child.setBounds({ x: 10, y: 10, width: 530, height: 326 })
         } else {
           // 更新子窗口的位置，使其跟随主窗口
           child.setBounds({ x: clientBounds.x + 1, y: clientBounds.y + 40, width: clientBounds.width - 2, height: clientBounds.height - 41 });
@@ -557,4 +617,53 @@ ipcMain.on('open-new-tab', async (event, arg) => {
     log.info('[open-new-tab] message =>', message)
     newWin?.webContents.send('main-process-message', message)
   })
+})
+
+ipcMain.on('header-drop-down', (event) => {
+  const sender = event.sender;
+  //  通过 WebContents 找到点击的 BrowserWindow
+  const win = BrowserWindow.fromWebContents(sender);
+  const headerMoreWin = win.getChildWindows().find(win => {
+    const title = win.getTitle()
+    return title === "HPro Client Header More";
+  })
+  headerMoreWin?.show();
+  const point = screen.getCursorScreenPoint();
+  headerMoreWin.setPosition(point.x - 200, point.y + 22);
+})
+
+ipcMain.on('header-drop-hide', (event) => {
+  const sender = event.sender;
+  //  通过 WebContents 找到点击的 BrowserWindow
+  const win = BrowserWindow.fromWebContents(sender);
+  const headerMoreWin = win.getChildWindows().find(win => {
+    const title = win.getTitle()
+    return title === "HPro Client Header More";
+  })
+  headerMoreWin?.hide();
+})
+
+ipcMain.on('header-about-show', (event) => {
+  const sender = event.sender;
+  //  通过 WebContents 找到点击的 BrowserWindow
+  const win = BrowserWindow.fromWebContents(sender);
+  const parentWin = win.getParentWindow();
+  const aboutWin = parentWin.getChildWindows().find(win => {
+    const title = win.getTitle()
+    return title === "HPro Client About";
+  })
+  if (!aboutWin) return;
+
+  // 先获取父窗口位置和尺寸
+  const [parentX, parentY] = parentWin.getPosition();
+  const [parentWidth, parentHeight] = parentWin.getSize();
+
+  const [width, height] = aboutWin.getSize();
+
+  // 计算居中坐标
+  const x = parentX + Math.round((parentWidth - width) / 2);
+  const y = parentY + Math.round((parentHeight - height) / 2);
+
+  aboutWin.setPosition(x, y);
+  aboutWin.show();
 })
