@@ -1,4 +1,4 @@
-# HPro AI NVR Client & USC VMS Client (Windows x64 and macOS)
+# HPro AI NVR Client(Windows x64 and macOS)
 
 ![Login](./doc/img/login.png)
 ![Grid View](./doc/img/liveview.png)
