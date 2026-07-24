@@ -19,7 +19,7 @@ export class RecordingStatus {
             callback: null,
         };
 
-        // 🎨 七种循环颜色
+        // seven cyclic colors
         this.colors = [
             "#0399FE", "#3FAD98", "#D4BA3F",
             "#E78AC3", "#8DA0CB", "#0F9355", "#A35BBE"
@@ -32,7 +32,7 @@ export class RecordingStatus {
         this._initTooltip(); // 👈 初始化 tooltip
     }
 
-    /** 初始化SVG画布 **/
+    /** initialize SVG drawing **/
     _initSVG(containerId) {
         this.svg = d3.select(containerId)
             .append("svg")
@@ -46,7 +46,7 @@ export class RecordingStatus {
         };
     }
 
-    /** 初始化 tooltip **/
+    /** initialize tooltip **/
     _initTooltip() {
         this.tooltip = d3.select("body")
             .append("div")
@@ -62,7 +62,7 @@ export class RecordingStatus {
             .style("z-index", 9999);
     }
 
-    /** 主入口 **/
+    /** main **/
     StartDrawing(data) {
         this.data = data || [];
         console.log(this.data);
@@ -73,7 +73,7 @@ export class RecordingStatus {
     SetRecordData(data) {
         this.data = data;
     }
-    /** 初始化时间比例尺 **/
+    /** initialize the time percent rule **/
     _initTimeScale() {
         const { startTime, endTime, width, modeType } = this.options;
         const now = new Date();
@@ -107,7 +107,7 @@ export class RecordingStatus {
             .range([0, width]);
     }
 
-    /** 绘制时间标签背景和文字 **/
+    /** draw the time tab background and words **/
     _drawTimeLabels() {
         const group = this.layers.timeLabels;
         group.selectAll("*").remove();
@@ -148,26 +148,26 @@ export class RecordingStatus {
             .text(d => this._formatTimeLabel(d));
     }
 
-    /** 绘制单个录像时间段的高亮区 **/
+    /** draw the highlight zone of angle recording time zone  **/
     _addRecordingHighlight(record, channelIndex, devName, rowY, rowHeight) {
         const start = new Date(record.strStartTime);
         const end = new Date(record.strEndTime);
         end.setSeconds(end.getSeconds() + 1);
         const x1 = this.x(start);
         const x2 = this.x(end);
-        // 使用整数像素值，避免浮点数精度问题
+        // use integer pixel values to avoid floating-point precision issues
         const intX1 = Math.floor(x1);
         const intX2 = Math.ceil(x2);
-        const width = Math.max(1, intX2 - intX1); // 确保最小宽度为1
-        // 为同一通道的不同录像段使用相同颜色
+        const width = Math.max(1, intX2 - intX1);
+        // use the same color for different recording segments of the same channel
         let fillColor;
         if (this.options.router === 'recordInfo') {
             const types = [
-                'H5_STOR_REC_ALERT',    // 报警录像
-                'H5_STOR_REC_A_MOTION', // 报警录像
-                'H5_STOR_REC_A_OBJECT', // 报警录像
-                'H5_STOR_REC_N_MANUAL', // 手动录像
-                'H5_STOR_REC_N_SCHED'   // 计划录像
+                'H5_STOR_REC_ALERT',    
+                'H5_STOR_REC_A_MOTION', 
+                'H5_STOR_REC_A_OBJECT', 
+                'H5_STOR_REC_N_MANUAL', 
+                'H5_STOR_REC_N_SCHED'
             ];
             const item = record.type.find(val => types.includes(val));
             switch (item) {
@@ -192,7 +192,7 @@ export class RecordingStatus {
         }
         // const fillColor = this.colors[channelIndex % this.colors.length];
 
-        // 🎨 高亮条 + 交互
+        // highlight bar + interaction
         this.layers.highlights.append("rect")
             .attr("x", x1)
             .attr("y", rowY)
@@ -219,7 +219,7 @@ export class RecordingStatus {
                 this.tooltip.transition().duration(0).style("opacity", 0);
             });
     }
-    /** 创建tooltip HTML内容 **/
+    /** create tooltip HTML content **/
     _createTooltipHtml(event, record, fillColor, devName) {
         const start = new Date(record.strStartTime);
         const end = new Date(record.strEndTime);
@@ -238,7 +238,7 @@ export class RecordingStatus {
     `;
         return html;
     }
-    /** 绘制通道的所有录像段 **/
+    /** draw the all recordings of channels **/
     _addChannelHighlights(channelData, index) {
         if (!channelData) {
             return;
@@ -247,13 +247,13 @@ export class RecordingStatus {
         const rowHeight = 24;
         const rowY = labelWidth + index * rowHeight;
 
-        // 绘制该通道的所有录像段
+        // draw the all recordings of the channel
         if (channelData.record && Array.isArray(channelData.record)) {
             channelData.record.forEach((record) => {
                 this._addRecordingHighlight(record, index, channelData.devName, rowY, rowHeight);
             });
         }
-        // 绘制通道号文本（只在第一行绘制一次）
+        // draw channel number text (render only once on the first row)
         if (channelData.record) {
             this.layers.highlights.append("text")
                 .attr("x", 5)
@@ -281,21 +281,21 @@ export class RecordingStatus {
                 `;
         return html;
     }
-    /** 创建通道轴 **/
+    /** 创建通道轴 create channel axis **/
     _createChannelAxis(data) {
         const group = this.layers.highlights;
         group.selectAll("*").remove();
         data.forEach((el, i) => this._addChannelHighlights(el, i));
     }
 
-    /** 时间标签格式化 **/
+    /** format the time tip **/
     _formatTimeLabel(date) {
         const { modeType } = this.options;
         const formats = { month: "%m/%d", week: "%m/%d", date: "%H:%M" };
         return d3.timeFormat(formats[modeType] || "%m/%d")(date);
     }
 
-    /** 切换模式并重绘 **/
+    /** switch mode and redraw **/
     setMode(mode, time) {
         if (!["month", "week", "date"].includes(mode)) {
             console.warn("Invalid mode:", mode);
@@ -315,7 +315,7 @@ export class RecordingStatus {
         this._drawTimeLabels();
         this._createChannelAxis(this.data);
     }
-    /** 销毁 **/
+
     destroy() {
         this.svg?.remove();
         this.tooltip?.remove();

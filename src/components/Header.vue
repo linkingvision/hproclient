@@ -2,7 +2,7 @@
     <div id="header">
         <div class="header-left">
             <i class="iconfont icon-caidanlan" @click="sidebarShow"></i>
-            <!-- <img src="" alt=""> Logo占位 -->
+            <!-- <img src="" alt=""> Logo sit a sit -->
              <div class="sidebar-logo" v-if="store.darkMode">
                 <img :src="store.lang === 'en' ? LogoBlackEN : ''" alt="">
             </div>
@@ -44,6 +44,7 @@ import StorageImg from './favicos/StorageSetting.png'
 import DeviceImg from './favicos/DeviceManagement.png'
 import VideoImg from './favicos/VideoConfiguration.png'
 import General from './favicos/General.png'
+import MapImg from './favicos/map.png'
 
 const store = useStore()
 
@@ -79,7 +80,7 @@ window.ipcRenderer.invoke('open-win-tabs', {
     }
 })
 
-//创建tabs标签数据集 初始化tabs代码写好这里需要清空
+// creat tabs group, init tabs, need empty
 const tabs = reactive<any[]>([])
 
 const isDragging = ref(false);
@@ -128,20 +129,20 @@ const handleAdd = () => {
 }
 
 const toggleMaximize = ref('icon-xiangxiahuanyuan');
-//监听最大化还原消息 
+//listen minimize message
 window.ipcRenderer.on('header-minimize', (_, data) => {
     toggleMaximize.value = data
 });
 
-// 最小化窗口
+// minimize window
 let minimizeWindow = () => {
     window.ipcRenderer.send("window-min");
 }
-// 最大化/还原窗口
+// maximize window
 let toggleMaximizeWindow = () => {
     window.ipcRenderer.send("window-max");
 }
-// 关闭窗口
+// close window
 let closeWindow = () => {
     window.ipcRenderer.send("window-close");
 }
@@ -153,11 +154,8 @@ const openSiteLogin = async(_: any, data: any) => {
         window.ipcRenderer.send('switch-tabs', tabItem.id)
         tab.value = tabItem.key;
     } else {
-        window.ipcRenderer.invoke('open-win-tabs', {
-            label: 'Site Login',
-            key: 'sitelogin',
-            path: "SiteLogin",
-        }).then((msg: any) => {
+        const tabConfig = getTabConfig(data);
+        window.ipcRenderer.invoke('open-win-tabs',tabConfig).then((msg: any) => {
             if (msg) {
                 tabRef.value.addTab({
                     label: msg.label,
@@ -165,13 +163,34 @@ const openSiteLogin = async(_: any, data: any) => {
                     path: msg.path,
                     icon: "",
                     id: msg.id,
-                    favico:LoginImg 
+                    favico:getFavico(data) 
                 });
-
                 tab.value = msg.key;
             }
         })
     }
+}
+
+const getTabConfig = (key:string) => {
+    const configMap:Record<string,{label:string,key:string,path:string}> = {
+        'sitelogin':{label:'Site Login',key:'sitelogin',path:'SiteLogin'},
+        'view':{label:'View',key:'View',path:'View'},
+        'map':{label:'Map',key:'map',path:'Map'},
+
+
+    }
+    return configMap[key];
+}
+
+const getFavico = (key:string) => {
+    const favicoMap:Record<string,any> = {
+        'sitelogin':LoginImg,
+        'view':viewImg,
+        'map':MapImg,
+
+
+    }
+    return favicoMap[key];
 }
 
 const createTab = async (_: any, data: any) => {
@@ -191,6 +210,7 @@ const createTab = async (_: any, data: any) => {
             case 'DeviceManagement': newTabData.favico = DeviceImg; break;
             case 'VideoConfiguration': newTabData.favico = VideoImg; break;
             case 'General': newTabData.favico = General; break;
+            case 'Map': newTabData.favico = MapImg; break;
             default: newTabData.favico = ''
         }
         tabRef.value.addTab(newTabData)

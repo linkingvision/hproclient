@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import electron from 'vite-plugin-electron/simple'
+import {nodePolyfills} from 'vite-plugin-node-polyfills'
 import pkg from './package.json'
 import { fileURLToPath, URL } from 'node:url'
 
@@ -16,6 +17,16 @@ export default defineConfig(({ command }) => {
   return {
     plugins: [
       vue(),
+      nodePolyfills({
+        // Enable Node.js global variables or protocols that you need to be compatible with
+        globals: {
+          Buffer: true,
+          global: true,
+          process: true,
+        },
+        // Enable import support for the node: protocol
+        protocolImports: true, 
+      }),
       electron({
         main: {
           // Shortcut of `build.lib.entry`
@@ -71,6 +82,13 @@ export default defineConfig(({ command }) => {
       }
     })(),
     clearScreen: false,
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: "modern-compiler" // or 'modern'
+        }
+      }
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url))

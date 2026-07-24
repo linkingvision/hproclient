@@ -1,34 +1,34 @@
-# Mac 焦点问题修复说明
+# Mac Focus Issue Fix Documentation
 
-## 问题描述
-在 Mac 平台上，当从 page 窗口切换到 header 窗口时，需要点击两次才能正常聚焦和操作 tab 切换功能。
+## Problem Description
+On macOS, when switching from the page window to the header window, two clicks are required to gain proper focus and interact with the tab switching functionality.
 
-## 解决方案
-针对 Mac 平台的窗口焦点管理机制，我们实施了以下修复：
+## Solution
+The following fixes have been implemented to accommodate macOS’s native window focus management mechanism:
 
-### 1. 窗口配置优化
-- 为所有窗口添加 `acceptFirstMouse: true` 配置，允许第一次点击就激活窗口
-- 设置 `skipTaskbar: false` 确保窗口在任务栏中正确显示
+### 1. Window Configuration Optimization
+- Add the `acceptFirstMouse: true` setting to all windows to allow window activation on the initial click
+- Set `skipTaskbar: false` to ensure windows are displayed correctly in the taskbar
 
-### 2. 焦点管理增强
-- 在窗口显示后添加延迟聚焦机制
-- 使用 `app.focus({ steal: true })` 强制激活应用
-- 在切换标签时主动调用 `focus()` 方法
+### 2. Enhanced Focus Management
+- Implement a delayed focusing mechanism after windows are displayed
+- Invoke `app.focus({ steal: true })` to forcibly activate the application
+- Explicitly call the `focus()` method during tab switching
 
-### 3. 新增 IPC 处理器
-添加了 `mac-focus-fix` IPC 处理器，可以在渲染进程中调用来强制修复焦点问题：
+### 3. New IPC Handler Added
+A `mac-focus-fix` IPC handler has been added, which can be invoked from the renderer process to forcibly resolve focus issues:
 
 ```javascript
-// 在渲染进程中使用
+// Usage within the renderer process
 ipcRenderer.send('mac-focus-fix');
 ```
 
-## 修改的文件
-- `electron/main/index.ts` - 主要的焦点修复逻辑
-- `electron/main/window_pool_manager.ts` - 窗口池配置优化
+## Modified Files
+- `electron/main/index.ts` - Core focus repair logic
+- `electron/main/window_pool_manager.ts` - Window pool configuration optimization
 
-## 使用建议
-如果在某些情况下仍然遇到焦点问题，可以在渲染进程的适当位置（如鼠标进入 header 区域时）调用 `mac-focus-fix` IPC 消息来主动修复焦点。
+## Usage Recommendations
+If focus issues persist under certain scenarios, send the `mac-focus-fix` IPC message at appropriate points in the renderer process (for example, when the mouse enters the header area) to actively rectify focus abnormalities.
 
-## 兼容性
-所有修改都使用了 `process.platform === 'darwin'` 条件判断，只在 Mac 平台生效，不会影响 Windows 和 Linux 平台的正常运行。
+## Compatibility
+All modifications are wrapped within the conditional check `process.platform === 'darwin'`. The logic only takes effect on macOS and does not disrupt normal operation on Windows and Linux platforms.

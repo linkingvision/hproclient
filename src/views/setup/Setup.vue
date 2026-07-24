@@ -44,11 +44,11 @@ const TreeFold = () => {
   }
 }
 
-// 添加加载状态和缓存
+// add loading status and cache
 let isLoading = ref(false);
-let deviceCache = new Map(); // 缓存设备通道数据
+let deviceCache = new Map(); // Cache device channel data
 const getDeviceList = async () => {
-  if (isLoading.value) return;  // 正在加载中，跳过重复请求
+  if (isLoading.value) return;  // loading,skip repeat request
   isLoading.value = true;
   try {
     channelData.value = [];
@@ -75,20 +75,20 @@ const getDeviceList = async () => {
         const res = await GetPartitionApi(partitionParams);
         if (res.status == 200 && res.data.code == 0) {
           const result = res.data.result;
-          // 使用扁平化函数，按照优先级排序
+          // Use flatten function and sort by priority
           const list = flattenRootNodes(result);
 
-          // 为设备节点加载通道数据 - 使用缓存和更小的批次
+          // Load channel data for device nodes - adopt caching and smaller batches
           const deviceItems = list.filter(item => item.type === 'device' && item.data && item.data.token);
 
-          // 减少批次大小，避免同事发起太多请求
+          // Reduce batch size to prevent excessive concurrent requests
           const batchSize = 3;
           for (let i = 0; i < deviceItems.length; i += batchSize) {
             const batch = deviceItems.slice(i, i + batchSize);
             await Promise.allSettled(
               batch.map(async (item) => {
                 try {
-                  // 检查缓存
+                  // check cache
                   const cacheKey = item.data.token;
                   if (deviceCache.has(cacheKey)) {
                     const cachedData = deviceCache.get(cacheKey);
@@ -110,17 +110,17 @@ const getDeviceList = async () => {
                     token: item.data.token
                   })
                   if (ress.status == 200 && ress.data.code == 0 && ress.data.result.length > 0) {
-                    // 将通道数据转换为树节点格式，保持在线状态
+                    // Convert channel data to tree node format while retaining online status
                     const channels = ress.data.result.map((channel: any, index: number) => ({
                       id: `channel_${item.data.devId}_${index}`,
                       label: channel.name || `channel ${index + 1}`,
                       name: channel.name || `channel ${index + 1}`,
                       token: channel.token,
                       online: channel.online,
-                      type: 'device', // 通道也是device类型，但通过isDeviceChannel区分
+                      type: 'device', // Channels also belong to the device type, distinguished via isDeviceChannel flag
                       data: channel,
                       isLeaf: true,
-                      isDeviceChannel: true, // 标记为设备通道
+                      isDeviceChannel: true, // Mark as device channel
                       ipv4Address: site.ipv4Address,
                       protocol: site.enableHttps ? 'https:' : 'http:',
                       host: site.enableHttps ? site.httpsPort : site.httpPort,
@@ -128,36 +128,36 @@ const getDeviceList = async () => {
                       access_token: site.access_token
                     }));
                     
-                    // 缓存数据
+                    // cache data
                     deviceCache.set(cacheKey, channels);
                     
                     item.children = channels;
                     item.loaded = true;
                     item.isLeaf = false;
                   } else {
-                    // 缓存空结果
+                    // cache empty
                     deviceCache.set(cacheKey, []);
                     
-                    // 设备没有通道时，删除children属性，这样就不会显示展开图标
+                    // remove the children property when a device has no channels to hide the expand icon
                     delete item.children;
                     item.loaded = true;
-                    item.isLeaf = false; // 设置为叶子节点
+                    item.isLeaf = false; // Set as leaf node
                   }
                 } catch (error) {
-                  console.error(`加载设备 ${item.data.devId} 的通道失败:`, error);
-                  // 出错时也要清理占位符
+                  console.error(`failed to load device ${item.data.devId} of channels:`, error);
+                  // clear placeholders even when errors occur
                   delete item.children;
                   item.loaded = true;
                   item.isLeaf = false;
                 }
               })
             )
-            // 每批之间添加小延迟，避免服务器压力过大
+            // add a short delay between each batch to mitigate excessive server load
             if (i + batchSize < deviceItems.length) {
               await new Promise(resolve => setTimeout(resolve, 100));
             }
           }
-          console.log('设备树数据', list)
+          console.log('The data of device tree', list)
           siteData.children = list;
         }
         channelArr.push(siteData);
@@ -170,17 +170,17 @@ const getDeviceList = async () => {
     isLoading.value = false;
   }
 }
-// 扁平化根节点，直接展示其内容，按照优先级排序
+// Flatten root nodes, display their contents directly and sort by priority
 const flattenRootNodes = (partitions: any[]): TreeNode[] => {
   const result: TreeNode[] = [];
   partitions.forEach(partition => {
-    // 1. 优先展示children（子分区）
+    // 1. Prioritize displaying child partitions
     if (partition.children && partition.children.length > 0) {
       const childrenNodes = transformToTreeData(partition.children);
       result.push(...childrenNodes);
     }
     
-    // 2. 其次展示dev设备
+    // 2. Display dev devices secondly
     if (partition.dev && partition.dev.length > 0) {
       partition.dev.forEach((device: any) => {
         result.push({
@@ -189,14 +189,14 @@ const flattenRootNodes = (partitions: any[]): TreeNode[] => {
           type: 'device',
           online: device.online,
           data: device,
-          children: [{ id: 'placeholder', label: '', type: 'device', data: null }], // 设备需要懒加载通道
+          children: [{ id: 'placeholder', label: '', type: 'device', data: null }], // Implement lazy loading for device channels
           isLeaf: false,
           loaded: false
         });
       });
     }
     
-    // 3. 然后展示map地图 - map是叶子节点，不需要展开图标
+    // 3. Display map items afterwards; maps are leaf nodes with no expand icon required
     if (partition.map && partition.map.length > 0) {
       partition.map.forEach((map: any) => {
         result.push({
@@ -204,13 +204,13 @@ const flattenRootNodes = (partitions: any[]): TreeNode[] => {
           label: map.mapName,
           type: 'map',
           data: map,
-          isLeaf: true, // map是叶子节点
+          isLeaf: true, // map is leaf node
           loaded: true
         });
       });
     }
     
-    // 4. 最后展示view视图 - view是叶子节点，不需要展开图标
+    // 4. Display views last; views are leaf nodes without expand icons.
     if (partition.view && partition.view.length > 0) {
       partition.view.forEach((view: any) => {
         result.push({
@@ -218,7 +218,7 @@ const flattenRootNodes = (partitions: any[]): TreeNode[] => {
           label: view.viewName,
           type: 'view',
           data: view,
-          isLeaf: true, // view是叶子节点
+          isLeaf: true, // view is leaf node
           loaded: true
         });
       });
@@ -242,17 +242,17 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
       isLeaf: !hasChildren,
       loaded: false
     };
-    // 只有当有实际的子数据时，才设置children属性
+    // only set the children property when actual child data exists
     if (hasChildren) {
       partitionNode.children = [];
       
-      // 1. 优先展示children（子分区）
+      // 1. prioritize rendering child partitions first
       if (partition.children && partition.children.length > 0) {
         const childrenNodes = transformToTreeData(partition.children);
         partitionNode.children.push(...childrenNodes);
       }
       
-      // 2. 其次展示dev设备
+      // 2. render dev devices next
       if (partition.dev && partition.dev.length > 0) {
         partition.dev.forEach((device: any) => {
           partitionNode.children!.push({
@@ -261,14 +261,14 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
             type: 'device',
             online: device.online,
             data: device,
-            children: [{ id: 'placeholder', label: '', type: 'device', data: null }], // 设备需要懒加载通道
+            children: [{ id: 'placeholder', label: '', type: 'device', data: null }], // implement lazy loading for device channels
             isLeaf: false,
             loaded: false
           });
         });
       }
       
-      // 3. 然后展示map地图 - map是叶子节点，不需要展开图标
+      // 3. display map items afterwards; maps are leaf nodes with no expand icon required
       if (partition.map && partition.map.length > 0) {
         partition.map.forEach((map: any) => {
           partitionNode.children!.push({
@@ -276,13 +276,13 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
             label: map.mapName,
             type: 'map',
             data: map,
-            isLeaf: true, // map是叶子节点
+            isLeaf: true, // map is leaf node
             loaded: true
           });
         });
       }
       
-      // 4. 最后展示view视图 - view是叶子节点，不需要展开图标
+      // 4. display views last; views are leaf nodes without expand icons.
       if (partition.view && partition.view.length > 0) {
         partition.view.forEach((view: any) => {
           partitionNode.children!.push({
@@ -290,7 +290,7 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
             label: view.viewName,
             type: 'view',
             data: view,
-            isLeaf: true, // view是叶子节点
+            isLeaf: true, // view is leaf node
             loaded: true
           });
         });
@@ -298,7 +298,7 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
       
       partitionNode.loaded = true;
     }
-    // 没有子数据时不设置children属性，这样树组件就不会显示展开图标
+    // do not set the children property if no child data exists, so the tree component will not render the expand icon.
     
     result.push(partitionNode);
   })
@@ -314,7 +314,7 @@ const getAllKeys = (data: any) => {
     if (item && item.id !== 'placeholder') {
       keys.push(item.id);
       if (item.children && item.children.length > 0) {
-        // 只有非叶子节点才继续处理子节点
+        // only process child nodes for non-leaf nodes
         if (!item.isLeaf) {
           stack.push(...item.children);
         }
@@ -323,7 +323,7 @@ const getAllKeys = (data: any) => {
   }
   return keys;
 }
-// 点击节点
+// click node
 const clickSite = (node: TreeNode) => {
   console.log(node)
   if (node.type == 'site' && node.data.ipv4Address) {
@@ -331,11 +331,11 @@ const clickSite = (node: TreeNode) => {
     // $router.push('/Setup')
   }
 }
-// 获取节点样式类
+// get node style class
 const getNodeClass = (node: TreeNode) => {
   const classes = ['tree-node'];
   if (node.type === 'device') {
-    // 获取在线状态
+    // get online status
     const isOnline = node.online !== undefined ? node.online : (node.data && node.data.online);
     
     if (isOnline) {
@@ -349,30 +349,30 @@ const getNodeClass = (node: TreeNode) => {
   }
   return classes.join(' ');
 };
-// 获取录像状态的SVG图标
+//  get svg icon of recording status
 const getRecordingIcon = (node: TreeNode) => {
   return getNodeIcon(node);
 };
-// 获取节点颜色
+// get the node color
 const getNodeColor = (node: TreeNode) => {
   if (node.type === 'device') {
-    // 获取在线状态
+    // get online status
     const isOnline = node.online !== undefined ? node.online : (node.data && node.data.online);
     return isOnline ? '1' : '0.6';
   }
   return '1';
 };
-// 获取节点图标
+// get node iconfont
 const getNodeIcon = (node: TreeNode) => {
   // console.log('getNodeIcon', node)
   switch (node.type) {
     case 'site':
       return 'icon-shebeiguanli';
     case 'partition':
-      // children节点使用icon-gen
+      // children node use icon-gen
       return 'icon-gen';
     case 'device':
-      // 如果是设备通道（叶子节点），使用摄像机图标
+      // Use the camera icon for device channels (leaf nodes).
       if (node.isLeaf || node.isDeviceChannel) {
         if (node.data.recording) {
           if (store.darkMode) {
@@ -383,20 +383,20 @@ const getNodeIcon = (node: TreeNode) => {
         }
         return 'icon-shexiangjizaixian';
       }
-      // dev里的设备使用icon-Device
+      // icon-Device is used by devices in dev
       return 'icon-Device';
     case 'map':
-      // map里的使用icon-ditu
+      // icon-ditu is used by element in map
       return 'icon-ditu';
     case 'view':
-      // view里的使用icon-shipin
+      // icon-shitu2 is used by element in view
       return 'icon-shitu2';
     default:
       return 'icon-gen';
   }
 };
 
-// 防抖刷新函数
+// debounce the refresh function
 let refreshTimer: any = null;
 const refresh = () => {
   if (refreshTimer) {
@@ -452,13 +452,13 @@ onUnmounted(() => {
                 draggable="true"
                 style="width: 100%; display: flex; align-items: center; position: relative;"
                 :class="getNodeClass(data)" @click="clickSite(data)">
-                <!-- 字体图标 - 用于非录像状态 -->
+                <!-- font icon: used for non-recording status -->
                 <svg v-if="data.data && data.data.recording" class="icon" aria-hidden="true" :style="{
                   marginRight: '0'
                 }">
                   <use :xlink:href="getRecordingIcon(data)"></use>
                 </svg>
-                <!-- 字体图标 - 用于非录像状态 -->
+                <!-- font icon: used for non-recording status -->
                 <i :class="`iconfont ${getNodeIcon(data)}`"
                 :style="{
                   opacity: getNodeColor(data),

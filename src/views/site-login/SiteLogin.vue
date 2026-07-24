@@ -49,7 +49,6 @@ const getSiteDevice = async () => {
 }
 const timerRef = ref<NodeJS.Timeout | null>(null);
 
-//登录成功调用
 //window.ipcRenderer.on('get-site-device')
 
 const clickSite = (row: any) => {
@@ -214,15 +213,13 @@ const randomWord = (num:number) => {
     }
     return str;
 }
-// 在组件挂载时启动定时器
+// start timer when component is mounted
 onMounted(() => {
-    // 查询记录的账号密码
+    // account and password for querying records
     const usersStr = localStorage.getItem('users');
     rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];
 
-    // 立即执行一次
     getSiteDevice();
-    // 设置定时器，并保存引用
     timerRef.value = setInterval(() => {
         getSiteDevice();
     }, 20_000);
@@ -330,8 +327,8 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     background-image: url('../../assets/image/login-background.png');
-    background-size: cover; /* 图片等比例缩放，完全覆盖容器 */
-    background-position: center center; /* 确保重要部分居中 */
+    background-size: cover;
+    background-position: center center;
     background-repeat: no-repeat;
     .sites-list {
         width: 100%;

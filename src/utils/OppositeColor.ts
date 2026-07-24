@@ -1,7 +1,7 @@
 /**
- * 16进制色值获取反色设置方法
- * @param  {String} oldColor 为16进制色值的字符串（例：'#000000'）
- * @return {String} 返回反色的色值（例：'#ffffff'）
+ * Method to get inverse color from hex color value
+ * @param  {String} oldColor String of hexadecimal color values（example：'#000000'）
+ * @return {String} Return the inverse color value（example：'#ffffff'）
  */
 
 const getOppositeColor = (oldColor: any) => {

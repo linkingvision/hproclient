@@ -18,9 +18,9 @@ interface TreeNode {
   children?: TreeNode[];
   online?: boolean;
   data: any;
-  isLeaf?: boolean; // 标记是否为叶子节点
-  loaded?: boolean; // 标记是否已加载过子节点
-  isDeviceChannel?: boolean; // 标记是否为设备通道（展开设备后的子节点）
+  isLeaf?: boolean; 
+  loaded?: boolean; 
+  isDeviceChannel?: boolean;
 }
 interface gridListenerType {
   closeCellHandler: null | Function,
@@ -45,10 +45,10 @@ const props = {
   label: 'label',
   children: 'children'
 }
-const expandedKeys = ref<any[]>([])  // 保持所有要默认展开的key
-const treeRef = ref<any>(null)  // 树组件的引用
+const expandedKeys = ref<any[]>([])  // retain all keys that need to be expanded by default
+const treeRef = ref<any>(null)  // reference of the tree component
 
-const IsTreeFold = ref(false) // 左侧树状容器 收起/展示
+const IsTreeFold = ref(false) // collapse / expand the left tree container
 const TreeFold = () => {
   IsTreeFold.value = !IsTreeFold.value;
   if (IsTreeFold.value) {
@@ -58,11 +58,11 @@ const TreeFold = () => {
   }
 }
 
-// 添加加载状态和缓存
+// add loading state and cache mechanism
 let isLoading = ref(false);
-let deviceCache = new Map(); // 缓存设备通道数据
+let deviceCache = new Map(); // cache device channel data
 const getDeviceList = async () => {
-  if (isLoading.value) return;  // 正在加载中，跳过重复请求
+  if (isLoading.value) return;  // skip duplicate requests while loading
   isLoading.value = true;
   try {
     channelData.value = [];
@@ -90,20 +90,20 @@ const getDeviceList = async () => {
         const res = await GetPartitionApi(partitionParams);
         if (res.status == 200 && res.data.code == 0) {
           const result = res.data.result;
-          // 使用扁平化函数，按照优先级排序
+          // use flatten function and sort by priority
           const list = flattenRootNodes(result);
 
-          // 为设备节点加载通道数据 - 使用缓存和更小的批次
+          // load channel data for device nodes with cache and smaller batch sizes
           const deviceItems = list.filter(item => item.type === 'device' && item.data && item.data.token);
 
-          // 减少批次大小，避免同事发起太多请求
+          // reduce batch size to prevent excessive concurrent requests
           const batchSize = 3;
           for (let i = 0; i < deviceItems.length; i += batchSize) {
             const batch = deviceItems.slice(i, i + batchSize);
             await Promise.allSettled(
               batch.map(async (item) => {
                 try {
-                  // 检查缓存
+                  // check cache
                   const cacheKey = item.data.token;
                   if (deviceCache.has(cacheKey)) {
                     const cachedData = deviceCache.get(cacheKey);
@@ -125,17 +125,17 @@ const getDeviceList = async () => {
                     token: item.data.token
                   })
                   if (ress.status == 200 && ress.data.code == 0 && ress.data.result.length > 0) {
-                    // 将通道数据转换为树节点格式，保持在线状态
+                    // convert channel data to tree node format and preserve online status
                     const channels = ress.data.result.map((channel: any, index: number) => ({
                       id: `channel_${item.data.devId}_${index}`,
                       label: channel.name || `channel ${index + 1}`,
                       name: channel.name || `channel ${index + 1}`,
                       token: channel.token,
                       online: channel.online,
-                      type: 'device', // 通道也是device类型，但通过isDeviceChannel区分
+                      type: 'device', // channels are also of device type, distinguished via isDeviceChannel
                       data: channel,
                       isLeaf: true,
-                      isDeviceChannel: true, // 标记为设备通道
+                      isDeviceChannel: true, // mark as device channel
                       ipv4Address: site.ipv4Address,
                       protocol: site.enableHttps ? 'https:' : 'http:',
                       host: site.enableHttps ? site.httpsPort : site.httpPort,
@@ -143,36 +143,36 @@ const getDeviceList = async () => {
                       access_token: site.access_token
                     }));
                     
-                    // 缓存数据
+                    // cache data
                     deviceCache.set(cacheKey, channels);
                     
                     item.children = channels;
                     item.loaded = true;
                     item.isLeaf = false;
                   } else {
-                    // 缓存空结果
+                    // cache empty
                     deviceCache.set(cacheKey, []);
                     
-                    // 设备没有通道时，删除children属性，这样就不会显示展开图标
+                    // delete the children property when a device has no channels to hide the expand icon
                     delete item.children;
                     item.loaded = true;
-                    item.isLeaf = false; // 设置为叶子节点
+                    item.isLeaf = false; // set as leaf node
                   }
                 } catch (error) {
-                  console.error(`加载设备 ${item.data.devId} 的通道失败:`, error);
-                  // 出错时也要清理占位符
+                  console.error(`failed to load device ${item.data.devId} of channel:`, error);
+                  // clear placeholders even when errors occur
                   delete item.children;
                   item.loaded = true;
                   item.isLeaf = false;
                 }
               })
             )
-            // 每批之间添加小延迟，避免服务器压力过大
+            // add a short delay between each batch to reduce server load
             if (i + batchSize < deviceItems.length) {
               await new Promise(resolve => setTimeout(resolve, 100));
             }
           }
-          console.log('设备树数据', list)
+          console.log('The data of device tree', list)
           siteData.children = list;
         }
         channelArr.push(siteData);
@@ -185,17 +185,17 @@ const getDeviceList = async () => {
     isLoading.value = false;
   }
 }
-// 扁平化根节点，直接展示其内容，按照优先级排序
+// flatten root nodes, display their contents directly and sort by priority
 const flattenRootNodes = (partitions: any[]): TreeNode[] => {
   const result: TreeNode[] = [];
   partitions.forEach(partition => {
-    // 1. 优先展示children（子分区）
+    // 1. prioritize displaying child partitions
     if (partition.children && partition.children.length > 0) {
       const childrenNodes = transformToTreeData(partition.children);
       result.push(...childrenNodes);
     }
     
-    // 2. 其次展示dev设备
+    // 2. display dev devices secondly
     if (partition.dev && partition.dev.length > 0) {
       partition.dev.forEach((device: any) => {
         result.push({
@@ -204,14 +204,14 @@ const flattenRootNodes = (partitions: any[]): TreeNode[] => {
           type: 'device',
           online: device.online,
           data: device,
-          children: [{ id: 'placeholder', label: '', type: 'device', data: null }], // 设备需要懒加载通道
+          children: [{ id: 'placeholder', label: '', type: 'device', data: null }], // implement lazy loading for device channels
           isLeaf: false,
           loaded: false
         });
       });
     }
     
-    // 3. 然后展示map地图 - map是叶子节点，不需要展开图标
+    // 3. display map items afterwards; maps are leaf nodes with no expand icon required
     if (partition.map && partition.map.length > 0) {
       partition.map.forEach((map: any) => {
         result.push({
@@ -219,13 +219,13 @@ const flattenRootNodes = (partitions: any[]): TreeNode[] => {
           label: map.mapName,
           type: 'map',
           data: map,
-          isLeaf: true, // map是叶子节点
+          isLeaf: true, // map is leaf node
           loaded: true
         });
       });
     }
     
-    // 4. 最后展示view视图 - view是叶子节点，不需要展开图标
+    // 4. Display views last; views are leaf nodes without expand icons.
     if (partition.view && partition.view.length > 0) {
       partition.view.forEach((view: any) => {
         result.push({
@@ -233,7 +233,7 @@ const flattenRootNodes = (partitions: any[]): TreeNode[] => {
           label: view.viewName,
           type: 'view',
           data: view,
-          isLeaf: true, // view是叶子节点
+          isLeaf: true, // view is leaf node
           loaded: true
         });
       });
@@ -257,17 +257,17 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
       isLeaf: !hasChildren,
       loaded: false
     };
-    // 只有当有实际的子数据时，才设置children属性
+    // only set the children property when actual child data exists
     if (hasChildren) {
       partitionNode.children = [];
       
-      // 1. 优先展示children（子分区）
+      // 1. prioritize rendering child partitions first
       if (partition.children && partition.children.length > 0) {
         const childrenNodes = transformToTreeData(partition.children);
         partitionNode.children.push(...childrenNodes);
       }
       
-      // 2. 其次展示dev设备
+      // 2. display dev devices secondly
       if (partition.dev && partition.dev.length > 0) {
         partition.dev.forEach((device: any) => {
           partitionNode.children!.push({
@@ -276,14 +276,14 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
             type: 'device',
             online: device.online,
             data: device,
-            children: [{ id: 'placeholder', label: '', type: 'device', data: null }], // 设备需要懒加载通道
+            children: [{ id: 'placeholder', label: '', type: 'device', data: null }], // implement lazy loading for device channels
             isLeaf: false,
             loaded: false
           });
         });
       }
       
-      // 3. 然后展示map地图 - map是叶子节点，不需要展开图标
+      // 3. display map items afterwards; maps are leaf nodes with no expand icon required
       if (partition.map && partition.map.length > 0) {
         partition.map.forEach((map: any) => {
           partitionNode.children!.push({
@@ -291,13 +291,13 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
             label: map.mapName,
             type: 'map',
             data: map,
-            isLeaf: true, // map是叶子节点
+            isLeaf: true, // map is leaf node
             loaded: true
           });
         });
       }
       
-      // 4. 最后展示view视图 - view是叶子节点，不需要展开图标
+      // 4. display views last; views are leaf nodes without expand icons.
       if (partition.view && partition.view.length > 0) {
         partition.view.forEach((view: any) => {
           partitionNode.children!.push({
@@ -305,7 +305,7 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
             label: view.viewName,
             type: 'view',
             data: view,
-            isLeaf: true, // view是叶子节点
+            isLeaf: true, // view is leaf node
             loaded: true
           });
         });
@@ -313,7 +313,7 @@ const transformToTreeData = (partitions: any[]): TreeNode[] => {
       
       partitionNode.loaded = true;
     }
-    // 没有子数据时不设置children属性，这样树组件就不会显示展开图标
+    // do not set the children property if no child data exists, so the tree component will not render the expand icon.
     
     result.push(partitionNode);
   })
@@ -329,7 +329,7 @@ const getAllKeys = (data: any) => {
     if (item && item.id !== 'placeholder') {
       keys.push(item.id);
       if (item.children && item.children.length > 0) {
-        // 只有非叶子节点才继续处理子节点
+        // only process child nodes for non-leaf nodes
         if (!item.isLeaf) {
           stack.push(...item.children);
         }
@@ -340,15 +340,15 @@ const getAllKeys = (data: any) => {
 }
 
 const playingIdArr = ref<string[]>([])
-// 根据token查找对应的设备树节点ID
+// find the corresponding device tree node id based on token
 const findNodeIdByToken = (token: string): string | null => {
   const findInNodes = (nodes: TreeNode[]): string | null => {
     for (const node of nodes) {
-      // 检查当前节点
+      // check current node
       if (node.data && node.data.token === token) {
         return node.id;
       }
-      // 递归检查子节点
+      // recursively check child nodes
       if (node.children && node.children.length > 0) {
         const found = findInNodes(node.children);
         if (found) return found;
@@ -363,23 +363,23 @@ const updatePlayingStatus = (type: string, id: string) => {
   if (!id) return;
   
   if (type == 'add') {
-    // 添加播放状态，先检查是否已存在，避免重复添加
+    // add playback status; check existence first to avoid duplicate addition
     if (!playingIdArr.value.includes(id)) {
       playingIdArr.value.push(id);
     }
   } else if (type == 'del') {
-    console.log('清楚播放状态 id =>', id)
-    // 删除播放状态
+    console.log('known the playing status id =>', id)
+    // delete playing status
     playingIdArr.value = playingIdArr.value.filter(item => item !== id);
   }
   
   // console.log('playingIdArr after update =>', playingIdArr.value);
 }
-// 获取节点样式类
+// get node style class
 const getNodeClass = (node: TreeNode) => {
   const classes = ['tree-node'];
   if (node.type === 'device') {
-    // 获取在线状态
+    // get online status
     const isOnline = node.online !== undefined ? node.online : (node.data && node.data.online);
     
     if (isOnline) {
@@ -390,24 +390,24 @@ const getNodeClass = (node: TreeNode) => {
   }
   return classes.join(' ');
 };
-// 获取录像状态的SVG图标
+// get svg icon of recording status
 const getRecordingIcon = (node: TreeNode) => {
   if (isChannelPlaying(node)) {
     return '#icon-lvshexiangji';
   }
   return getNodeIcon(node);
 };
-// 获取节点图标
+// get node iconfont
 const getNodeIcon = (node: TreeNode) => {
   // console.log('getNodeIcon', node)
   switch (node.type) {
     case 'site':
       return 'icon-shebeiguanli';
     case 'partition':
-      // children节点使用icon-gen
+      // children node use icon-gen
       return 'icon-gen';
     case 'device':
-      // 如果是设备通道（叶子节点），使用摄像机图标
+      // use camera icon if it is a device channel (leaf node)
       if (node.isLeaf || node.isDeviceChannel) {
         if (node.data.recording) {
           if (store.darkMode) {
@@ -418,44 +418,44 @@ const getNodeIcon = (node: TreeNode) => {
         }
         return 'icon-shexiangjizaixian';
       }
-      // dev里的设备使用icon-Device
+      // icon-Device is used by devices of dev
       return 'icon-Device';
     case 'map':
-      // map里的使用icon-ditu
+      // icon-ditu is used by the element of map
       return 'icon-ditu';
     case 'view':
-      // view里的使用icon-shipin
+      // vicon-shitu2 is used by the element of view
       return 'icon-shitu2';
     default:
       return 'icon-gen';
   }
 };
-// 检查通道是否正在播放
+// check if channel is playing
 const isChannelPlaying = (node: TreeNode) => {
   if (!node.data) return false;
   
-  // 只对叶子节点（实际的通道）或view类型进行播放状态检查
-  // 避免父设备节点也显示播放状态
+  // only check playback status for leaf nodes (actual channels) or view type
+  // prevent parent device nodes from displaying playback status
   if (!node.isLeaf && !node.isDeviceChannel && node.type !== 'view') return false;
   
-  // 检查当前节点是否在播放列表中
+  // check whether current node exists in playback list
   const isPlaying = playingIdArr.value.includes(node.id);
   if (isPlaying) {
     console.log('isChannelPlaying', node.id, node.label);
   }
   return isPlaying;
 };
-// 获取节点颜色
+// get the color of node
 const getNodeColor = (node: TreeNode) => {
   if (node.type === 'device') {
-    // 获取在线状态
+    // get the online status
     const isOnline = node.online !== undefined ? node.online : (node.data && node.data.online);
     return isOnline ? '1' : '0.6';
   }
   return '1';
 };
 
-// 防抖刷新函数
+// debounced refresh function
 let refreshTimer: any = null;
 const refresh = () => {
   if (refreshTimer) {
@@ -534,7 +534,7 @@ const initGridLayout = (): void => {
   gridListener.layoutLoadedFromCacheHandler = async (event: CustomEvent<any>) => {
     console.log('layoutLoadedFromCacheHandler =>', event.detail)
     await nextTick();
-    // 等待设备树数据加载完成的辅助函数
+    // helper function to wait until device tree data finishes loading
     const waitForDeviceData = async (maxRetries = 10, delay = 500) => {
       for (let i = 0; i < maxRetries; i++) {
         if (channelData.value && channelData.value.length > 0) {
@@ -545,7 +545,7 @@ const initGridLayout = (): void => {
       return false;
     };
     
-    // 等待设备树数据加载完成
+    // wait for device tree data loading to complete
     const deviceDataReady = await waitForDeviceData();
     if (!deviceDataReady) {
       console.warn('Device tree data not ready, skipping playing status update');
@@ -570,7 +570,7 @@ const initGridLayout = (): void => {
             label: row.camera.label,
             liveVideoType: store.liveviewrtc,
             recording: row.camera.recording,
-            playingId: nodeId, // 添加playingId，用于关闭时更新设备树状态
+            playingId: nodeId, // add playingId to update device tree status on close
             onPlaybackModeChange: (mode: string) => {
               console.log('onPlaybackModeChange =>', mode);
               if (mode == 'live') {
@@ -591,7 +591,7 @@ const initGridLayout = (): void => {
           PlayBackArr.value.push(UPlayer);
           isPlaying.value = true;
 
-          // 更新播放状态
+          // update playing status
           if (nodeId) {
             updatePlayingStatus('add', nodeId);
             console.log('Auto-play: Updated playing status for node:', nodeId, 'token:', row.camera.token);
@@ -621,11 +621,11 @@ const findSiteByIp = (ip: string) => {
 const findSDKById = (id: string) => {
   const sdk = PlayingArr.value.find(item => item.conf.videoid === id);
   if (!sdk) {
-    throw new Error(`未找到 id=${id}的 sdk`)
+    throw new Error(`not found the sdk of id=${id}`)
   }
   return sdk;
 }
-// 云台控制
+// ptz control
 const ptzShow = ref<boolean>(false);
 const ptzToken = ref<string>('');
 const PresetData = reactive<any[]>([])
@@ -681,7 +681,7 @@ const closePtz = () => {
   ptzAccessToken.value = '';
   PresetData.splice(0);
 }
-// 点击语音
+// click intercoming
 const audioback = ref<any>(null)
 const Shoutwheat = (id: string, audio: boolean) => {
   const vid = id.slice(1)
@@ -709,7 +709,7 @@ const Shoutwheat = (id: string, audio: boolean) => {
   }
   GridManager.value.changeAudio(id, !audio)
 }
-// 本地抓图
+// local snapshot
 const DoSnapshotWeb = (id: string) => {
   const vid = id.slice(1);
   const sdk = findSDKById(vid);
@@ -722,7 +722,7 @@ const DoSnapshotWeb = (id: string) => {
   } else {
     video = $('#playback' + vid).find('video[pos="0"]').get(0);
   }
-  // ✅ 新增：跨域属性
+
   if (video) video.crossOrigin = 'anonymous';
   const canvas = document.createElement('canvas');
   const ctx: any = canvas.getContext('2d');
@@ -738,7 +738,7 @@ const DoSnapshotWeb = (id: string) => {
   dlLink.click();
   document.body.removeChild(dlLink);
 }
-// 打开 / 关闭仪表
+// open / close information
 const Information = (id: string) => {
   const vid = id.slice(1);
   const sdk = findSDKById(vid);
@@ -755,56 +755,46 @@ const Information = (id: string) => {
     }, 8000)
   }
 }
-// 获取码流信息
+// get stream information
 const Informationdata = async (root: string, access_token: string, token: string) => {
   const res = await GetInformationDataApi(root, access_token, token);
   if (res.status == 200) {
     const item = res.data;
     informationAudio.value = [{
-      // name: '编码类型',
       name: 'Codec',
       data: item.strAudioType
     }, {
-      // name: '采样率',
       name: 'Sample Rate',
       data: item.nAudioSampleRate
     }, {
-      // name: '采样位宽',
       name: 'Sample Bit',
       data: item.nAudioSampleBit
     }, {
-      // name: '声道数',
       name: 'Channels',
       data: item.nAudioChannels
     }, {
-      // name: '码率',
       name: 'Bitrate',
       data: (item.nAudioBitrate / 1024).toFixed(1) + 'kpbs'
     }];
     informationVideo.value = [{
-      // name: '编码类型',
       name: 'Codec',
       data: item.strVideoType
     }, {
-      // name: '宽',
       name: 'Width',
       data: item.nVideoWidth
     }, {
-      // name: '高',
       name: 'Height',
       data: item.nVideoHeight
     }, {
-      // name: '帧率',
       name: 'FPS',
       data: item.nVideoFPS
     }, {
-      // name: '码率',
       name: 'Bitrate',
       data: (item.nVideoBitrate / 1024).toFixed(1) + 'kpbs'
     }]
   }
 }
-// 关闭仪表
+// close information
 const closeInformation = (): void => {
   informationshow.value = false;
   if (timerRunInfo.value) {
@@ -812,12 +802,12 @@ const closeInformation = (): void => {
     timerRunInfo.value = null;
   }
 }
-// 开启 / 关闭手动录像
+// open / stop manual recording
 const DoManualRecordStart = async (id: string, recEnable: boolean) => {
   const vid = id.slice(1)
   const sdk = findSDKById(vid);
   if (!sdk) return;
-  // console.log('手动录像 id => ', root, access_token);
+  // console.log('manual recording id => ', root, access_token);
   let manualRecEnable;
   if (recEnable) {
     manualRecEnable = false;
@@ -833,13 +823,13 @@ const DoManualRecordStart = async (id: string, recEnable: boolean) => {
   if (res.status == 200 && res.data.code == 0) {
     if (manualRecEnable) {
       ElMessage({
-        message: '开启录像',
+        message: 'start recording',
         type: 'success',
         duration: 2000
       })
     } else {
       ElMessage({
-        message: '停止录像',
+        message: 'end recording',
         type: 'success',
         duration: 2000
       })
@@ -848,20 +838,20 @@ const DoManualRecordStart = async (id: string, recEnable: boolean) => {
   } else {
     if (manualRecEnable) {
       ElMessage({
-        message: '开启失败',
+        message: 'failed to start',
         type: 'error',
         duration: 2000
       })
     } else {
       ElMessage({
-        message: '关闭失败',
+        message: 'failed to close',
         type: 'error',
         duration: 2000
       })
     }
   }
 }
-// 关闭单个单元格
+// close single container
 const closePlayContainer = (id: string) => {
   console.log('closePlayContainer id => ', id);
   if (!UPlayerList.value) return;
@@ -885,7 +875,7 @@ const closePlayContainer = (id: string) => {
       isPlaying.value = false;
     }
 
-    // 更新播放状态：优先使用playingId，如果为空则根据token查找
+    // update playback status: prioritize playingId, look up by token if it is empty
     let nodeIdToRemove = currentSDK.conf.playingId;
     if (!nodeIdToRemove && currentSDK.conf.token) {
       nodeIdToRemove = findNodeIdByToken(currentSDK.conf.token);
@@ -897,7 +887,7 @@ const closePlayContainer = (id: string) => {
     } else {
       console.warn('closePlayContainer: Could not find nodeId to remove playing status for token:', currentSDK.conf.token);
     }
-    // 触发树的重新渲染以更新播放状态显示
+    // trigger tree re-render to refresh playback status display
     nextTick(() => {
       if (treeRef.value) {
         treeRef.value.$forceUpdate?.();
@@ -918,13 +908,13 @@ const informationAudio = ref<any[]>([])
 const informationVideo = ref<any[]>([])
 const Audioslider = ref<number>(0)
 
-// 切换主播放器
+// switch main player
 const changeMainSDK = (id: string) => {
   const vid = id.slice(1);
-  // 如果当前为回放，且点击和当前选中时同一个，那么 加入/取消 回放组
+  // if current mode is playback and clicking the same selected item, add to or remove from playback group
   if (!isLiveview.value && mainSDKId.value === id) {
     const playSDK = PlayingArr.value.find(item => item.conf.videoid === vid);
-    if (playSDK) {  // 当前点击区域有正在播放的视频
+    if (playSDK) {  // there is video playing in the clicked area
       const playbackSDK = PlayBackArr.value.find(item => item.conf.videoid === vid);
       const target = document.getElementById(id)
       if (playbackSDK) {
@@ -992,14 +982,14 @@ const gotoLive = async () => {
         })
       })
     )
-    // 再统一进入实时播放
+    // then switch to live playback uniformly
     await UPlayerList.value.setAllPosition(now.getTime()).then(() => {
       UPlayerList.value.playAll();
     })
     isLiveview.value = true;
   }
 }
-const Alloffvideo = () => { // 关闭所有视频以及单元格
+const Alloffvideo = () => { // close all videos and cells
   if (!UPlayerList.value) return;
   if (PlayingArr.value.length == 0) return;
   const notPlaybackArr = PlayingArr.value.filter(item => !PlayBackArr.value.includes(item));
@@ -1014,10 +1004,9 @@ const Alloffvideo = () => { // 关闭所有视频以及单元格
   isLiveview.value = true;
   isPlaying.value = false;
   mainSDKId.value = '';
-  // 清除所有播放状态
   playingIdArr.value = [];
   const cellFactory = async (cell: any) => {
-    console.log('关闭', cell)
+    console.log('close cell :', cell)
   }
   GridManager.value.reloadStageConfiguration(cellFactory)
 }
@@ -1044,7 +1033,7 @@ const handleDragStart = (node: any) => {
       resourceUUID: node.data.data.uuid,
       liveVideoType: store.liveviewrtc,
       recording: node.data.data.recording,
-      playingId: node.data.id,  // 仅用于设备树显示状态
+      playingId: node.data.id,
       onPlaybackModeChange: (mode: string) => {
         console.log('onPlaybackModeChange view =>', mode);
         if (mode == 'live') {
@@ -1067,7 +1056,7 @@ const handleDragStart = (node: any) => {
       drag.value.playingId = node.data.id;
     } else if (node.data.type == 'map') {
       // console.log('handleDragStart map =>', node.data)
-      // 暂时为map设置playingId，但不实现播放逻辑
+      // temporarily set playingId for map without implementing playback logic
       drag.value.mapId = node.data.data.mapId;
       drag.value.playingId = node.data.id;
     }
@@ -1076,7 +1065,7 @@ const handleDragStart = (node: any) => {
   GridManager.value.highlightCells([]);
   console.log('drag =>', drag.value)
 }
-// 正在拖动
+// dragging
 const dragOver = (event: any) => {
   if (!isDrag.value || (!drag.value.viewId && !drag.value.videoid)) return;
   // console.log(!isDrag.value , !drag.value.viewId , !isDrag.value , !drag.value.videoid)
@@ -1085,7 +1074,7 @@ const dragOver = (event: any) => {
   const eventX = event.pageX;
   const eventY = event.pageY;
   let cellsToHighlight = [];
-  // 显示网格
+  // display net
   GridManager.value.showLines()
   let gridPosition = GridManager.value.findGridPositionByCoordinates(eventX, eventY);
   if (gridPosition !== false) {
@@ -1149,9 +1138,9 @@ const dropTarget = async (event: any) => {
   GridManager.value.hideLines()
   GridManager.value.highlightCells([]);
 
-  // 触发树的重新渲染以更新播放状态显示
+  // trigger tree re-render to update playback status display
   nextTick(() => {
-    // 强制更新树组件
+    // force update tree component
     if (treeRef.value) {
       treeRef.value.$forceUpdate?.();
     }
@@ -1159,7 +1148,7 @@ const dropTarget = async (event: any) => {
 }
 
 const showRecodeType = ref<boolean>(false)
-const panelFullScreen = (event: any) => { // 全屏展示 / 退出全屏
+const panelFullScreen = (event: any) => { // full screen display / exit fullscreen
   const elem: any = document.getElementById("video_hed");
   const doc: any = document;
   if (doc.fullscreenEnabled || doc.webkitFullscreenEnabled || doc.mozFullScreenEnabled || doc.msFullscreenEnabled) {
@@ -1189,14 +1178,14 @@ const panelFullScreen = (event: any) => { // 全屏展示 / 退出全屏
   }
 }
 const xzvalue = ref<Date>(new Date())
-const customDateArr = ref<any>([])    // 用于存放'已标记的日期数组'
-const input_ch = () => {    // 时间选择器时间发生改变触发的函数
+const customDateArr = ref<any>([])    // used to store array of marked dates
+const input_ch = () => {    // function triggered when time picker value changes
   if (!UPlayerList.value) return;
   UPlayerList.value.setAllPosition(xzvalue.value.getTime()).then(() => {
     UPlayerList.value.playAll(xzvalue.value.getTime());
   })
 }
-const isShow = async () => {    // 获取焦点，展示日期
+const isShow = async () => {    // gain focus and display dates
   await nextTick();
   customDateArr.value = [];
   const year = xzvalue.value.getFullYear();
@@ -1210,11 +1199,11 @@ const isShow = async () => {    // 获取焦点，展示日期
     markRecordDates(year, month)
   }
 }
-const monthChange = async (panelDate: Date, type: 'month' | 'year') => {   // 切换年月后重新调接口
+const monthChange = async (panelDate: Date, type: 'month' | 'year') => {   // re-request interface after switching year and month
   const year = panelDate.getFullYear()
   const month = panelDate.getMonth() + 1 // 0-based
   // console.log(type, year, month)
-  // 查找当前选中宫格是否存在视频播放器
+  // check whether the currently selected cell contains a video player
   const sdk = PlayingArr.value.find(item => item.conf.videoid === selectCellId.value);
   if (sdk && sdk.conf.token) {
     await SearchRecordCalendar(sdk.conf.protocol + '//' + sdk.conf.host, sdk.conf.accessToken, sdk.conf.token, year, month)
@@ -1228,7 +1217,7 @@ const closePicker = () => {
           td.classList.remove('custom_date_class')
       })
 }
-const SearchRecordCalendar = async (root: string, access_token: string, token: string, year: number, month: number) => {    // 根据年月获取有录像的日期
+const SearchRecordCalendar = async (root: string, access_token: string, token: string, year: number, month: number) => {    // get dates with recordings by year and month
   customDateArr.value = [];
   $('.available').removeClass('custom_date_class');
   let res = await GetRecordCalendar({
@@ -1296,12 +1285,12 @@ const regiondata = reactive([{
   label: "1/4x"
 }])
 const timeSpeed = (speed: string) => {
-  console.log('选择的倍速 =>', speed);
+  console.log('selected speed =>', speed);
   if (isLiveview.value) {
     region.value = '1.0';
-    return;   // 直播状态下不处理
+    return;   // no processing under live status
   }
-  if (!UPlayerList.value.UPlayerSDKList.length) return;   // 没有播放器实例不处理
+  if (!UPlayerList.value.UPlayerSDKList.length) return;   // skip processing if no player instance exists
   UPlayerList.value.setAllPlaybackRate(speed)
 }
 const timeInput = (e: Event) => {
@@ -1316,8 +1305,8 @@ const timeInput = (e: Event) => {
 }
 
 const resume = () => {
-  if (!UPlayerList.value.UPlayerSDKList.length) return; // 没有播放器实例不处理
-  if (isLiveview.value) return;   // 直播状态下不处理
+  if (!UPlayerList.value.UPlayerSDKList.length) return; // skip processing if no player instance exists
+  if (isLiveview.value) return;   // no processing under live status
   if (isPlaying.value) {
     UPlayerList.value.pauseAll()
   } else {
@@ -1365,10 +1354,10 @@ onUnmounted(() => {
 watch(isLiveview, (newVal) => {
   if (newVal) {
     console.log('isLivevie watch =>', newVal);
-    // 去除所有回放组边框 和选中回放组的边框效果
+    // remove all playback group borders and the border style of selected playback groups
     document.querySelectorAll('.grid_cell.blue_dashed').forEach(el => el.classList.remove('blue_dashed'))
     document.querySelectorAll('.grid_cell.playback_check_border').forEach(el => el.classList.remove('playback_check_border'))
-    // 添加直播状态下 选中效果
+    // add selected style for live status
     const target = document.getElementById(mainSDKId.value);
     if (target) target.classList.add('red_border')
   } else {
@@ -1455,13 +1444,13 @@ const onRightClick = (e: MouseEvent, data: any) => {
                 @dragstart="handleDragStart(node)"
                 style="width: 100%; display: flex; align-items: center; position: relative;"
                 :class="getNodeClass(data)" @contextmenu="onRightClick($event, data)">
-                <!-- 字体图标 - 用于非录像状态 -->
+                <!-- font icon - for non-recording status -->
                 <svg v-if="data.data && data.data.recording" class="icon" aria-hidden="true" :style="{
                   marginRight: '0'
                 }">
                   <use :xlink:href="getRecordingIcon(data)"></use>
                 </svg>
-                <!-- 字体图标 - 用于非录像状态 -->
+                <!-- font icon - for non-recording status -->
                 <i :class="`iconfont ${getNodeIcon(data)}`"
                 :style="{
                   opacity: getNodeColor(data),
@@ -1474,7 +1463,7 @@ const onRightClick = (e: MouseEvent, data: any) => {
                   color: isChannelPlaying(data) ? '#00ff00' : 'inherit',
                   fontSize: '14px',
                 }">{{ node.label }}</span>
-                <!-- 播放状态指示 -->
+                <!-- play status indicator -->
                 <span v-if="isChannelPlaying(data)" style="color: #00ff00; font-size: 12px; position: absolute; right: 10px;">
                   Playing...
                 </span>

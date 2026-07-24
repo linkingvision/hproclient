@@ -26,8 +26,8 @@ const version = packageJSON.description;
   width: 100%;
   height: 100%;
   background-image: url('../assets/image/About-background.png');
-  background-size: cover; /* 图片等比例缩放，完全覆盖容器 */
-  background-position: center center; /* 确保重要部分居中 */
+  background-size: cover;
+  background-position: center center;
   background-repeat: no-repeat;
   display: flex;
   flex-direction: column;

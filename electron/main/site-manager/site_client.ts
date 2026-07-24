@@ -34,12 +34,12 @@ export class DiscoveryClient {
     private setupListeners(): void {
         this.client.on('message', (msg: Buffer, rinfo: RemoteInfo) => {
             this.handleResponse(msg.toString(), rinfo).catch(error => {
-                log.debug(`处理响应失败: ${error.message}`);
+                log.debug(`dealing response failed: ${error.message}`);
             });
         });
 
         this.client.on('error', (err: Error) => {
-            log.debug(`Socket错误: ${err.message}`);
+            log.debug(`Socket error: ${err.message}`);
             if (this.isRunning) {
                 this.stop();
             }
@@ -51,7 +51,7 @@ export class DiscoveryClient {
      */
     public async start(): Promise<void> {
         if (this.isRunning) {
-            log.debug('服务已经在运行中');
+            log.debug('server has been running');
             return;
         }
 
@@ -60,15 +60,15 @@ export class DiscoveryClient {
 
             this.client.bind(() => {
                 const address = this.client.address();
-                log.debug(`服务已启动，监听端口: ${address.port}`);
+                log.debug(`server has been run,listening port: ${address.port}`);
 
-                // 启用广播
+                // enable broadcast
                 this.client.setBroadcast(true);
 
-                // 立即执行一次查询
+                // research once right now
                 this.sendProbeRequests();
 
-                // 设置定时查询
+                // setting timing research
                 if (this.options.queryInterval > 0) {
                     this.queryInterval = setInterval(() => {
                         if (this.isRunning) {
@@ -85,7 +85,7 @@ export class DiscoveryClient {
     }
 
     /**
-     * 发送 Probe 请求
+     * send Probe request
      */
     private async sendProbeRequests(): Promise<void> {
         if (!this.isRunning) return;
@@ -110,7 +110,7 @@ export class DiscoveryClient {
     }
 
     /**
-     * 创建 Probe 请求 XML
+     * creat Probe request XML
      */
     private createProbeRequest(): string {
         const probeId = uuidv4().toUpperCase();
@@ -123,7 +123,7 @@ export class DiscoveryClient {
     }
 
     /**
-     * 处理设备响应
+     * handles the device response
      */
     private async handleResponse(xmlData: string, rinfo: RemoteInfo): Promise<void> {
         try {
@@ -139,18 +139,18 @@ export class DiscoveryClient {
                     rinfo
                 );
                 device.ipv4Address = rinfo.address;
-                // 检查设备是否已存在
+                // checks if the device already exists.
                 const existingDevice = this.discoveredDevices.get(device.ipv4Address);
 
                 if (!existingDevice) {
                     device.type = "auto";
-                    // 新设备
+                    // new device
                     this.discoveredDevices.set(device.ipv4Address, device);
-                    this.printDeviceInfo(device, '新设备');
+                    this.printDeviceInfo(device, 'new device');
                 } else {
-                    // 更新现有设备（更新时间戳）
+                    // update existing device (update timestamp)
 
-                    log.info(` 设备:${device.ipv4Address} 已存在. 更新设备信息...`);
+                    log.info(` devices:${device.ipv4Address} already exists. update device information...`);
                     existingDevice.lastSeen = new Date();
                     existingDevice.deviceName = device.deviceName;
                     this.discoveredDevices.set(device.ipv4Address, existingDevice);
@@ -158,13 +158,13 @@ export class DiscoveryClient {
             }
         } catch (error) {
             if (error instanceof Error) {
-                log.debug(`解析响应失败: ${error.message}`);
+                log.debug(`failed to parse response: ${error.message}`);
             }
         }
     }
 
     /**
-     * 解析设备信息
+     * parse device information
      */
     private parseDeviceInfo(
         data: ProbeMatchResponse,
@@ -186,21 +186,21 @@ export class DiscoveryClient {
     }
 
     /**
-     * 打印设备信息
+     * print device information
      */
     private printDeviceInfo(device: DiscoveredDevice, prefix: string = ''): void {
         const timeStr = new Date().toLocaleTimeString();
-        log.info(`[${timeStr}] ${prefix} 发现设备: ${device.deviceName}`);
-        log.info(`   IP地址: ${device.ipv4Address}`);
+        log.info(`[${timeStr}] ${prefix} find device: ${device.deviceName}`);
+        log.info(`   IP address: ${device.ipv4Address}`);
         log.info(`   uuid: ${device.uuid}`);
         log.info(`   httpPort: ${device.httpPort}`);
         log.info(`   httpsPort: ${device.httpsPort}`);
-        log.info(`   软件版本: ${device.softwareVersion}`);
-        log.info(`   获取时间: ${device.responseTime}`);
+        log.info(`   software vision: ${device.softwareVersion}`);
+        log.info(`   the time got: ${device.responseTime}`);
     }
 
     /**
-     * 停止服务
+     * end serve
      */
     public stop(): void {
         if (!this.isRunning) {
@@ -209,27 +209,26 @@ export class DiscoveryClient {
 
         this.isRunning = false;
 
-        // 清除定时器
         if (this.queryInterval) {
             clearInterval(this.queryInterval);
             this.queryInterval = undefined;
         }
 
-        // 关闭socket
+        // close socket
         this.client.close();
 
-        log.info('发现服务已停止');
+        log.info('found serve has been paused');
     }
 
     /**
-     * 手动触发一次设备查询
+     * manually trigger a device query
      */
     public queryNow(): void {
         if (this.isRunning) {
-            log.info('手动触发设备查询...');
+            log.info('handle to trigger the query of device...');
             this.sendProbeRequests();
         } else {
-            log.debug('发现服务未启动，无法查询');
+            log.debug('found serve has not been enabled,cannot query');
         }
     }
 
@@ -254,7 +253,7 @@ export class DiscoveryClient {
     }
 
     /**
-     * 获取设备列表
+     * get device list
      */
     public getDevices(): DiscoveredDeviceResponse[] {
         // log.info(Array.from(this.discoveredDevices.values()))
@@ -281,16 +280,10 @@ export class DiscoveryClient {
         return devices;
     }
 
-    /**
-     * 获取设备
-     */
     public getDevice(ip: string): DiscoveredDeviceResponse | undefined {
         return this.discoveredDevices.get(ip);
     }
 
-    /**
-     * 修改设备
-     */
     public setDevice(data: DiscoveredDeviceResponse) {
         let device = this.discoveredDevices.get(data.ipv4Address);
         device.login = data.login;
@@ -336,14 +329,14 @@ export class DiscoveryClient {
                 device.session = undefined;
                 device.access_token = undefined;
                 device.enableHttps = false;
-                // 发生错误时，清除定时器修改登录状态
+                // if error happened,clear the interval to fix the login status
                 this.clearKeepAlive(device);
-                log.info(`[KeepAlive]-------------------------------------------- ${device.ipv4Address} 失败，已清除登录状态`);
+                log.info(`[KeepAlive]-------------------------------------------- ${device.ipv4Address} failed,has cleared the status of login`);
             }
         }, 60_000)
     }
     /**
-     * 清除keepalive定时器
+     * clear keepalive interval
      * @param device 
      */
     private clearKeepAlive(device: DiscoveredDevice) {
@@ -353,43 +346,36 @@ export class DiscoveryClient {
         clearInterval(device.keepAliveTimer);
         device.keepAliveTimer = null;
     }
-    /**
-     * 获取设备数量
-     */
+
     public getDeviceCount(): number {
         return this.discoveredDevices.size;
     }
-    /**
-     * 清除设备
-     */
+
     public clearDevice(ip: string) {
         let device = this.discoveredDevices.get(ip);
         this.clearKeepAlive(device);
         this.discoveredDevices.delete(ip);
     }
 
-    /**
-     * 清除所有设备（重置列表）
-     */
+
     public clearDevices(): void {
         const count = this.discoveredDevices.size;
         this.discoveredDevices.clear();
-        log.info(`已清除所有设备，共 ${count} 台`);
+        log.info(`has cleared all the devices, the total is ${count}`);
     }
 
     /**
-     * 设置离线设备（超过指定时间未响应）
+     * set offline devices (no response after specified time)
      */
     public setOfflineDevices(timeoutMs: number = 60000) {
         const now = Date.now();
-        // 将 Map 转换为数组，然后使用 forEach 遍历
         Array.from(this.discoveredDevices.entries()).forEach(([ip, device]) => {
             if (device.type != "auto") {
                 return;
             }
             const lastSeenTime = device.lastSeen ? device.lastSeen.getTime() : device.responseTime.getTime();
             if (now - lastSeenTime > timeoutMs) {
-                log.info(`设置离线设备: ${device.deviceName} (${device.ipv4Address})`);
+                log.info(`setting offline devices: ${device.deviceName} (${device.ipv4Address})`);
                 device.enabled = false;
             }
         });
@@ -397,7 +383,7 @@ export class DiscoveryClient {
     }
 
     /**
-     * 导出设备列表为 JSON 格式
+     * export device list as json format
      */
     public exportToJSON(): string {
         return JSON.stringify({
@@ -408,34 +394,32 @@ export class DiscoveryClient {
         }, null, 2);
     }
 
-    /**
-     * 延迟函数
-     */
+
     private delay(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     /**
-     * 事件发射器
+     * event emitter
      */
     private emitDeviceAdded(device: DiscoveredDevice): void {
-        // 添加自定义事件处理
+        // add custom event handler
     }
 
 
     private emitDeviceRemoved(device: DiscoveredDevice): void {
-        // 删除自定义事件
+        // delete custom event
     }
 
     /**
-     * 检查服务是否运行
+     * check if service is running
      */
     public isDiscovering(): boolean {
         return this.isRunning;
     }
 
     /**
-     * 获取最后查询时间
+     * get the last time to query
      */
     public getLastQueryTime(): Date {
         return new Date(this.lastQueryTime);
@@ -446,19 +430,19 @@ export function GetDiscoveryClient() {
     const client = new DiscoveryClient({
         broadcastAddress: '255.255.255.255',
         port: 37121,
-        queryInterval: 15000, // 每15秒查询一次
+        queryInterval: 15000,
     });
 
     try {
-        // 启动发现服务
+        // enable the serve of founding
         client.start();
-        // 定期更新离线设备（例如每分钟清理一次）
+        // periodically update offline devices (e.g., cleanup once per minute)
         setInterval(() => {
-            client.setOfflineDevices(120000); // 2分钟未响应视为离线
+            client.setOfflineDevices(120000); // considered offline if unresponsive for 2 minutes
         }, 60000);
 
     } catch (error) {
-        log.debug('启动失败:', error);
+        log.debug('failed to enable:', error);
         client.stop();
     }
 

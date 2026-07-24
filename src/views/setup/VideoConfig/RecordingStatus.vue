@@ -15,7 +15,7 @@ const store = useStore();
 const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 const root = ref<string>('')
 
-const filterText = ref<string>('') // 搜索输入框的内容
+const filterText = ref<string>('')
 const tableData = ref<NodeItem[]>([])
 const total = ref<number>(0)
 // const nodeId = ref<string>('')
@@ -122,7 +122,7 @@ const devimage = (row: NodeItem) => {
   } else {
     titlecol = '#000';
   }
-  // 先销毁旧实例
+
   const oldChart = echarts.getInstanceByDom(pieId);
   if (oldChart) {
     oldChart.dispose();
@@ -220,33 +220,27 @@ const Back = () => {
 
 const selectChange = () => {}
 
-// 计算盘总容量和可用容量
+// calculate total disk capacity and available capacity
 const CalculateCapacity = (value: number) => {
   if (value) {
-    // 是不是小于1GB, 
     if ((value / 1024) < 1) {
       return (value / 1024).toFixed(1) + "GB";
     } else if ((value / 1024) > 1000) {
-      // 是不是大于1000GB, 
       return (value / 1024 / 1024).toFixed(0) + "TB";
     } else {
       return (value / 1024).toFixed(0) + "GB";
     }
   }
 }
-// 毫秒如果大于等于1秒则转为秒
 const CalculateTime = (value: number) => {
   if (value === 0) return { time: 0, unit: 'ms' };
   if (value >= 1000) {
-    // 转换为秒
     return { time: (value / 1000).toFixed(3), unit: 's' };
   } else {
-    // 转换为毫秒
     return { time: value.toFixed(3), unit: 'ms' };
   }
 }
 
-// kb超过1024转为Mb
 const CalculateStorage = (value: number) => {
   if (value == 0) return 0;
   if (value) {
@@ -299,7 +293,7 @@ onUnmounted(() => {
         </template>
       </el-table-column>
     </el-table>
-    <!-- 详情页面 -->
+    <!-- detail page -->
     <div v-if="detailVisible" class="recording-status-detail">
       <div class="bread-header">
         <el-breadcrumb :separator-icon="ArrowRight">

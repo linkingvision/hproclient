@@ -90,8 +90,8 @@ const addFileTreeRef = ref();
 
 const addHandleCheck = (data: any, info: any) => {
   const currentKey = data.devPartitionId;
-  addTreeRef.value.setCheckedKeys([]);  // 先取消所有节点的选中
-  addTreeRef.value.setCheckedKeys([currentKey]) // 再仅选中当前节点
+  addTreeRef.value.setCheckedKeys([]);
+  addTreeRef.value.setCheckedKeys([currentKey])
   addForm.value.devPartitionId = currentKey;
   addForm.value.devPartitionName = data.devPartitionName;
 }
@@ -103,7 +103,6 @@ const filterMethod = (query: string, node: any) => {
 }
 const addFileHandleCheck = () => {
   const checkedNodes = addFileTreeRef.value.getCheckedNodes();
-  // console.log('选中的File节点 =>', checkedNodes)
   let url = '';
   let name = '';
   checkedNodes.forEach((item: any) => {
@@ -156,7 +155,7 @@ const DevFile = async () => {
     const srcGroup: any = { children: [] };
     if (!result) return;
     for (let i = 0; i < result.length; i++) {
-      srcGroup.Url = '视频列表';
+      srcGroup.Url = 'video list';
       srcGroup.id = i;
       let url = {
         Url: result[i],
@@ -376,8 +375,8 @@ const filterMethod3 = (query: string, node: any) => {
 }
 const editHandleCheck = (data: any, info: any) => {
   const currentKey = data.devPartitionId;
-  editTreeRef.value.setCheckedKeys([]);  // 先取消所有节点的选中
-  editTreeRef.value.setCheckedKeys([currentKey]) // 再仅选中当前节点
+  editTreeRef.value.setCheckedKeys([]);
+  editTreeRef.value.setCheckedKeys([currentKey])
   editForm.value.devPartitionId = currentKey;
   editForm.value.devPartitionName = data.devPartitionName;
 }
@@ -386,7 +385,6 @@ const onQueryChanged4 = () => {
 }
 const editFileHandleCheck = () => {
   const checkedNodes = editFileTreeRef.value.getCheckedNodes();
-  // console.log('选中的File节点 =>', checkedNodes)
   let url = '';
   let name = '';
   checkedNodes.forEach((item: any) => {
@@ -643,7 +641,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="device-sdk">
-    <!-- 添加表单 -->
     <div v-if="addVisiable && !editVisiable" class="add-device">
       <div class="bread-header">
         <el-breadcrumb :separator-icon="ArrowRight">
@@ -772,7 +769,7 @@ onBeforeUnmount(() => {
         </el-form-item>
       </el-form>
     </div>
-    <!-- 编辑表单 -->
+    
     <div v-if="!addVisiable && editVisiable" class="edit-device">
       <div class="bread-header">
         <el-breadcrumb :separator-icon="ArrowRight">

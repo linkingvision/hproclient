@@ -16,7 +16,7 @@ export const GetDeviceListApi = (root: string, access_token: string) => http({
   }
 })
 
-// 获取设备根目录
+// get the device root 
 export const GetDevPartitionApi = (root: string, access_token: string) => http({
   url: root + '/uapi/v1/DevPartition/List?pageSize=100000',
   method: 'GET',
@@ -25,7 +25,7 @@ export const GetDevPartitionApi = (root: string, access_token: string) => http({
   }
 })
 
-// 获取视频文件
+// get the video files
 export const GetDevFileApi = (root: string, access_token: string) => http({
   url: root + '/uapi/v1/Device/DevFileList',
   method: 'GET',

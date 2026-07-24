@@ -20,28 +20,28 @@ const avatar = ref<any>();
 const acronym = ref<any>();
 const background = ref<any>()
 
-const liveviewrtc = ref<string>(store.liveviewrtc);   // 存放store中的默认值
-const liveviewrtc1 = ref<string>(store.liveviewrtc1); // 存放store中的默认值
-const watermark = ref<string>('watermark')            // 存放store中的默认值
-const watermarkEnable = ref<boolean>(false)           // 存放store中的默认值 
-const rtcEngine = ref<string>('v1')                   // 存放store中的默认值
-const devicemarktoggle = ref<boolean>(false); // 存放store中的默认值
-const elqualitytoggle = ref<boolean>(false);     // 存放store中的默认值
+const liveviewrtc = ref<string>(store.liveviewrtc);
+const liveviewrtc1 = ref<string>(store.liveviewrtc1);
+const watermark = ref<string>('watermark')
+const watermarkEnable = ref<boolean>(false)
+const rtcEngine = ref<string>('v1')
+const devicemarktoggle = ref<boolean>(false);
+const elqualitytoggle = ref<boolean>(false);      
 const WebclientAutoLogoutTime = ref<string>('180')
-const WebclientAutoLogoutTimeEnable = ref<boolean>(false);  // 存放store中的默认值
+const WebclientAutoLogoutTimeEnable = ref<boolean>(false);   
 const websocketDecoder = ref<string>('H264 H265')
 const rtcDecoder = ref<string>('H264')
-const keepAspectRatio = ref<boolean>(false)   // 存放store中的默认值
+const keepAspectRatio = ref<boolean>(false)    
 const VideoBackground = ref<number>(2)  
-const color = ref<string>('#000000'); // 存放store中的默认值
+const color = ref<string>('#000000');  
 const mapCluster = ref<boolean>(false);
-const CascadeLoadingLevel = ref<string>('3'); // 存放store中的默认值
-const DefaultStorage = ref<string>('CentralStorage'); // 存放store中的默认值
-const DefaultView = ref<number>(1); // 存放store中的默认值
+const CascadeLoadingLevel = ref<string>('3');  
+const DefaultStorage = ref<string>('CentralStorage');  
+const DefaultView = ref<number>(1);  
 const DefaultMap = ref<string>('');
 const partitionType = ref<string>('');
-const RBufferTime = ref<number>(0); // 存放store中的默认值
-const H264CpuDecode = ref<boolean>(true); // 存放store中的默认值
+const RBufferTime = ref<number>(0);  
+const H264CpuDecode = ref<boolean>(true);  
 
 
 const ProtocolOptions = [{
@@ -126,7 +126,7 @@ const viewOptions = [{
 }]
 
 
-// 获取用户头像
+// get user avatar
 const userList = async () => {
   if (!site.value || !site.value.access_token || !site.value.username) return;
   const res = await GetUsernameApi(root.value, site.value.access_token, site.value.username)
@@ -140,7 +140,7 @@ const userList = async () => {
   }
 }
 
-// 获取用户配置
+// get user configuration
 const userConfig = async () => {
   if (!site.value || !site.value.access_token) return;
   const res = await GetUserConfigApi(root.value, site.value.access_token)
@@ -284,14 +284,14 @@ onMounted(() => {
             <el-option v-for="item in ProtocolOptions" :key="item.value" :value="item.value" :label="item.label"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item v-if="liveviewrtc == 'WS2'" :label="'缓存时间'">
+        <el-form-item v-if="liveviewrtc == 'WS2'" :label="'Cache Duration'">
           <el-input v-model="RBufferTime" style="width: 414px;">
             <template #suffix>
               <span>minutes</span>
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item v-if="liveviewrtc == 'WS2'" :label="'H264 CPU解码'">
+        <el-form-item v-if="liveviewrtc == 'WS2'" :label="'H264 CPU Decoding'">
           <el-switch v-model="H264CpuDecode"></el-switch>
         </el-form-item>
         <el-form-item label="Watermark">

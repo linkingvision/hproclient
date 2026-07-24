@@ -20,13 +20,13 @@ export const useSiteInfo = defineStore('siteStore', () => {
     function updateSiteName(ip: string, name: string) {
         siteDevices.value = siteDevices.value.map(item => {
             if (item.ipv4Address === ip) {
-                return { ...item, deviceName: name }; // 创建新对象
+                return { ...item, deviceName: name }; // creat new Object
             }
             return item;
         });
     }
 
-    // 监听 localStorage 变化
+    // listen localStorage
     const storageKey = 'siteStore';
     const handleStorageChange = (event: StorageEvent): void => {
         // console.log('handleStorageChange =>', event.newValue)
@@ -40,12 +40,9 @@ export const useSiteInfo = defineStore('siteStore', () => {
             }
         }
     }
-    // 启动监听
     const startListening = (): void => {
         window.addEventListener('storage', handleStorageChange)
     }
-
-    // 停止监听
     const stopListening = (): void => {
         window.removeEventListener('storage', handleStorageChange)
     }

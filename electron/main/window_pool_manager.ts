@@ -31,11 +31,11 @@ class WindowPoolManager {
         width: 800,
         height: 600,
         frame: false,
-        show: false, // 窗口默认隐藏
+        show: false,
         hasShadow: false,
-        transparent: true, // 窗口透明
-        focusable: true,  // 保证窗口可以获得焦点
-        icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+        transparent: true,
+        focusable: true,
+        icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
         webPreferences: {
           devTools: true,
           preload: this.preload,
@@ -43,9 +43,8 @@ class WindowPoolManager {
         },
       };
 
-      // Mac平台特殊配置
       if (process.platform === 'darwin') {
-        windowOptions.acceptFirstMouse = true; // 允许第一次点击就激活窗口
+        windowOptions.acceptFirstMouse = true;
         windowOptions.skipTaskbar = false;
       }
 
@@ -86,7 +85,7 @@ class WindowPoolManager {
       this.initPool();
     }
 
-    log.info(`[WindowPool] 总窗口池: ${poolsArray.length}, 活跃窗口数量: ${activeCount}`);
+    log.info(`[WindowPool] total window poll: ${poolsArray.length}, active window number: ${activeCount}`);
     return win;
   }
 
@@ -112,10 +111,10 @@ class WindowPoolManager {
     if (!windowPool) {
       return;
     }
-    //获取当前窗口的子窗口
+    // get the children of current window
     let win_children = windowPool.window.getChildWindows()
     if (win_children) {
-      //逐个关闭子窗口
+      // close children one by one
       win_children.forEach(child => {
         child.close()
       });

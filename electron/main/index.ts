@@ -10,16 +10,16 @@ import log from 'electron-log';
 import http from '../http';
 const DiscoveryClient = GetDiscoveryClient()
 
-// 示例：每30秒打印一次设备列表
+// example: print device list every 30 seconds
 setInterval(() => {
   const devices = DiscoveryClient.getDevices();
-  log.info(`[site] 当前在线设备: ${devices.length} 台`);
+  log.info(`[site] the total online devices online new: ${devices.length} `);
 
   if (devices.length > 0) {
     devices.forEach((device, index) => {
       const lastSeen = device.lastSeen || device.responseTime;
       const secondsAgo = Math.floor((Date.now() - lastSeen.getTime()) / 1000);
-      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - 更新于${secondsAgo}秒前`);
+      log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - has been updated before ${secondsAgo} seconds`);
     });
   }
 }, 30000);
@@ -67,12 +67,12 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
   let sidebarWin = new BrowserWindow({
     title: "Hpro client sidebar",
     frame: false,
-    show: false, // 窗口默认隐藏
-    // alwaysOnTop: true, // 保持在最顶层
-    focusable: true,  // 保证窗口可以获得焦点
-    transparent: true, // 窗口透明
-    resizable: false, // 禁止调整窗
-    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+    show: false, //  the window default hidden
+    // alwaysOnTop: true, // keep on the top
+    focusable: true,  // promise the window can get focuse
+    transparent: true, 
+    resizable: false, // banned to fix the window
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // set the iconfont path
     parent: parentWin,
     webPreferences: {
       preload,
@@ -96,7 +96,6 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     //   type: "Sidebar",
     // }
 
-    // 主动测试向渲染器推送消息
     // mainWin?.webContents.send('main-process-message', message)
   })
   sidebarWin.on('blur', () => {
@@ -104,17 +103,17 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
   })
 };
 
-// header 更多设置窗口
+// header the more setting windows
 // let headerMoreWin: BrowserWindow | null = null;
 async function createHeaderMoreWindow(parentWin: BrowserWindow) {
   const headerMoreWin = new BrowserWindow({
     title: 'HPro Client Header More',
     frame: false,
     show: false,
-    focusable: true,  // 保证窗口可以获得焦点
-    transparent: true, // 窗口透明
-    resizable: false, // 禁止调整窗
-    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+    focusable: true,  
+    transparent: true, 
+    resizable: false, 
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     parent: parentWin,
     webPreferences: {
       preload,
@@ -137,10 +136,10 @@ async function createAboutWindow(parentWin: BrowserWindow) {
     title: 'HPro Client About',
     frame: false,
     show: false,
-    focusable: true,  // 保证窗口可以获得焦点
-    transparent: true, // 窗口透明
-    resizable: false, // 禁止调整窗
-    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+    focusable: true,
+    transparent: true,
+    resizable: false,
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     parent: parentWin,
     webPreferences: {
       preload,
@@ -158,24 +157,24 @@ async function createAboutWindow(parentWin: BrowserWindow) {
   aboutWin.setAlwaysOnTop(true);
 }
 
-//主窗口
+//main window
 async function createWindow(childPath: string) {
   const windowOptions: BrowserWindowConstructorOptions = {
     title: "Hpro client main",
     width: 800,
     height: 600,
     frame: false,
-    show: false, // 窗口默认隐藏
-    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+    show: false,
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     webPreferences: {
       preload,
       nodeIntegration: false,
     },
   };
 
-  // Mac平台特殊配置
+  // special configuration of Mac platform
   if (process.platform === 'darwin') {
-    windowOptions.acceptFirstMouse = true; // 允许第一次点击就激活窗口
+    windowOptions.acceptFirstMouse = true; // admit activate the window at first
     windowOptions.skipTaskbar = false;
   }
 
@@ -183,14 +182,14 @@ async function createWindow(childPath: string) {
   if (VITE_DEV_SERVER_URL) {
     mainWin.webContents.openDevTools()
     mainWin.loadURL(VITE_DEV_SERVER_URL)
-    // Open devTool if the app is not packaged
+    // open devTool if the app is not packaged
   } else {
     mainWin.loadFile(indexHtml)
   }
 
   mainWinArray.set(mainWin.webContents.id, mainWin)
 
-  //网页加载完成事件
+  // the event about the web has been loaded
   mainWin.webContents.on('did-finish-load', () => {
     var message = {
       type: "tabs",
@@ -198,11 +197,10 @@ async function createWindow(childPath: string) {
         path: childPath,
       }
     }
-    // 主动测试向渲染器推送消息
     mainWin?.webContents.send('main-process-message', message)
   })
 
-  // 使用浏览器而不是应用程序打开所有链接
+  // open all links via browser instead of app
   mainWin.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
@@ -214,12 +212,12 @@ async function createWindow(childPath: string) {
     createSidebarWindow(mainWin)
     createHeaderMoreWindow(mainWin)
     createAboutWindow(mainWin)
-    //全屏模式 
+    //fullscreen mode
     if (!mainWin.isMaximized()) {
       mainWin.maximize();
     }
     
-    // Mac平台特殊处理：确保主窗口获得焦点
+    // special handling for Mac platform: Ensure the main window gains focus
     if (process.platform === 'darwin') {
       setTimeout(() => {
         mainWin.focus();
@@ -261,17 +259,17 @@ async function createWindow(childPath: string) {
   function setChildrenBounds() {
     let win_children = mainWin.getChildWindows()
     if (win_children) {
-      let clientBounds = mainWin.getContentBounds();  // 获取内容区域的边界
+      let clientBounds = mainWin.getContentBounds();  // get bounds of content area
       win_children.forEach(child => {
         if (child.getTitle() == "Hpro client sidebar") {
-          // 更新子窗口的位置，使其跟随主窗口
+          // update child window position to follow main window
           child.setBounds({ x: clientBounds.x, y: clientBounds.y, width: 250, height: clientBounds.height });
         }else if (child.getTitle() == 'HPro Client Header More') {
           child.setBounds({ x: 0, y: 0, width: 270, height: 170 });
         } else if (child.getTitle() == 'HPro Client About') {
           child.setBounds({ x: 10, y: 10, width: 530, height: 326 })
         } else {
-          // 更新子窗口的位置，使其跟随主窗口
+          // update child window position to follow main window
           child.setBounds({ x: clientBounds.x + 1, y: clientBounds.y + 40, width: clientBounds.width - 2, height: clientBounds.height - 41 });
         }
       });
@@ -279,7 +277,7 @@ async function createWindow(childPath: string) {
   }
 };
 
-//启动页logo画面
+// splash screen logo
 const splashScreen = () => {
   logo_win = new BrowserWindow({
     title: "Hpro client logo",
@@ -288,10 +286,10 @@ const splashScreen = () => {
     frame: false,
     show: false,
     // transparent: true,
-    // alwaysOnTop: true, // 保证启动图像在最前面
-    focusable: true,  // 保证窗口可以获得焦点
-    resizable: false, // 禁止调整窗
-    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'), // 设置图标路径
+    // alwaysOnTop: true, 
+    focusable: true,
+    resizable: false,
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
 
     webPreferences: {
       devTools: false,
@@ -317,16 +315,16 @@ const splashScreen = () => {
 };
 
 
-//当 Electron 完成初始化并准备创建浏览器窗口时
+// when Electron finishes initialization and is ready to create browser windows
 app.whenReady().then(splashScreen);
 
-//当所有浏览器窗口都关闭时
+// when all browser windows are closed
 app.on('window-all-closed', () => {
   mainWinArray = new Map<number, BrowserWindow>();
   if (process.platform !== 'darwin') app.quit()
 });
 
-// //用户双击应用图标再次启动时触发
+// triggered when user double-clicks app icon to relaunch
 // app.on('second-instance', () => {
 //   if (mainWin) {
 //     // Focus on the main window if the user tried to open another
@@ -335,7 +333,7 @@ app.on('window-all-closed', () => {
 //   }
 // });
 
-//在 macOS 上点击 Dock 图标重新激活应用时
+// triggered when clicking dock icon to reactivate app on macos
 app.on('activate', () => {
   const allWindows = BrowserWindow.getAllWindows()
   if (allWindows.length) {
@@ -344,25 +342,22 @@ app.on('activate', () => {
     createWindow("SiteLogin")
   }
 });
-// 监听 before-quit 事件（在退出应用前触发）
 app.on('before-quit', (event) => {
-  console.log('应用即将退出');
+  console.log('app about to quit');
 });
 
-// 监听 will-quit 事件（在退出应用时触发）
 app.on('will-quit', (event) => {
-  console.log('应用正在退出');
+  console.log('app is quitting');
 });
 
-//接收最小化命令
 ipcMain.on('window-min', function (event) {
-  // 通过 WebContents 找到对应的 BrowserWindow
+  // find corresponding browserwindow via webcontents
   const senderWindow = BrowserWindow.fromWebContents(event.sender);
   senderWindow.minimize()
 });
-//接收最大化命令
+// receive the order of maximizing
 ipcMain.on('window-max', function (event) {
-  // 通过 WebContents 找到对应的 BrowserWindow
+  // find corresponding browserwindow via webcontents
   const senderWindow = BrowserWindow.fromWebContents(event.sender);
   if (senderWindow.isMaximized()) {
     senderWindow.unmaximize()
@@ -370,30 +365,30 @@ ipcMain.on('window-max', function (event) {
     senderWindow.maximize()
   }
 });
-//接收关闭命令
+// receive the order of closing
 ipcMain.on('window-close', function (event) {
-  //获取当前窗口
+
   const win = BrowserWindow.fromWebContents(event.sender);
 
-  //获取当前窗口的子窗口
+
   let win_children = win.getChildWindows()
   if (win_children) {
-    //逐个关闭子窗口
+    //close the children window one by one
     win_children.forEach(child => {
       winManager.closeWindow(child.id);
     });
   }
   win.close()
 })
-//接收关闭标签命令
+// receive the order of closing tab
 ipcMain.on('window-tabs-close', function (event, id) {
-  //关闭此标签
+  //close this tab
   winManager.closeWindow(id);
 })
-//接收sidebar导航栏显示消息
+//receive sidebar navigation display messages
 ipcMain.on('sidebar-show', function (event, id) {
   const sender = event.sender;
-  //  通过 WebContents 找到点击的 BrowserWindow
+  // find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
   const sidebarWindows = win.getChildWindows().find(win => {
     const title = win.getTitle()
@@ -403,13 +398,13 @@ ipcMain.on('sidebar-show', function (event, id) {
   sidebarWindows?.show();
 })
 
-// Mac平台焦点修复：专门处理header窗口焦点问题
+// mac focus fix: handle header window focus issues exclusively
 ipcMain.on('mac-focus-fix', function (event) {
   if (process.platform === 'darwin') {
     const sender = event.sender;
     const win = BrowserWindow.fromWebContents(sender);
     
-    // 强制激活应用并聚焦窗口
+    // force activate app and focus window
     app.focus({ steal: true });
     setTimeout(() => {
       win.focus();
@@ -418,7 +413,7 @@ ipcMain.on('mac-focus-fix', function (event) {
   }
 })
 
-//发送给所有窗口站点信息
+// send to all window the information about site
 ipcMain.on('get-site-device', function (event, uuid) {
   const devices = DiscoveryClient.getDevices();
 
@@ -433,44 +428,44 @@ ipcMain.on('get-site-device', function (event, uuid) {
   });
 })
 
-//站点登录保存信息
+// save the information when the site has logined
 ipcMain.handle('site-device-login', function (event, data) {
   DiscoveryClient.setDevice(data);
 })
-//获取站点信息
+// get the information of sites
 ipcMain.handle('get-site-device', async (event) => {
   const devices = DiscoveryClient.getDevices();
   return devices
 });
-//删除站点
+// delete a site
 ipcMain.handle('delete-site-device', function (event, ipv4Address) {
   DiscoveryClient.clearDevice(ipv4Address)
   const devices = DiscoveryClient.getDevices();
   return devices
 })
 
-//添加站点
+// add a site
 ipcMain.handle('add-site-device', function (event, data) {
   DiscoveryClient.addDevice(data)
   const devices = DiscoveryClient.getDevices();
   return devices
 })
-//切换标签
+//shift tab
 ipcMain.on('switch-tabs', function (event, data) {
   const sender = event.sender;
-  //  通过 WebContents 找到点击的 BrowserWindow
+  // find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
   let win_children = win.getChildWindows();
   if (win_children) {
     win_children.forEach(child => {
       if (child.id == data) {
         child.show();
-        // Mac平台特殊处理：确保窗口获得焦点
+        // mac special handling: ensure window gains focus
         if (process.platform === 'darwin') {
-          // 延迟聚焦，确保窗口完全显示后再聚焦
+          // delay focus: focus window after fully displayed
           setTimeout(() => {
             child.focus();
-            // 如果仍然无法聚焦，尝试激活应用
+            // attempt to activate app if focus still fails
             if (!child.isFocused()) {
               app.focus({ steal: true });
               child.focus();
@@ -483,22 +478,21 @@ ipcMain.on('switch-tabs', function (event, data) {
     });
   }
 })
-//打开新的窗口
+//open the new window
 ipcMain.on('open-new-win', (event, arg) => {
   createWindow("View")
 });
-//添加新的标签页
+// add the new tab
 ipcMain.handle('open-win-tabs', (event, arg) => {
   const newWin = winManager.openWindow().window;
   newWin.resizable = false;
   const sender = event.sender;
-  // 通过 WebContents 找到对应的 BrowserWindow
+  // find the clicked BrowserWindow by WebContents
   const senderWindow = BrowserWindow.fromWebContents(sender);
   if (!senderWindow) {
     return null;
   };
-  let clientBounds = senderWindow.getContentBounds();  // 获取内容区域的边界
-  // 设置新窗口的大小边界
+  let clientBounds = senderWindow.getContentBounds();
   newWin.setBounds({ x: clientBounds.x + 1, y: clientBounds.y + 40, width: clientBounds.width - 2, height: clientBounds.height - 41 });
   newWin.setParentWindow(senderWindow);
   let routerPath = arg.path;
@@ -509,7 +503,6 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
     newWin.loadFile(indexHtml, { hash: routerPath })
   };
 
-  //   //网页加载完成事件
   // mainWin.webContents.on('did-finish-load', () => {
   //   var message = {
   //     type: "tabs",
@@ -517,13 +510,12 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
   //       path: childPath,
   //     }
   //   }
-  //   // 主动测试向渲染器推送消息
   //   mainWin?.webContents.send('main-process-message', message)
   // })
 
   newWin.once('ready-to-show', () => {
     newWin.show();
-    // Mac平台特殊处理：确保新窗口获得焦点
+    //mac special handling: ensure window gains focus
     // if (process.platform === 'darwin') {
     //   setTimeout(() => {
     //     newWin.focus();
@@ -535,7 +527,7 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
     // }
   })
   newWin.on('show', () => {
-    // Mac平台特殊处理：确保新窗口获得焦点
+    // mac special handling: ensure window gains focus
     if (process.platform === 'darwin') {
         newWin.focus();
     }
@@ -545,28 +537,29 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
 });
 
 
-// 接收 SideBar 信息, 切换页面
+// receive SideBar message, tab page
 ipcMain.on('sidebar-switch-tab', async (event, data) => {
+  console.log('[sidebar-switch-tab] receive data ----------------:', data);
   const sender = event.sender;
-  // 通过 WebContents 找到对应的 BrowserWindow
+  //find the current BrowserWindow by WebContents
   const senderWindow = BrowserWindow.fromWebContents(sender);
   const mainWin = senderWindow.getParentWindow()
   // mainWinArray.get('header')?.webContents.send('header-switch-tab', data)
   mainWin?.webContents.send('header-switch-tab', data)
 })
 
-// 页面中操作打开新页面
+// open the new Page in current page
 ipcMain.on('open-new-tab', async (event, arg) => {
   const newWin = winManager.openWindow().window;
   newWin.resizable = false;
   const sender = event.sender;
-  // 通过 WebContents 找到对应的 BrowserWindow
+  // find the current BrowserWindow by WebContents
   const senderWindow = BrowserWindow.fromWebContents(sender).getParentWindow();
   if (!senderWindow) {
     return null;
   };
-  let clientBounds = senderWindow.getContentBounds();  // 获取内容区域的边界
-  // 设置新窗口的大小边界
+  let clientBounds = senderWindow.getContentBounds();
+  // set the new window of boundary
   newWin.setBounds({
     x: clientBounds.x + 1,
     y: clientBounds.y + 40,
@@ -583,16 +576,16 @@ ipcMain.on('open-new-tab', async (event, arg) => {
   };
 
 
-  // 通知 header
+  // notice header
   senderWindow.webContents.send('create-new-tab', { ...arg.data, id: newWin.id, type: arg.type })
 
   newWin.once('ready-to-show', () => {
     newWin.show();
-    // Mac平台特殊处理：确保新窗口获得焦点
+    // Mac platform：ensure focusing the new window
     // if (process.platform === 'darwin') {
     //   setTimeout(() => {
     //     newWin.focus();
-    //     // 确保父窗口也能正常响应焦点
+    //     // ensure the father can response the focus
     //     if (senderWindow && !senderWindow.isFocused()) {
     //       senderWindow.focus();
     //     }
@@ -600,7 +593,7 @@ ipcMain.on('open-new-tab', async (event, arg) => {
     // }
   })
   newWin.on('show', () => {
-    // Mac平台特殊处理：确保新窗口获得焦点
+    // Mac platform：ensure focusing the new window
     if (process.platform === 'darwin') {
         newWin.focus();
     }
@@ -613,7 +606,7 @@ ipcMain.on('open-new-tab', async (event, arg) => {
         ip: arg.ip
       }
     }
-    // 主动测试向渲染器推送消息
+    // push the message by itself
     log.info('[open-new-tab] message =>', message)
     newWin?.webContents.send('main-process-message', message)
   })
@@ -621,7 +614,7 @@ ipcMain.on('open-new-tab', async (event, arg) => {
 
 ipcMain.on('header-drop-down', (event) => {
   const sender = event.sender;
-  //  通过 WebContents 找到点击的 BrowserWindow
+  //  find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
   const headerMoreWin = win.getChildWindows().find(win => {
     const title = win.getTitle()
@@ -634,7 +627,7 @@ ipcMain.on('header-drop-down', (event) => {
 
 ipcMain.on('header-drop-hide', (event) => {
   const sender = event.sender;
-  //  通过 WebContents 找到点击的 BrowserWindow
+  //  find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
   const headerMoreWin = win.getChildWindows().find(win => {
     const title = win.getTitle()
@@ -645,7 +638,7 @@ ipcMain.on('header-drop-hide', (event) => {
 
 ipcMain.on('header-about-show', (event) => {
   const sender = event.sender;
-  //  通过 WebContents 找到点击的 BrowserWindow
+  //  find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
   const parentWin = win.getParentWindow();
   const aboutWin = parentWin.getChildWindows().find(win => {
@@ -654,13 +647,13 @@ ipcMain.on('header-about-show', (event) => {
   })
   if (!aboutWin) return;
 
-  // 先获取父窗口位置和尺寸
+  // get the position and size of parent window frist
   const [parentX, parentY] = parentWin.getPosition();
   const [parentWidth, parentHeight] = parentWin.getSize();
 
   const [width, height] = aboutWin.getSize();
 
-  // 计算居中坐标
+  // curculate the center position
   const x = parentX + Math.round((parentWidth - width) / 2);
   const y = parentY + Math.round((parentHeight - height) / 2);
 

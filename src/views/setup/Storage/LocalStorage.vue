@@ -140,9 +140,9 @@ const goback = (type: string) => {
 }
 
 const findMissingNumber = (arr: number[]) => {
-  if (arr.length == 0) return 1;  // 如果数组为空，返回1
-  const sortedUnique = [...new Set(arr)].sort((a, b) => a-b); // 对数组排序并去重
-  for (let i = 1; i <= sortedUnique.length + 1; i++) {  // 从1开始查找第一个缺失的数字
+  if (arr.length == 0) return 1;
+  const sortedUnique = [...new Set(arr)].sort((a, b) => a-b);
+  for (let i = 1; i <= sortedUnique.length + 1; i++) {
     if (sortedUnique[i - 1] !== i) {
       return i;
     }
@@ -151,11 +151,9 @@ const findMissingNumber = (arr: number[]) => {
 }
 const CalculateCapacity = (value: any) => {
   if (value) {
-    // 是不是小于1GB, 
     if ((value / 1024) < 1) {
       return (value / 1024).toFixed(1) + "GB";
     } else if ((value / 1024) > 1000) {
-      // 是不是大于1000GB, 
       return (value / 1024 / 1024).toFixed(0) + "TB";
     } else {
       return (value / 1024).toFixed(0) + "GB";

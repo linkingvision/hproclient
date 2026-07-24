@@ -192,9 +192,9 @@ const goback = (type: string) => {
 }
 
 const findMissingNumber = (arr: number[]) => {
-  if (arr.length == 0) return 1;  // 如果数组为空，返回1
-  const sortedUnique = [...new Set(arr)].sort((a, b) => a-b); // 对数组排序并去重
-  for (let i = 1; i <= sortedUnique.length + 1; i++) {  // 从1开始查找第一个缺失的数字
+  if (arr.length == 0) return 1;
+  const sortedUnique = [...new Set(arr)].sort((a, b) => a-b);
+  for (let i = 1; i <= sortedUnique.length + 1; i++) {
     if (sortedUnique[i - 1] !== i) {
       return i;
     }
@@ -208,7 +208,6 @@ onMounted(() => {
 
 <template>
   <div class="s3-storage">
-    <!-- 新增 -->
     <div v-if="addVisiable && !editVisiable && !stateVisible" class="add-s3">
       <div class="bread-header">
         <el-breadcrumb :separator-icon="ArrowRight">
@@ -244,7 +243,7 @@ onMounted(() => {
         </el-form-item>
       </el-form>
     </div>
-    <!-- 编辑 -->
+
     <div v-if="editVisiable && !addVisiable && !stateVisible" class="edit-s3">
       <div class="bread-header">
         <el-breadcrumb :separator-icon="ArrowRight">
@@ -291,7 +290,6 @@ onMounted(() => {
       <StorageState router="S3Storage" :objPartitions="activeObjPartitions"></StorageState>
     </div>
 
-    <!-- 主页 -->
     <div v-if="!addVisiable && !editVisiable && !stateVisible" class="s3-header">
       <el-button type="primary" size="small" @click="add">Add</el-button>
     </div>

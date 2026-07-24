@@ -11,10 +11,16 @@ const activeIndex = ref<string>('');
 
 const gotoPage = (page: string) => {
   // router.push(page)
-  if (page == 'sitelogin') {
-    console.log(page)
-    window.ipcRenderer.send('sidebar-switch-tab', page);
-  }
+  // if (page == 'sitelogin') {
+  //   console.log(page)
+  //   window.ipcRenderer.send('sidebar-switch-tab', page);
+  // }
+  console.log(page)
+  window.ipcRenderer.send('sidebar-switch-tab', page);
+  // if (page == 'map') {
+  //   console.log(page)
+  //   window.ipcRenderer.send('sidebar-switch-tab', page);
+  // }
 }
 
 console.log('SideBar')
@@ -36,10 +42,17 @@ onUnmounted(() => {
       class="el-menu-vertical-demo"
       close-on-click-outside
     >
-      <el-menu-item index="/View" @click="() => gotoPage('system')">
-        <i class="iconfont icon-xitong"></i>
-        <span>{{ 'System' }}</span>
-      </el-menu-item>
+      <el-menu-item-group title="Monitoring">
+        <el-menu-item index="/View" @click="() => gotoPage('view')">
+          <i class="iconfont icon-xitong"></i>
+          <span>{{ 'View' }}</span>
+        </el-menu-item>
+        <el-menu-item index="/Map" @click="() => gotoPage('map')">
+          <i class="iconfont icon-ditu"></i>
+          <span>{{ 'Map' }}</span>
+        </el-menu-item>
+      </el-menu-item-group>
+
       <el-menu-item index="/SiteLogin" @click="() => gotoPage('sitelogin')">
         <i class="iconfont icon-dengru"></i>
         <span>{{ 'Site Login' }}</span>

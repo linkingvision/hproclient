@@ -3,8 +3,8 @@ import { ref } from 'vue';
 
 export const useStore = defineStore('mainStore', () => {
   // 多语言类型
-  const lang = ref<"en" | "zhchs" | "zhcht" | "pt" | "es">('en');
-  function changeLang(newLang: "en" | "zhchs" | "zhcht" | "pt" | "es") {
+  const lang = ref<"en" | "zhcht" | "pt" | "es">('en');
+  function changeLang(newLang: "en"  | "zhcht" | "pt" | "es") {
     console.log('changeLang =>', newLang)
     lang.value = newLang;
   }

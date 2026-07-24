@@ -4,7 +4,7 @@ interface GetPartitionParams {
   root: string,
   access_token: string,
 }
-// 获取设备分区
+// get device partition
 export const GetPartitionApi = (params: GetPartitionParams) => http({
   url: params.root + '/uapi/v1/DevPartition/List?pageSize=100000',
   method: 'GET',
@@ -39,7 +39,7 @@ export const RecEnableApi = (params: RecEnableParams) => http({
   }
 })
 
-// 获取设备有录像日期
+// get the date which device has recordings
 interface GetRecordCalendarParams {
   token: string;
   year: string | number;
@@ -55,7 +55,7 @@ export const GetRecordCalendar = (params: GetRecordCalendarParams) => http({
   }
 })
 
-// 开启 / 关闭手动录像
+// enable / disable manual recording
 interface SetRecEnableParams {
   root: string;
   access_token: string;
@@ -85,7 +85,7 @@ export const GetInformationDataApi = (root: string, access_token: string, token:
   }
 })
 
-// 获取设备云台预置位查询
+// get device ptz preset positions
 export const GetPresetsApi = (root: string, access_token: string, token: string) => http({
   url: root + '/uapi/v1/GetPresets?token=' + token,
   method: 'GET',
@@ -94,7 +94,7 @@ export const GetPresetsApi = (root: string, access_token: string, token: string)
   }
 })
 
-// 云台预置位跳转
+// preset jump
 export const PresetJumpApi = (root: string, access_token: string, ptzToken: string, presetToken: string, speed: number) => http({
   url: root + '/uapi/v1/Ptz?token=' + ptzToken + '&action=preset&preset=' + presetToken + '&speed=' + speed,
   method: 'GET',
@@ -103,7 +103,7 @@ export const PresetJumpApi = (root: string, access_token: string, ptzToken: stri
   }
 })
 
-// 云台预置位设置
+// set ptz preset position
 export const SetPresetApi = (root: string, access_token: string, ptzToken: string, inputVal: string, presetToken: string) => http({
   url: root + '/uapi/v1/SetPreset?token=' + ptzToken + '&presetname=' + inputVal + '&presettoken=' + presetToken,
   method: 'GET',
@@ -112,7 +112,7 @@ export const SetPresetApi = (root: string, access_token: string, ptzToken: strin
   }
 })
 
-// 云台控制
+// ptz control
 export const PtzApi = (root: string, access_token: string, ptzToken: string, action: string, speed: number) => http({
   url: root + '/uapi/v1/Ptz?token=' + ptzToken + '&action=' + action + '&speed=' + speed,
   method: 'GET',

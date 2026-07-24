@@ -6,7 +6,7 @@ let basicRoutes: RouteRecordRaw[] = [
         path: '/',
         name: 'Container',
         component: () => import('../components/Container.vue'),
-        redirect: '/Home',  // 添加此行，确保根路径自动重定向到 /home
+        redirect: '/Home',
         children: [{
             path: '/Home',
             name: 'Home',
@@ -24,7 +24,11 @@ let basicRoutes: RouteRecordRaw[] = [
         path: '/View',
         name: 'View',
         component: () => import('../views/view/View.vue'),
-    }, {
+    },{
+        path:'/Map',
+        name:'Map',
+        component:() => import('../views/map/Map.vue')
+    },{
         path: '/Sidebar',
         name: 'Sidebar',
         component: () => import('../components/Sidebar.vue'),
@@ -124,13 +128,13 @@ let basicRoutes: RouteRecordRaw[] = [
 ]
 
 // app router
-// 创建一个可以被 Vue 应用程序使用的路由实例
+// creat a router example which can be used by vue app
 export const router = createRouter({
-    // 创建一个 hash 历史记录。
+    // creat hash history record
     history: createWebHashHistory('/'),
-    // 应该添加到路由的初始路由列表。
+    // should add to the initial router list
     routes: basicRoutes as unknown as RouteRecordRaw[],
-    // 是否应该禁止尾部斜杠。默认为假
+    //  weather ban the /, the default is false
     strict: true,
     scrollBehavior: () => ({ left: 0, top: 0 }),
 });

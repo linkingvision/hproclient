@@ -75,7 +75,7 @@ const submit = async () => {
   const res = await SetMetaStorageApi(root.value, site.value.access_token, params);
   if (res.status == 200 && res.data.code == 0) {
     ElMessage({
-      message: '修改成功',
+      message: 'fixed success',
       type: 'success',
       duration: 2000
     })
@@ -86,11 +86,9 @@ const submit = async () => {
 
 const CalculateCapacity = (value: any) => {
   if (value) {
-    // 是不是小于1GB, 
     if ((value / 1024) < 1) {
       return (value / 1024).toFixed(1) + "GB";
     } else if ((value / 1024) > 1000) {
-      // 是不是大于1000GB, 
       return (value / 1024 / 1024).toFixed(0) + "TB";
     } else {
       return (value / 1024).toFixed(0) + "GB";
