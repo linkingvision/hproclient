@@ -1315,6 +1315,19 @@ const resume = () => {
   isPlaying.value = !isPlaying.value;
 }
 
+const handleNodeClick = (data:any,node:any) => {
+  console.log('=== handleNodeClick ===');
+    console.log('data.type:', data.type);
+    console.log('data.data?.ipv4Address:', data.data?.ipv4Address);
+    console.log('当前 selectedSite:', siteStore.selectedSite?.ipv4Address);
+  if(data.type === 'site'){
+    const siteInfo = data.data;
+    console.log('准备选中站点:', siteInfo.ipv4Address);
+    siteStore.setSelectedSite(siteInfo);
+    console.log('选中后 selectedSite:', siteStore.selectedSite?.ipv4Address);
+  }
+}
+
 onMounted(() => {
   getDeviceList();
   initGridLayout();
@@ -1437,6 +1450,7 @@ const onRightClick = (e: MouseEvent, data: any) => {
             :default-expanded-keys="expandedKeys"
             node-key="id"
             :height="770"
+            @node-click="handleNodeClick"
           >
             <template #default="{ node, data }">
               <div

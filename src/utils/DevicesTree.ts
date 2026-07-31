@@ -6,6 +6,7 @@ import { usePlayStore } from '../store/play';
 import { useStore } from '../store';
 import { GetAccessDeviceV2, GetCascadeHierarchyV2, GetDeviceChannelsV2, GetDevPartitionFilterNodeV2, GetDevPartitionItem, GetDevPartitionListWithPage, GetGroupListV2, GetLogicPartitionListV2, GetMapListV2, GetRoleListV2, GetSysConfigItemV2, GetUserConfigItemV2, PostDeviceChannelsAll } from '../api/map';
 import { DiscoveredDevice } from '../types/site-info';
+import { useSelectedSite } from '../store/sites';
 
 const siteStore = useSiteInfo()
 const playStore = usePlayStore();
@@ -43,7 +44,7 @@ const getDeviceInfo = (): { target: DiscoveredDevice | null; access_token: strin
     if (!devices || devices.length === 0) {
         return { target: null, access_token: '', session: '', root: '', username: '' };
     }
-    const target = devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
+    const target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
     if (!target) {
         return { target: null, access_token: '', session: '', root: '', username: '' };
     }

@@ -20,7 +20,7 @@ const getDeviceInfo = (): { target: DiscoveredDevice | null; access_token: strin
     if (!devices || devices.length === 0) {
         return { target: null, access_token: '', session: '', root: '', username: '' };
     }
-    const target = devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
+    const target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
     if (!target) {
         return { target: null, access_token: '', session: '', root: '', username: '' };
     }

@@ -87,9 +87,8 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     sidebarWin.loadFile(indexHtml, { hash: "Sidebar" })
   }
 
-  //网页加载完成事件
   sidebarWin.webContents.on('did-finish-load', () => {
-    let clientBounds = parentWin.getContentBounds();  // 获取内容区域的边界
+    let clientBounds = parentWin.getContentBounds();
     sidebarWin.setBounds({ x: clientBounds.x, y: clientBounds.y, width: 250, height: clientBounds.height });
     sidebarWin.setParentWindow(parentWin);
     // var message = {
@@ -303,12 +302,12 @@ const splashScreen = () => {
     logo_win.loadFile(indexHtml, { hash: "Logo" })
   }
   logo_win.once('ready-to-show', () => {
-    logo_win.show()
+    logo_win?.show()
   })
   winManager = new WindowPoolManager({ VITE_DEV_SERVER_URL, indexHtml, preload });
   const logoout = () => {
     createWindow("SiteLogin")
-    logo_win.close();
+    logo_win?.close();
   }
   setTimeout(logoout, 3000);
 
@@ -353,16 +352,16 @@ app.on('will-quit', (event) => {
 ipcMain.on('window-min', function (event) {
   // find corresponding browserwindow via webcontents
   const senderWindow = BrowserWindow.fromWebContents(event.sender);
-  senderWindow.minimize()
+  senderWindow?.minimize()
 });
 // receive the order of maximizing
 ipcMain.on('window-max', function (event) {
   // find corresponding browserwindow via webcontents
   const senderWindow = BrowserWindow.fromWebContents(event.sender);
-  if (senderWindow.isMaximized()) {
-    senderWindow.unmaximize()
+  if (senderWindow?.isMaximized()) {
+    senderWindow?.unmaximize()
   } else {
-    senderWindow.maximize()
+    senderWindow?.maximize()
   }
 });
 // receive the order of closing
@@ -371,14 +370,14 @@ ipcMain.on('window-close', function (event) {
   const win = BrowserWindow.fromWebContents(event.sender);
 
 
-  let win_children = win.getChildWindows()
+  let win_children = win?.getChildWindows()
   if (win_children) {
     //close the children window one by one
     win_children.forEach(child => {
-      winManager.closeWindow(child.id);
+      winManager?.closeWindow(child.id);
     });
   }
-  win.close()
+  win?.close()
 })
 // receive the order of closing tab
 ipcMain.on('window-tabs-close', function (event, id) {
@@ -390,7 +389,7 @@ ipcMain.on('sidebar-show', function (event, id) {
   const sender = event.sender;
   // find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
-  const sidebarWindows = win.getChildWindows().find(win => {
+  const sidebarWindows = win?.getChildWindows().find(win => {
     const title = win.getTitle()
     return title === "Hpro client sidebar";
   })
@@ -407,8 +406,8 @@ ipcMain.on('mac-focus-fix', function (event) {
     // force activate app and focus window
     app.focus({ steal: true });
     setTimeout(() => {
-      win.focus();
-      win.moveTop();
+      win?.focus();
+      win?.moveTop();
     }, 10);
   }
 })
@@ -455,7 +454,7 @@ ipcMain.on('switch-tabs', function (event, data) {
   const sender = event.sender;
   // find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
-  let win_children = win.getChildWindows();
+  let win_children = win?.getChildWindows();
   if (win_children) {
     win_children.forEach(child => {
       if (child.id == data) {
@@ -484,7 +483,7 @@ ipcMain.on('open-new-win', (event, arg) => {
 });
 // add the new tab
 ipcMain.handle('open-win-tabs', (event, arg) => {
-  const newWin = winManager.openWindow().window;
+  const newWin = winManager?.openWindow().window;
   newWin.resizable = false;
   const sender = event.sender;
   // find the clicked BrowserWindow by WebContents
@@ -493,14 +492,14 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
     return null;
   };
   let clientBounds = senderWindow.getContentBounds();
-  newWin.setBounds({ x: clientBounds.x + 1, y: clientBounds.y + 40, width: clientBounds.width - 2, height: clientBounds.height - 41 });
-  newWin.setParentWindow(senderWindow);
+  newWin?.setBounds({ x: clientBounds.x + 1, y: clientBounds.y + 40, width: clientBounds.width - 2, height: clientBounds.height - 41 });
+  newWin?.setParentWindow(senderWindow);
   let routerPath = arg.path;
   if (VITE_DEV_SERVER_URL) {
     // newWin.webContents.openDevTools()
-    newWin.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`)
+    newWin?.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`)
   } else {
-    newWin.loadFile(indexHtml, { hash: routerPath })
+    newWin?.loadFile(indexHtml, { hash: routerPath })
   };
 
   // mainWin.webContents.on('did-finish-load', () => {
@@ -513,33 +512,31 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
   //   mainWin?.webContents.send('main-process-message', message)
   // })
 
-  newWin.once('ready-to-show', () => {
+  newWin?.once('ready-to-show', () => {
     newWin.show();
     //mac special handling: ensure window gains focus
     // if (process.platform === 'darwin') {
     //   setTimeout(() => {
     //     newWin.focus();
-    //     // 确保父窗口也能正常响应焦点
     //     if (senderWindow && !senderWindow.isFocused()) {
     //       senderWindow.focus();
     //     }
     //   }, 50);
     // }
   })
-  newWin.on('show', () => {
+  newWin?.on('show', () => {
     // mac special handling: ensure window gains focus
     if (process.platform === 'darwin') {
         newWin.focus();
     }
   })
-  arg.id = newWin.id;
+  arg.id = newWin?.id;
   return arg;
 });
 
 
 // receive SideBar message, tab page
 ipcMain.on('sidebar-switch-tab', async (event, data) => {
-  console.log('[sidebar-switch-tab] receive data ----------------:', data);
   const sender = event.sender;
   //find the current BrowserWindow by WebContents
   const senderWindow = BrowserWindow.fromWebContents(sender);
@@ -550,36 +547,36 @@ ipcMain.on('sidebar-switch-tab', async (event, data) => {
 
 // open the new Page in current page
 ipcMain.on('open-new-tab', async (event, arg) => {
-  const newWin = winManager.openWindow().window;
+  const newWin = winManager?.openWindow().window;
   newWin.resizable = false;
   const sender = event.sender;
   // find the current BrowserWindow by WebContents
-  const senderWindow = BrowserWindow.fromWebContents(sender).getParentWindow();
+  const senderWindow = BrowserWindow.fromWebContents(sender)?.getParentWindow();
   if (!senderWindow) {
     return null;
   };
   let clientBounds = senderWindow.getContentBounds();
   // set the new window of boundary
-  newWin.setBounds({
+  newWin?.setBounds({
     x: clientBounds.x + 1,
     y: clientBounds.y + 40,
     width: clientBounds.width - 2,
     height: clientBounds.height - 41
   });
-  newWin.setParentWindow(senderWindow);
+  newWin?.setParentWindow(senderWindow);
   let routerPath = arg.data.path;
   if (VITE_DEV_SERVER_URL) {
     // newWin.webContents.openDevTools()
-    newWin.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`)
+    newWin?.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`)
   } else {
-    newWin.loadFile(indexHtml, { hash: routerPath })
+    newWin?.loadFile(indexHtml, { hash: routerPath })
   };
 
 
   // notice header
-  senderWindow.webContents.send('create-new-tab', { ...arg.data, id: newWin.id, type: arg.type })
+  senderWindow.webContents.send('create-new-tab', { ...arg.data, id: newWin?.id, type: arg.type })
 
-  newWin.once('ready-to-show', () => {
+  newWin?.once('ready-to-show', () => {
     newWin.show();
     // Mac platform：ensure focusing the new window
     // if (process.platform === 'darwin') {
@@ -592,14 +589,14 @@ ipcMain.on('open-new-tab', async (event, arg) => {
     //   }, 50);
     // }
   })
-  newWin.on('show', () => {
+  newWin?.on('show', () => {
     // Mac platform：ensure focusing the new window
     if (process.platform === 'darwin') {
         newWin.focus();
     }
   })
   
-  newWin.webContents.on('did-finish-load', () => {
+  newWin?.webContents.on('did-finish-load', () => {
     const message = {
       type: arg.type,
       data: {
@@ -616,13 +613,13 @@ ipcMain.on('header-drop-down', (event) => {
   const sender = event.sender;
   //  find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
-  const headerMoreWin = win.getChildWindows().find(win => {
+  const headerMoreWin = win?.getChildWindows().find(win => {
     const title = win.getTitle()
     return title === "HPro Client Header More";
   })
   headerMoreWin?.show();
   const point = screen.getCursorScreenPoint();
-  headerMoreWin.setPosition(point.x - 200, point.y + 22);
+  headerMoreWin?.setPosition(point.x - 200, point.y + 22);
 })
 
 ipcMain.on('header-drop-hide', (event) => {
@@ -640,8 +637,8 @@ ipcMain.on('header-about-show', (event) => {
   const sender = event.sender;
   //  find the clicked BrowserWindow by WebContents
   const win = BrowserWindow.fromWebContents(sender);
-  const parentWin = win.getParentWindow();
-  const aboutWin = parentWin.getChildWindows().find(win => {
+  const parentWin = win?.getParentWindow();
+  const aboutWin = parentWin?.getChildWindows().find(win => {
     const title = win.getTitle()
     return title === "HPro Client About";
   })

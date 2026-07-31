@@ -18,8 +18,8 @@ export interface DiscoveredDevice {
     uuid: string;
     deviceName: string;
     ipv4Address: string;
-    httpPort: number;
-    httpsPort: number;
+    httpPort: number | string;
+    httpsPort: number | string;
     softwareVersion: string;
     responseTime: Date;
     enabled: boolean;

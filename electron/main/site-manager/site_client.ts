@@ -286,15 +286,17 @@ export class DiscoveryClient {
 
     public setDevice(data: DiscoveredDeviceResponse) {
         let device = this.discoveredDevices.get(data.ipv4Address);
-        device.login = data.login;
-        device.session = data.session;
-        device.access_token = data.access_token;
-        device.enableHttps = data.enableHttps;
-        device.username = data.username;
-        if (data.login) {
-            this.keepAlive(device);
-        } else {
-            this.clearKeepAlive(device);
+        if(device){
+            device.login = data.login;
+            device.session = data.session;
+            device.access_token = data.access_token;
+            device.enableHttps = data.enableHttps;
+            device.username = data.username;
+            if (data.login) {
+                this.keepAlive(device);
+            } else {
+                this.clearKeepAlive(device);
+            }
         }
     }
     /**

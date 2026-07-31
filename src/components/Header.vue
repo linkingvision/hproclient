@@ -45,6 +45,7 @@ import DeviceImg from './favicos/DeviceManagement.png'
 import VideoImg from './favicos/VideoConfiguration.png'
 import General from './favicos/General.png'
 import MapImg from './favicos/map.png'
+import { ElMessage } from "element-plus";
 
 const store = useStore()
 
@@ -85,6 +86,7 @@ const tabs = reactive<any[]>([])
 
 const isDragging = ref(false);
 let viewIndex = 0
+let mapIndex = 0
 const setTabRef = (el: any) => {
     tabRef.value = el
 }
@@ -101,6 +103,14 @@ const handleClick = (event: Event, data: any) => {
 const handleRemove = (data: any, index: any) => {
     // console.log("[tabs remove==========",tabs , data);
     // if (tabs.length > 1) {
+    const viewTabs = tabs.filter(tab => tab.path === 'View' || tab.label.includes('View'));
+    
+    if (viewTabs.length < 1 && (data.path === 'View' || data.label.includes('View'))) {
+        ElMessage.info('Cannot close the last View tab');
+        // ✅ 手动把 tab 加回去
+        tabRef.value.addTab(data);
+        return;
+    }
         window.ipcRenderer.send("window-tabs-close", data.id);
     // }
 };
@@ -149,6 +159,46 @@ let closeWindow = () => {
 
 const openSiteLogin = async(_: any, data: any) => {
     console.log('header-switch-tab =>', data, tabs)
+    if(data === 'view'){
+        viewIndex++;
+        const arg = {
+            label:'View' + viewIndex,
+            key:'view' + viewIndex,
+            path:'View'
+        }
+        const msg = await window.ipcRenderer.invoke('open-win-tabs',arg);
+        if(msg){
+            tabRef.value.addTab({
+                label:'View' + viewIndex,
+                key:'view' + viewIndex,
+                path:'View',
+                id:msg.id,
+                favico:viewImg
+            });
+            tab.value = 'view' + viewIndex;
+        }
+        return;
+    }
+    if(data === 'map'){
+        mapIndex++;
+        const arg = {
+            label:'Map' + mapIndex,
+            key:'map' + mapIndex,
+            path:'Map'
+        }
+        const msg = await window.ipcRenderer.invoke('open-win-tabs',arg);
+        if(msg){
+            tabRef.value.addTab({
+                label:'Map' + mapIndex,
+                key:'map' + mapIndex,
+                path:'Map',
+                id:msg.id,
+                favico:MapImg
+            });
+            tab.value = 'map' + mapIndex;
+        }
+        return;
+    }
     const tabItem = tabs.find(item => item.key == data);
     if (tabItem) {
         window.ipcRenderer.send('switch-tabs', tabItem.id)

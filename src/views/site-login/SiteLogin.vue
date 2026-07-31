@@ -44,7 +44,7 @@ const getSiteDevice = async () => {
     window.ipcRenderer.invoke('get-site-device').then((msg: Array<DiscoveredDevice>) => {
         console.log('Received get-site-device data:', msg);
         // siteDevice.value = msg
-        siteStore.setSiteDevices(msg)
+        siteStore.mergeSiteDevices(msg)
     })
 }
 const timerRef = ref<NodeJS.Timeout | null>(null);
@@ -84,33 +84,28 @@ const addSite = async () => {
     const res = await GetSiteApi(root)
     if (res.status == 200 && res.data.code == 200) {
         const result = res.data.result;
-        window.ipcRenderer.invoke('add-site-device', {
-            uuid: result.UUID,
-            deviceName: result.DeviceName,
-            ipv4Address: addform.ip,
-            httpPort: result.HttpPort,
-            httpsPort: result.HttpsPort,
-            softwareVersion: result.SoftwareVersion,
-        }).then((msg: Array<DiscoveredDevice>) => {
-            // siteDevice.value = msg;
-            siteStore.setSiteDevices(msg)
-        })
+        window.ipcRenderer.invoke('add-site-device',{
+            uuid:result.UUID,
+            deviceName:result.DeviceName,
+            ipv4Address:addform.ip,
+            httpPort:String(result.HttpPort),
+            httpsPort:String(result.HttpsPort),
+            softwareVersion:result.SoftwareVersion,
+        });
         addVisible.value = false;
+        getSiteDevice()
     }
 }
 const delSite = (ip: string) => {
     checkedSites.value = {};
-    console.log('Del Site => ', ip)
-    window.ipcRenderer.invoke('delete-site-device', ip).then((msg: Array<DiscoveredDevice>) => {
-        console.log('Received get-site-device data:', msg);
-        // siteDevice.value = msg
-        siteStore.setSiteDevices(msg)
-    })
+    
+    window.ipcRenderer.invoke('delete-site-device', ip).then(() => {
+        siteStore.removeSiteDevice(ip);
+        window.ipcRenderer.send('get-site-device');
+    });
 }
 
 const LogIn = async () => {
-    // console.log(checkedSites.value)
-    // return
     if (!checkedSites.value || !checkedSites.value.ipv4Address) return;
     const params = {
         username: form.username,
@@ -214,10 +209,22 @@ const randomWord = (num:number) => {
     return str;
 }
 // start timer when component is mounted
-onMounted(() => {
+onMounted(async() => {
     // account and password for querying records
     const usersStr = localStorage.getItem('users');
     rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];
+
+    const manuals = siteStore.restoreManualDevices();
+    for(const device of manuals){
+        await window.ipcRenderer.invoke('add-site-device',{
+            uuid:device.uuid,
+            deviceName:device.deviceName,
+            ipv4Address:device.ipv4Address,
+            httpPort:device.httpPort,
+            httpsPort:device.httpsPort,
+            softwareVersion:device.softwareVersion,
+        })
+    }
 
     getSiteDevice();
     timerRef.value = setInterval(() => {

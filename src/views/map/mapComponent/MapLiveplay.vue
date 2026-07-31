@@ -118,13 +118,57 @@ const isPlaying = ref(false);
 const channelDataArray = ref<any[]>([]);
 const rowUnit = ref<any[]>([]);
 const rowUnit1 = ref<any[]>([]);
+const expandedCellId = ref<string|null>(null);
+const selectedCellId = ref<string|null>(null);
+const linkLoading = ref(false);
+const AccessDoorData = ref<any>(null);
+const mapList = ref<any[]>([]);
+
+const computeCellStyle = (cell:any,layoutType:string) => {
+  const borderWidth = "1px";
+  const selectedBorderWidth = "2px";
+  if(expandedCellId.value === cell.id){
+    return {
+      position:"absolute",
+      top:0,
+      left:0,
+      width:"100%",
+      height:"100%",
+      margin:"0",
+      boxSizing:"border-box",
+      border:"none",
+      zIndex:10,
+    }
+  }
+
+  const [totalRows,totalCows] = layoutType.split("|").map(Number);
+  const cellWidth = 100/totalCows;
+  const cellHeight = 100 / totalRows;
+  const isSelected = selectedCellId.value === cell.id;
+
+  const style : any = {
+    position:"absolute",
+    top:`${(cell.rowStart - 1) * cellHeight}%`,
+    left:`${(cell.colStart - 1) * cellWidth}%`,
+    width:`calc(${cellWidth * (cell.colEnd - cell.colStart)}% - ${borderWidth})`,
+    height: `calc(${cellHeight * (cell.rowEnd - cell.rowStart)}% - ${borderWidth})`,
+    boxSizing: "border-box",
+    border: `${borderWidth} solid transparent`,
+    zIndex: 1,
+  }
+
+  if(isSelected){
+    style.border = `${selectedBorderWidth} solid #F44336`;
+  }
+  return style;
+}
 
 const getDeviceInfo = (): { target: DiscoveredDevice | null; access_token: string; session: string; root: string;} => {
     const devices = siteStore.siteDevices;
     if (!devices || devices.length === 0) {
         return { target: null, access_token: '', session: '', root: '' };
     }
-    const target = devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
+    const target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
     if (!target) {
         return { target: null, access_token: '', session: '', root: '' };
     }
@@ -227,9 +271,10 @@ const initMap = (data:any,container:HTMLElement) => {
   },300);
 }
 
-const PlayVideo = (token:string,streamprofile:string,label:string,name:string,uniqueId?:string) => {
+const PlayVideo = (token:string | number,streamprofile:string,label:string | null,name:string | null,uniqueId?:string | null) => {
   CloseVideo();
   const videoEl = document.getElementById(props.videoid) as HTMLVideoElement;
+  const tokenStr = String(token)
   if(!videoEl)return;
 
   videoEl.style.display = 'block';
@@ -246,7 +291,7 @@ const PlayVideo = (token:string,streamprofile:string,label:string,name:string,un
     host:host,
     streamprofile:streamprofile || 'main',
     rootpath:'/',
-    token:token,
+    token:tokenStr,
     hlsver:'v1',
     session:session,
     consolelog:'true',
@@ -739,11 +784,17 @@ const EventCB = async(data:any) => {
         }
         if(closer){
           closer.onclick=function(){
+            const key = props.hsid + data.cameraToken;
+            const win = window as any;
+            if(win.h5handlerMapVideo && win.h5handlerMapVideo[key]){
+              win.h5handlerMapVideo[key].disconnect();
+              delete win.h5handlerMapVideo[key];
+            }
             const videoId = data.cameraToken + 'Mapvideoid' + map.value?.ol_uid;
             const videoEl = document.getElementById(videoId);
             if(videoEl){
-              videoEl.poster = '';
-              videoEl.load();
+              (videoEl as HTMLVideoElement).poster = '';
+              (videoEl as HTMLVideoElement).load();
             }
             if(map.value && overlay.value[props.hsid + data.cameraToken]){
               map.value.removeOverlay(overlay.value[props.hsid + data.cameraToken]);
@@ -772,9 +823,9 @@ const EventCB = async(data:any) => {
         };
         const player = new H5sPlayerWS2(conf);
         player.connect();
-
-        if(!window.h5handlerMapVideo)window.h5handlerMapVideo = {};
-        window.h5handlerMapVideo[props.hsid + data.cameraToken] = player;
+        const win = window as any;
+        if(!win.h5handlerMapVideo)win.h5handlerMapVideo = {};
+        win.h5handlerMapVideo[props.hsid + data.cameraToken] = player;
       }
     }catch(err){
       console.error(err)
@@ -783,22 +834,394 @@ const EventCB = async(data:any) => {
   }
   if(data.type === 'view' && data.callbackType === "Update"){
     const uniqueId = props.hsid + data.cameraToken;
+    if(overlay.value[uniqueId]) return;
 
+    const divs = document.createElement("div");
+    divs.innerHTML = `
+      <div id="${uniqueId}" class="ol-popup1" style="width:600px;height:300px;border-radius:10px;display:block;background:#1a1a1a;">
+        <div id="${uniqueId}-closer" class="ol-popup-closer" style="position:absolute;top:8px;right:8px;z-index:10;width:20px;height:20px;background:rgba(105,105,105,0.7);border-radius:4px;text-align:center;line-height:20px;cursor:pointer;">
+          <a href="#" class="ol-popup-closer-btn" style="text-decoration:none;font-size:14px;color:#fff;">✖</a>
+        </div>
+        <div id="popup-content" class="popup-content" style="width:100%;height:100%;">
+          <div class="liveview_right" id="videoPanel" style="width:100%;height:100%;">
+            <div class="liveview_right_video_hed" style="position:relative;width:100%;height:100%;">
+              <div id="${uniqueId}-grid" style="width:100%;height:100%;position:relative;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.prepend(divs);
+
+    const container = document.getElementById(uniqueId);
+    const closer = document.getElementById(uniqueId + '-closer');
+
+    if(container && map.value){
+      overlay.value[uniqueId] = new Overlay({
+        element:container,
+        autoPan:true,
+        autoPanAnimation:{duration:250}
+      });
+      map.value.addOverlay(overlay.value[uniqueId]);
+      overlay.value[uniqueId].setPosition(data.center);
+    }
+
+    if(closer){
+      closer.onclick = function(){
+        if(map.value && overlay.value[uniqueId]){
+          map.value.removeOverlay(overlay.value[uniqueId]);
+          delete overlay.value[uniqueId];
+        }
+        const el = document.getElementById(uniqueId);
+        if(el) el.style.display = 'none';
+        return false;
+      }
+    }
+
+    await srcview(data.id,uniqueId);
     return;
   }
   if(data.type === 'link' && data.callbackType === "Update"){
+    if(linkLoading.value) return;
+    linkLoading.value = true;
     try{
-     const { access_token, root } = getDeviceInfo();
+      const { access_token, root } = getDeviceInfo();
       const result = await GetMapDetail({root, access_token, mapId: data.id}) as any;
       if(result.status === 200 && result.data?.msg === "Success"){
-        const mapData = result.data.result
+        const mapdata = result.data.result
+        if(mapdata.type){
+          if(map.value){
+            map.value.getLayers().clear();
+          }
+          drawMap.value = null;
+
+          const isStaticMap = await initializeMap(mapdata);
+          isStaticMapOnly.value = isStaticMap;
+
+          if(mapdata.mapId){
+            await MapChannel(mapdata.mapId,map.value,isStaticMap);
+          }else{
+            await MapChannel(mapdata.token,map.value,isStaticMap);
+          }
+
+          rememberPlayMapStatus();
+        }
       }
     }catch(err){
       console.error(err)
+    }finally{
+      linkLoading.value = false;
+    }
+    return;
+  }
+  if(data.type === 'accessDoor' && data.callbackType === "Update"){
+    const key = data.cameraToken;
+
+    if(overlay.value[key]) return;
+    
+    AccessDoorData.value = data;
+    const divs = document.createElement("div");
+    divs.innerHTML = 
+    `
+    <div id="${key}" class="ol-popup2" style="width:112px;height:32px;min-height:31px;border-radius:4px">
+      <div id="popup-content" class="popup-content" style=height:100%>
+        <div class="Map_Popup_content" style="height:100%;display:flex;justify-content:space-around;align-items:center;text-align:center;line-height:32px;font-size:10px">
+          <div id="${key}-openDoor" class="openDoor" style="width:unset;padding:0 20px;height:32px;background:#DAF0FF;border-radius:4px 0px 0px 4px;color:#0399FE;cursor:pointer;white-space:nowrap;">开门</div>
+          <div id="${key}-closeDoor" class="closeDoor" style="width:unset;padding:0 20px;height:32px;background:#FFE9DA;border-radius:0px 4px 4px 0px;color:#FA6400;cursor:pointer;white-space:nowrap;">关门</div>
+        </div>
+      </div>
+    </div>
+    `;
+    document.body.prepend(divs);
+
+    const container = document.getElementById(key);
+    const openDoor = document.getElementById(key + "-openDoor");
+    const closeDoor = document.getElementById(key + "-closeDoor");
+
+    if(container && map.value){
+      overlay.value[key] = new Overlay({
+        element:container,
+        autoPan:true,
+        autoPanAnimation:{duration:250}
+      })
+      map.value.addOverlay(overlay.value[key]);
+      overlay.value[key].setPosition(data.center);
+    }
+
+    if(openDoor){
+      openDoor.onclick = function(){
+        RemoteDoor(true);
+      }
+    }
+
+    if(closeDoor){
+      closeDoor.onclick = function(){
+        RemoteDoor(false);
+      }
     }
     return;
   }
 }
+
+const RemoteDoor = async(isOpen:boolean) => {
+  const data = AccessDoorData.value;
+  if(!data)return;
+  const key = data.cameraToken;
+
+  const DoorDate : any = {
+    doorToken:data.cameraToken,
+    accessToken:data.accessToken,
+  };
+
+  try{
+    const { root } = getDeviceInfo();
+    let url:string;
+    if(isOpen){
+      DoorDate.interval = 30;
+      url = root + "/uapi/v1/AccessDevice/RemoteOpenDoor";
+    }else{
+      url = root + "/uapi/v1/AccessDevice/RemoteCloseDoor";
+    }
+
+    const response = await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(DoorDate)
+    });
+    const result = await response.json();
+
+    if(result.msg === "Success"){
+      if(drawMap.value){
+        const updateData = {
+          id:data.id,
+          longitude: data.center[0],
+          latitude: data.center[1],
+          fillColor: data.cameraType,
+          accesstoken: data.accessToken,
+          cameraToken: data.cameraToken,
+        }
+        drawMap.value.updateCamera(data.cameraType,updateData,isOpen);
+      }
+
+      if(map.value && overlay.value[key]){
+        map.value.removeOverlay(overlay.value[key]);
+        delete overlay.value[key];
+      }
+      const el = document.getElementById(key);
+      if(el) el.remove();
+    }
+  }catch(e){
+    console.log(e)
+  }
+}
+
+const srcview = async (viewId: string, uniqueId: string) => {
+  try {
+    const { access_token, root } = getDeviceInfo();
+    const result = await GetMapDetail({root, access_token, mapId: viewId}) as any;
+    if (result.status === 200 && result.data?.msg === "Success") {
+      const data = result.data.result;
+      
+      let layoutName = '4';
+      if (data.layoutId === 1) layoutName = '1';
+      else if (data.layoutId === 2) layoutName = '3';
+      else if (data.layoutId === 3) layoutName = '13';
+      else if (data.layoutId === 4) layoutName = '16';
+      else if (data.layoutId === 5) layoutName = '25';
+      else if (data.layoutId === 6) layoutName = '7';
+      else if (data.layoutId === 7) layoutName = '4';
+      else if (data.layoutId === 8) layoutName = '4Alt';
+      else if (data.layoutId === 9) layoutName = '6';
+      else if (data.layoutId === 10) layoutName = '9';
+
+      const layoutType = getLayoutType(layoutName);
+      const cells = getLayoutCells(layoutName);
+
+      const gridContainer = document.getElementById(uniqueId + '-grid');
+      if (gridContainer) {
+        gridContainer.innerHTML = '';
+        
+        for (const cell of cells) {
+          const cellDiv = document.createElement('div');
+          cellDiv.className = 'palace videoColor';
+          Object.assign(cellDiv.style, computeCellStyle(cell, layoutType));
+
+          const videoId = uniqueId + '_video_' + cell.id;
+          cellDiv.innerHTML = `
+            <video 
+              class="h5video" 
+              id="${videoId}" 
+              autoplay 
+              webkit-playsinline 
+              playsinline
+              style="width:100%;height:100%;object-fit:fill;"
+            ></video>
+          `;
+          gridContainer.appendChild(cellDiv);
+        }
+      }
+      
+      if (data.viewEntity && data.viewEntity.length > 0) {
+        for (const entity of data.viewEntity) {
+          const position = entity.layoutPosition;
+          const cellId = position.length === 2 ? position[0] + '-' + position[1] : position;
+          const videoId = uniqueId + '_video_' + cellId;
+          
+          PlayVideoToTarget(
+            entity.Channel?.token || entity.token,
+            entity.profile || 'main',
+            entity.Channel?.name || entity.name,
+            videoId,
+            uniqueId
+          );
+        }
+      }
+    }
+  } catch (err) {
+    console.error('load view failed', err);
+  }
+};
+
+const PlayVideoToTarget = (token: string | number, streamprofile: string, name: string, targetVideoId: string, uniqueId: string) => {
+  const tokenStr = String(token);
+  const videoEl = document.getElementById(targetVideoId) as HTMLVideoElement;
+  if (!videoEl) return;
+  
+  const { session, root, target } = getDeviceInfo();
+  const protocol = target?.enableHttps ? 'https' : 'http';
+  const host = target ? `${target.ipv4Address}:${target.enableHttps ? target.httpsPort : target.httpPort}` : '';
+  const conf = {
+    videoid: targetVideoId,
+    protocol: protocol,
+    host: host,
+    streamprofile: streamprofile || 'main',
+    rootpath: '/',
+    token: tokenStr,
+    hlsver: 'v1',
+    session: session,
+    consolelog: 'true',
+    buffersize: 300,
+    h264cpumode: 'false',
+  };
+  
+  const win = window as any;
+  if (!win.h5handlerViewVideo) win.h5handlerViewVideo = {};
+  if (win.h5handlerViewVideo[targetVideoId]) {
+    win.h5handlerViewVideo[targetVideoId].disconnect();
+  }
+  
+  const player = new H5sPlayerWS2(conf);
+  player.connect();
+  win.h5handlerViewVideo[targetVideoId] = player;
+};
+
+const getLayoutType = (name: string): string => {
+  const layouts: Record<string, string> = {
+    '1': '1|1',
+    '3': '3|3',
+    '13': '4|4',
+    '16': '4|4',
+    '25': '5|5',
+    '7': '3|3',
+    '4': '2|2',
+    '4Alt': '3|3',
+    '6': '3|3',
+    '9': '3|3',
+  };
+  return layouts[name] || '2|2';
+};
+
+const getLayoutCells = (name: string): any[] => {
+  const layouts: Record<string, any[]> = {
+    '1': [
+      { id: '1-1', rowStart: 1, rowEnd: 2, colStart: 1, colEnd: 2, merged: true }
+    ],
+    '4': [
+      { id: '1-1', rowStart: 1, rowEnd: 2, colStart: 1, colEnd: 2, merged: false },
+      { id: '1-2', rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3, merged: false },
+      { id: '2-1', rowStart: 2, rowEnd: 3, colStart: 1, colEnd: 2, merged: false },
+      { id: '2-2', rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 3, merged: false },
+    ],
+    '4Alt': [
+      { id: '1-1', rowStart: 1, rowEnd: 3, colStart: 1, colEnd: 4, merged: true },
+      { id: '3-1', rowStart: 3, rowEnd: 4, colStart: 1, colEnd: 2, merged: false },
+      { id: '3-2', rowStart: 3, rowEnd: 4, colStart: 2, colEnd: 3, merged: false },
+      { id: '3-3', rowStart: 3, rowEnd: 4, colStart: 3, colEnd: 4, merged: false },
+    ],
+    '6': [
+      { id: '1-1', rowStart: 1, rowEnd: 3, colStart: 1, colEnd: 3, merged: true },
+      { id: '1-3', rowStart: 1, rowEnd: 2, colStart: 3, colEnd: 4, merged: false },
+      { id: '2-3', rowStart: 2, rowEnd: 3, colStart: 3, colEnd: 4, merged: false },
+      { id: '3-1', rowStart: 3, rowEnd: 4, colStart: 1, colEnd: 2, merged: false },
+      { id: '3-2', rowStart: 3, rowEnd: 4, colStart: 2, colEnd: 3, merged: false },
+      { id: '3-3', rowStart: 3, rowEnd: 4, colStart: 3, colEnd: 4, merged: false },
+    ],
+    '7': [
+      { id: '1-1', rowStart: 1, rowEnd: 4, colStart: 1, colEnd: 2, merged: true },
+      { id: '1-2', rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3, merged: false },
+      { id: '1-3', rowStart: 1, rowEnd: 2, colStart: 3, colEnd: 4, merged: false },
+      { id: '2-2', rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 3, merged: false },
+      { id: '2-3', rowStart: 2, rowEnd: 3, colStart: 3, colEnd: 4, merged: false },
+      { id: '3-2', rowStart: 3, rowEnd: 4, colStart: 2, colEnd: 3, merged: false },
+      { id: '3-3', rowStart: 3, rowEnd: 4, colStart: 3, colEnd: 4, merged: false },
+    ],
+    '9': [
+      { id: '1-1', rowStart: 1, rowEnd: 2, colStart: 1, colEnd: 2, merged: false },
+      { id: '1-2', rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3, merged: false },
+      { id: '1-3', rowStart: 1, rowEnd: 2, colStart: 3, colEnd: 4, merged: false },
+      { id: '2-1', rowStart: 2, rowEnd: 3, colStart: 1, colEnd: 2, merged: false },
+      { id: '2-2', rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 3, merged: false },
+      { id: '2-3', rowStart: 2, rowEnd: 3, colStart: 3, colEnd: 4, merged: false },
+      { id: '3-1', rowStart: 3, rowEnd: 4, colStart: 1, colEnd: 2, merged: false },
+      { id: '3-2', rowStart: 3, rowEnd: 4, colStart: 2, colEnd: 3, merged: false },
+      { id: '3-3', rowStart: 3, rowEnd: 4, colStart: 3, colEnd: 4, merged: false },
+    ],
+    '13': [
+      { id: '1-1', rowStart: 1, rowEnd: 2, colStart: 1, colEnd: 2, merged: false },
+      { id: '1-2', rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3, merged: false },
+      { id: '1-3', rowStart: 1, rowEnd: 2, colStart: 3, colEnd: 4, merged: false },
+      { id: '1-4', rowStart: 1, rowEnd: 2, colStart: 4, colEnd: 5, merged: false },
+      { id: '2-1', rowStart: 2, rowEnd: 3, colStart: 1, colEnd: 2, merged: false },
+      { id: '2-2', rowStart: 2, rowEnd: 4, colStart: 2, colEnd: 4, merged: true },
+      { id: '2-4', rowStart: 2, rowEnd: 3, colStart: 4, colEnd: 5, merged: false },
+      { id: '3-1', rowStart: 3, rowEnd: 4, colStart: 1, colEnd: 2, merged: false },
+      { id: '3-4', rowStart: 3, rowEnd: 4, colStart: 4, colEnd: 5, merged: false },
+      { id: '4-1', rowStart: 4, rowEnd: 5, colStart: 1, colEnd: 2, merged: false },
+      { id: '4-2', rowStart: 4, rowEnd: 5, colStart: 2, colEnd: 3, merged: false },
+      { id: '4-3', rowStart: 4, rowEnd: 5, colStart: 3, colEnd: 4, merged: false },
+      { id: '4-4', rowStart: 4, rowEnd: 5, colStart: 4, colEnd: 5, merged: false },
+    ],
+    '16': [
+      ...Array.from({ length: 16 }, (_, index) => {
+        const row = Math.floor(index / 4) + 1;
+        const col = (index % 4) + 1;
+        return {
+          id: `${row}-${col}`,
+          rowStart: row,
+          rowEnd: row + 1,
+          colStart: col,
+          colEnd: col + 1,
+          merged: false,
+        };
+      }),
+    ],
+    '25': [
+      ...Array.from({ length: 25 }, (_, index) => {
+        const row = Math.floor(index / 5) + 1;
+        const col = (index % 5) + 1;
+        return {
+          id: `${row}-${col}`,
+          rowStart: row,
+          rowEnd: row + 1,
+          colStart: col,
+          colEnd: col + 1,
+          merged: false,
+        };
+      }),
+    ],
+  };
+  return layouts[name] || layouts['4'];
+};
 
 const rememberPlayMapStatus = () => {
   if(!map.value)return;
@@ -1056,6 +1479,22 @@ watch(
       }
       OnlyMapData.value = mapData;
       ViewPlayMap(mapData);
+      return;
+    }
+    if(token.token && token.vid){
+      let targetId = token.vid;
+      if(targetId.startsWith('h')){
+        targetId = 'Maph' + targetId.substring(1);
+      }
+      if(props.hsid === targetId){
+        PlayVideo(
+          token.token,
+          token.streamprofile || 'main',
+          token.label || token.name,
+          token.name,
+          token.vid,
+        )
+      }
     }
   },
   { deep: true, immediate: true }
@@ -1119,6 +1558,16 @@ onBeforeUnmount(()=>{
     overlay.value[key].setPosition(undefined);
   }
   overlay.value = {};
+
+  const win = window as any;
+  if(win.h5handlerViewVideo){
+    for(const key in win.h5handlerViewVideo){
+      if(win.h5handlerViewVideo[key]){
+        win.h5handlerViewVideo[key].disconnect();
+      }
+    }
+    delete win.h5handlerViewVideo;
+  }
 
   const rootInstance = instance?.proxy?.$root as any;
   if(rootInstance?.bus){
@@ -1306,6 +1755,21 @@ defineExpose({
   .ol-popup1 {
     width: 600px;
     height: 300px;
+  }
+
+  .ol-popup2{
+    width:112px;
+    height:32px;
+    min-height:32px;
+    border-radius:4px;
+    .openDoor,.closeDoor{
+      width:unset;
+      padding:0 20px;
+      height:32px;
+      border-radius:4px 0 0 4px;
+      cursor:pointer;
+      white-space:nowrap;
+    }
   }
 }
 </style>
