@@ -30,7 +30,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from "vue";
+import { ref, reactive, onMounted, onUnmounted, watch } from "vue";
 import { Vue3TabsChrome } from "vue3-tabs-chrome";
 import "vue3-tabs-chrome/dist/vue3-tabs-chrome.css";
 import { useStore } from '../store';
@@ -45,6 +45,14 @@ import DeviceImg from './favicos/DeviceManagement.png'
 import VideoImg from './favicos/VideoConfiguration.png'
 import General from './favicos/General.png'
 import MapImg from './favicos/map.png'
+import GridViewImg from './favicos/Grid.png'
+import GridCloudViewImg from './favicos/GridCloudView.png'
+import ClientImg from './favicos/General.png'
+import TextSearchImg from './favicos/TextSearch.png'
+import VideoSliceImg from './favicos/VideoSlice.png'
+import EventSearchImg from './favicos/EventSearch.png'
+import SearchImg from './favicos/Search.png'
+import OperateLogImg from './favicos/OperateLog.png'
 import { ElMessage } from "element-plus";
 
 const store = useStore()
@@ -92,9 +100,11 @@ const setTabRef = (el: any) => {
 }
 
 const sidebarShow = (event: Event) => {
-    // console.log("sidebar-show=========>", event);
-
     window.ipcRenderer.send('sidebar-show')
+}
+const updateViewCount = () => {
+    const viewTabs = tabs.filter(tab => tab.path === 'View' || tab.label?.includes('View'));
+    localStorage.setItem('hproViewCount',String(viewTabs.length));
 }
 const handleClick = (event: Event, data: any) => {
     window.ipcRenderer.send('switch-tabs', data.id)
@@ -107,11 +117,11 @@ const handleRemove = (data: any, index: any) => {
     
     if (viewTabs.length < 1 && (data.path === 'View' || data.label.includes('View'))) {
         ElMessage.info('Cannot close the last View tab');
-        // ✅ 手动把 tab 加回去
         tabRef.value.addTab(data);
         return;
     }
         window.ipcRenderer.send("window-tabs-close", data.id);
+        setTimeout(updateViewCount,100);
     // }
 };
 const handleAdd = () => {
@@ -133,6 +143,7 @@ const handleAdd = () => {
             });
 
             tab.value = msg.key + viewIndex;
+            updateViewCount()
         }
         console.log('header tabs =>', tabs)
     })
@@ -176,6 +187,7 @@ const openSiteLogin = async(_: any, data: any) => {
                 favico:viewImg
             });
             tab.value = 'view' + viewIndex;
+            updateViewCount();
         }
         return;
     }
@@ -225,9 +237,13 @@ const getTabConfig = (key:string) => {
     const configMap:Record<string,{label:string,key:string,path:string}> = {
         'sitelogin':{label:'Site Login',key:'sitelogin',path:'SiteLogin'},
         'view':{label:'View',key:'View',path:'View'},
+        'gridview':{label:'Grid View',key:'GridView',path:'GridView'},
+        'gridcloudview':{label:'Grid Cloud View',key:'GridCloudView',path:'GridCloudView'},
         'map':{label:'Map',key:'map',path:'Map'},
-
-
+        'search':{label:'Search',key:'Search',path:'Search'},
+        // 'textsearch':{label:'Text Search',key:'TextSearch',path:'TextSearch'},
+        // 'videoslice':{label:'Video Slice',key:'VideoSlice',path:'VideoSlice'},
+        'clientconfig':{label:'Client Config',key:'clientconfig',path:'ClientConfig'},
     }
     return configMap[key];
 }
@@ -237,14 +253,21 @@ const getFavico = (key:string) => {
         'sitelogin':LoginImg,
         'view':viewImg,
         'map':MapImg,
-
-
+        'clientconfig':ClientImg,
+        'gridview':GridViewImg,
+        'gridcloudview':GridCloudViewImg,
+        // 'textsearch':TextSearchImg,
+        // 'videoslice':VideoSliceImg,
+        'search':SearchImg,
     }
     return favicoMap[key];
 }
 
 const createTab = async (_: any, data: any) => {
     if (data) {
+        if(data.label.includes('_')){
+           data.label = data.label.replace(/_/g,' ')
+        }
         const newTabData = {
             label: data.label,
             key: data.key,
@@ -254,17 +277,27 @@ const createTab = async (_: any, data: any) => {
         }
         switch(data.type) {
             case 'view': newTabData.favico = viewImg; break;
+            case 'gridview': newTabData.favico = GridViewImg; break;
+            case 'gridcloudview': newTabData.favico = GridCloudViewImg; break;
             case 'setup': newTabData.favico = setupImg; break;
             case "StorageSetting": newTabData.favico = StorageImg; break;
             case 'User': newTabData.favico = UserImg; break;
-            case 'DeviceManagement': newTabData.favico = DeviceImg; break;
+            case 'Device_Management': newTabData.favico = DeviceImg; break;
             case 'VideoConfiguration': newTabData.favico = VideoImg; break;
             case 'General': newTabData.favico = General; break;
             case 'Map': newTabData.favico = MapImg; break;
+            // case 'textsearch': newTabData.favico = TextSearchImg; break;
+            // case 'videoslice': newTabData.favico = VideoSliceImg; break;
+            case 'EventSearch': newTabData.favico = EventSearchImg; break;
+            case 'SystemLog': newTabData.favico = OperateLogImg; break;
+            case 'Search': newTabData.favico = SearchImg; break;
             default: newTabData.favico = ''
         }
         tabRef.value.addTab(newTabData)
         tab.value = data.key;
+        if(data.path === 'View' || data.label?.includes('View')){
+            updateViewCount();
+        }
     }
     console.log('header tabs =>', tabs)
 }
@@ -274,9 +307,14 @@ const DropDown = () => {
     window.ipcRenderer.send('header-drop-down')
 }
 
+watch(tabs, () => {
+    updateViewCount();
+}, { deep: true });
+
 onMounted(() => {
     window.ipcRenderer.on('header-switch-tab', openSiteLogin)
     window.ipcRenderer.on('create-new-tab', createTab)
+    updateViewCount()
 })
 
 onUnmounted(() => {

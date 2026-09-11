@@ -14,9 +14,9 @@ interface TreeNode {
   children?: TreeNode[];
   online?: boolean;
   data: any;
-  isLeaf?: boolean; // 标记是否为叶子节点
-  loaded?: boolean; // 标记是否已加载过子节点
-  isDeviceChannel?: boolean; // 标记是否为设备通道（展开设备后的子节点）
+  isLeaf?: boolean; // mark weather it is leaf node
+  loaded?: boolean; // mark weather it is loaded
+  isDeviceChannel?: boolean; // mark whether it is a device channel (child node after expanding device)
 }
 
 const store = useStore();
@@ -31,10 +31,10 @@ const props = {
   label: 'label',
   children: 'children'
 }
-const expandedKeys = ref<any[]>([])  // 保持所有要默认展开的key
-const treeRef = ref<any>(null)  // 树组件的引用
+const expandedKeys = ref<any[]>([])  // Keep all keys that are expanded by default
+const treeRef = ref<any>(null)
 
-const IsTreeFold = ref(false) // 左侧树状容器 收起/展示
+const IsTreeFold = ref(false)
 const TreeFold = () => {
   IsTreeFold.value = !IsTreeFold.value;
   if (IsTreeFold.value) {
@@ -79,7 +79,19 @@ const getDeviceList = async () => {
           const list = flattenRootNodes(result);
 
           // Load channel data for device nodes - adopt caching and smaller batches
-          const deviceItems = list.filter(item => item.type === 'device' && item.data && item.data.token);
+          // const deviceItems = list.filter(item => item.type === 'device' && item.data && item.data.token);
+          const deviceItems: any[] = [];
+          const collectDevices = (nodes:any[]) => {
+            for(const node of nodes){
+              if(node.type === 'device' && node.data && node.data.token){
+                deviceItems.push(node);
+              }
+              if(node.children && node.children.length > 0){
+                collectDevices(node.children);
+              }
+            }
+          }
+          collectDevices(list);
 
           // Reduce batch size to prevent excessive concurrent requests
           const batchSize = 3;
@@ -344,9 +356,9 @@ const getNodeClass = (node: TreeNode) => {
       classes.push('device-offline');
     }
   }
-  if (node.data.ipv4Address == tempStore.tempIP) {
-    classes.push('site-checked')
-  }
+  // if (node.data.ipv4Address == tempStore.tempIP) {
+  //   classes.push('site-checked')
+  // }
   return classes.join(' ');
 };
 //  get svg icon of recording status
@@ -444,7 +456,7 @@ onUnmounted(() => {
             :props="props"
             :default-expanded-keys="expandedKeys"
             node-key="id"
-            :height="770"
+            :height="997"
             :expand-on-click-node="false"
           >
             <template #default="{ node, data }">

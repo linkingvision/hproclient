@@ -43,16 +43,25 @@ onMounted(() => {
 <template>
   <div class="header-more">
     <div class="options">
-      <div class="header-option" @click="addNewWindow">New</div>
+      <div class="header-option" @click="addNewWindow">
+        <i class="iconfont icon-jia"  style="margin-right: 5px;"></i>
+        <span>New</span>
+      </div>
       <el-popover placement="left" :width="120">
         <template #reference>
-          <div class="header-option">Theme</div>
+          <div class="header-option" style="font-size: 14px;">
+            <span class="iconfont icon-zhuti"  style="margin-right: 5px;"></span>
+            <span>Theme</span>
+          </div>
         </template>
         <div class="theme-options">
           <div class="theme-item" :class="{active: item.value == darkMode}" v-for="item in themeList" :key="item.label" @click="changeDarkMode(item.value)">{{ item.label }}</div>
         </div>
       </el-popover>
-      <div class="header-option" @click="About">About</div>
+      <div class="header-option" @click="About">
+        <span class="iconfont icon-guanyu" style="margin-right: 5px;"></span>
+        <span>About</span>
+      </div>
       <!-- <div class="header-option" @click="Logout">Log out</div> -->
     </div>
   </div>
@@ -77,7 +86,8 @@ onMounted(() => {
       flex: 1;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      padding-left: 20px;
       cursor: pointer;
       &:hover {
         background-color: #555555;

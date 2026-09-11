@@ -6,7 +6,7 @@ const msg = ref("Hpro client Home")
 
 <template>
     <div>
-        <h1>{{ msg }}</h1>
+        <!-- <h1>{{ msg }}</h1> -->
     </div>
 </template>
 

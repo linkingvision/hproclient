@@ -20,7 +20,11 @@ const getDeviceInfo = (): { target: DiscoveredDevice | null; access_token: strin
     if (!devices || devices.length === 0) {
         return { target: null, access_token: '', session: '', root: '', username: '' };
     }
-    const target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
+    let target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
+    if(target && target.login === false){
+      const matched = devices.find(d => d.ipv4Address === target.ipv4Address && d.login === true && d.session);
+      if(matched)target = matched;
+    }
     if (!target) {
         return { target: null, access_token: '', session: '', root: '', username: '' };
     }

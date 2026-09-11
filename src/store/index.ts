@@ -2,21 +2,21 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 export const useStore = defineStore('mainStore', () => {
-  // 多语言类型
+  // multilingual type
   const lang = ref<"en" | "zhcht" | "pt" | "es">('en');
   function changeLang(newLang: "en"  | "zhcht" | "pt" | "es") {
     console.log('changeLang =>', newLang)
     lang.value = newLang;
   }
 
-  // 主题
+  // theme
   type ThemeType = 'darkblue' | 'c-dark-theme' | false
   const darkMode = ref<ThemeType>('c-dark-theme')
   function setDarkMode(value: ThemeType) {
     darkMode.value = value;
   }
 
-  // 侧边栏导航显示/隐藏
+  // show/hide sidebar navigation
   const sidebarShow = ref<boolean>(false)
   function setSidebarShow(flag: boolean) {
     sidebarShow.value = flag;
@@ -32,7 +32,7 @@ export const useStore = defineStore('mainStore', () => {
     liveviewrtc1.value = value;
   }
 
-  // 监听 localStorage 变化
+  // listen localStorage 
   const storageKey = 'mainStore';
   const handleStorageChange = (event: StorageEvent): void => {
     if (event.key === storageKey && event.newValue) {
@@ -48,12 +48,12 @@ export const useStore = defineStore('mainStore', () => {
       }
     }
   }
-  // 启动监听
+  // enable listenning
   const startListening = (): void => {
     window.addEventListener('storage', handleStorageChange)
   }
 
-  // 停止监听
+  // stop listenning
   const stopListening = (): void => {
     window.removeEventListener('storage', handleStorageChange)
   }

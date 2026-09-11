@@ -153,6 +153,7 @@ export class DiscoveryClient {
                     log.info(` devices:${device.ipv4Address} already exists. update device information...`);
                     existingDevice.lastSeen = new Date();
                     existingDevice.deviceName = device.deviceName;
+                    existingDevice.enabled = true;
                     this.discoveredDevices.set(device.ipv4Address, existingDevice);
                 }
             }
@@ -241,10 +242,11 @@ export class DiscoveryClient {
             httpPort: data.httpPort,
             httpsPort: data.httpsPort,
             softwareVersion: data.softwareVersion,
-            enabled: true,
+            enabled: data.enabled ?? true,
             responseTime: new Date(),
             login: false,
             lastSeen: new Date(),
+            enableHttps:data.enableHttps ?? false,
         };
         const existingDevice = this.discoveredDevices.get(device.ipv4Address);
         if (!existingDevice) {
@@ -355,8 +357,11 @@ export class DiscoveryClient {
 
     public clearDevice(ip: string) {
         let device = this.discoveredDevices.get(ip);
-        this.clearKeepAlive(device);
-        this.discoveredDevices.delete(ip);
+        if(device){
+            this.clearKeepAlive(device);
+            this.discoveredDevices.delete(ip); 
+        }
+        
     }
 
 
@@ -364,6 +369,45 @@ export class DiscoveryClient {
         const count = this.discoveredDevices.size;
         this.discoveredDevices.clear();
         log.info(`has cleared all the devices, the total is ${count}`);
+    }
+
+
+    public async probeManualDev():Promise<void>{
+        const manualDev = Array.from(this.discoveredDevices.values()).filter(device => device.type === 'manual');
+        if(manualDev.length === 0)return;
+
+        log.debug(`has probed ${manualDev.length} manual devices`);
+
+        for(const device of manualDev){
+            await this.probeSingleDev(device)
+        }
+    }
+
+    private async probeSingleDev(device:DiscoveredDevice):Promise<void>{
+        const protocol = device.enableHttps ? 'https://' : 'http://';
+        const port = device.enableHttps ? device.httpsPort : device.httpPort;
+        const url = `${protocol}${device.ipv4Address}:${port}/uapi/v1/DiscoverService/Site`;
+        try{
+            const res = await http.get(url,{timeout:3000});
+            if(res.status === 200){
+                const result = res.data.result;
+                device.enabled = true;
+                device.lastSeen = new Date();
+                device.deviceName = result.DeviceName;
+                device.softwareVersion = result.SoftwareVersion;
+                device.uuid = result.UUID;
+                if(result.HttpPort){
+                    device.httpPort = result.HttpPort;
+                }
+                if(result.HttpsPort){
+                    device.httpsPort = result.HttpsPort;
+                }
+            }else{
+                device.enabled = false;
+            }
+        }catch(error){
+            device.enabled = false;
+        }
     }
 
     /**
@@ -441,7 +485,8 @@ export function GetDiscoveryClient() {
         // periodically update offline devices (e.g., cleanup once per minute)
         setInterval(() => {
             client.setOfflineDevices(120000); // considered offline if unresponsive for 2 minutes
-        }, 60000);
+            client.probeManualDev();
+        }, 10000);
 
     } catch (error) {
         log.debug('failed to enable:', error);

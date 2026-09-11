@@ -19,6 +19,12 @@ export const usePlayStore = defineStore('playStore',()=>{
   const devicemarktoggle = ref<string>("false")
   const passwordLength = ref<string>('8')
   const mapCluster = ref<string>('')
+  const CascadeLoadingLevel = ref<any>(0)
+  const isLive = ref(true);
+  const WaitPatrolClose = ref(false);
+  const offVideo = ref<string>('');
+  const role = ref<string>('Administrator');
+  const DefaultView = ref<string>('4');
 
   const liveplay = computed(() => ({
     token: token.value || null,
@@ -76,7 +82,13 @@ export const usePlayStore = defineStore('playStore',()=>{
     EnablePartitionTreeCacheSearch,
     EnableDevPartitionShowDeviceNode,
     mapCluster,
-    restoreStorage
+    restoreStorage,
+    CascadeLoadingLevel,
+    isLive,
+    WaitPatrolClose,
+    offVideo,
+    role,
+    DefaultView
   };
 },{
   persist:{

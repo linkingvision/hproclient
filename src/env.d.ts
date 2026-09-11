@@ -57,6 +57,10 @@ declare module '@/assets/js/h5splayer.js' {
   export const H5sPlayerRTC: any
 }
 
+declare module '@/assets/js/h5sthumbnail.js'{
+  export const H5sThumbnail : any
+}
+
 declare module '@/assets/js/h5jssdk.js' {
   export const AiDraw: any
   export const H5sPlayerWS2: any

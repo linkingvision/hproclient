@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, reactive } from 'vue'
+import { ref, onMounted, onUnmounted, reactive, nextTick, computed } from 'vue'
 import { useStore } from '../../store'
 import { useSiteInfo } from '../../store/site-info'
 import type { TabsPaneContext } from 'element-plus'
@@ -18,7 +18,7 @@ const siteStore = useSiteInfo();
 
 const activeName = ref('all')
 const filterText = ref<string>('')
-const checkedSites = ref<any>({})
+const checkedSites = computed(()=>siteStore.selectedSite);
 const form = reactive<any>({
     username: '',
     password: '',
@@ -27,13 +27,18 @@ const form = reactive<any>({
 })
 const addform = reactive({
     uuid: '',
-    ip: '',
-    port: '',
+    ip: '192.168.100.1',
+    port: '16445',
     deviceName: '',
+    isHttps:false,
 })
 const addVisible = ref<boolean>(false)
 
 const rememberUsers = ref<any[]>([])
+const updateRememberUsers  = ()=>{
+    const usersStr = localStorage.getItem('users');
+    rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];
+}
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {
     console.log(tab, event)
@@ -53,7 +58,8 @@ const timerRef = ref<NodeJS.Timeout | null>(null);
 
 const clickSite = (row: any) => {
     // console.log('click Site => ', row)
-    checkedSites.value = row
+    // checkedSites.value = row
+    siteStore.setSelectedSite(row);
     const userIndex = rememberUsers.value.findIndex((item: any) => item.ipv4Address == row.ipv4Address)
     if (userIndex !== -1) {
         const pwd = rememberUsers.value[userIndex].password.slice(11);
@@ -61,7 +67,8 @@ const clickSite = (row: any) => {
         form.password = Base64.decode(pwd);
         form.enableHttps = rememberUsers.value[userIndex].enableHttps;
         form.remPwd = rememberUsers.value[userIndex].rememberPwd;
-    } else {
+    }
+     else {
         Object.assign(form, {
             username: '',
             password: '',
@@ -70,34 +77,69 @@ const clickSite = (row: any) => {
         })
     }
 }
+
 const addSite = async () => {
     if (!addform.ip || !addform.port) return;
     let protocol;
-    if (addform.port == '16085') {
-        protocol = 'http:'
-    } else if (addform.port == '16445') {
+    if (addform.isHttps) {
         protocol = 'https:'
     } else {
-        return
+        protocol = 'http:'
     }
     const root = protocol + '//' + addform.ip + ':' + addform.port;
-    const res = await GetSiteApi(root)
-    if (res.status == 200 && res.data.code == 200) {
-        const result = res.data.result;
-        window.ipcRenderer.invoke('add-site-device',{
-            uuid:result.UUID,
-            deviceName:result.DeviceName,
-            ipv4Address:addform.ip,
-            httpPort:String(result.HttpPort),
-            httpsPort:String(result.HttpsPort),
-            softwareVersion:result.SoftwareVersion,
-        });
-        addVisible.value = false;
-        getSiteDevice()
+    try{
+        const res = await GetSiteApi(root)
+        if (res.status == 200 && res.data.code == 200) {
+            const result = res.data.result;
+            window.ipcRenderer.invoke('add-site-device',{
+                uuid:result.UUID,
+                deviceName:result.DeviceName,
+                ipv4Address:addform.ip,
+                enableHttps:addform.isHttps,
+                httpPort:String(result.HttpPort),
+                httpsPort:String(result.HttpsPort),
+                softwareVersion:result.SoftwareVersion,
+            });
+            addVisible.value = false;
+            getSiteDevice();
+        }else{
+            addUnavailiableSite();
+        }
+    }catch(error){
+        console.log('add site failed :',error);
+        addUnavailiableSite();
     }
+
+    addform.ip = '192.168.100.1';
+    addform.port = '16445';
+    addform.isHttps = false;
+        
 }
+
+const addUnavailiableSite = () => {
+    let httpPort = '';
+    let httpPorts = '';
+    if(addform.isHttps){
+        httpPorts = addform.port;
+    }else{
+        httpPort = addform.port;
+    }
+    window.ipcRenderer.invoke('add-site-device',{
+        uuid:'',
+        deviceName:`${addform.ip}:${addform.port}`,
+        ipv4Address:addform.ip,
+        enableHttps:addform.isHttps,
+        httpPort:httpPort,
+        httpsPort:httpPorts,
+        softwareVersion:'',
+        enabled:false,
+    });
+    addVisible.value = false;
+    getSiteDevice();
+}
+
 const delSite = (ip: string) => {
-    checkedSites.value = {};
+    // checkedSites.value = {};
     
     window.ipcRenderer.invoke('delete-site-device', ip).then(() => {
         siteStore.removeSiteDevice(ip);
@@ -156,7 +198,7 @@ const LogIn = async () => {
             if (form.remPwd) {
                 const random = randomWord(11);
                 const encryption = random + Base64.encode(form.password);
-                let userIndex = users.findIndex((item: any) => item.ipv4Address == checkedSites.value.ipv4Address)
+                let userIndex = users.findIndex((item: any) => item.ipv4Address == checkedSites.value?.ipv4Address)
                 const user = {
                     username: form.username,
                     password: encryption,
@@ -170,9 +212,11 @@ const LogIn = async () => {
                     users.push(user)
                 }
                 localStorage.setItem('users', JSON.stringify(users))
+                updateRememberUsers()
             } else {
-                users = users.filter((item: any) => item.ipv4Address != checkedSites.value.ipv4Address)
+                users = users.filter((item: any) => item.ipv4Address != checkedSites.value?.ipv4Address)
                 localStorage.setItem('users', JSON.stringify(users))
+                updateRememberUsers()
             }
 
             window.ipcRenderer.send('open-new-tab', {
@@ -211,8 +255,9 @@ const randomWord = (num:number) => {
 // start timer when component is mounted
 onMounted(async() => {
     // account and password for querying records
-    const usersStr = localStorage.getItem('users');
-    rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];
+    // const usersStr = localStorage.getItem('users');
+    // rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];
+    updateRememberUsers();
 
     const manuals = siteStore.restoreManualDevices();
     for(const device of manuals){
@@ -223,6 +268,8 @@ onMounted(async() => {
             httpPort:device.httpPort,
             httpsPort:device.httpsPort,
             softwareVersion:device.softwareVersion,
+            enableHttps:device.enableHttps ?? false,
+            enabled:device.enabled ?? false
         })
     }
 
@@ -269,26 +316,32 @@ onUnmounted(() => {
                 </el-radio-group>
                 <ul class="sites-list" v-if="activeName == 'all'">
                     <li v-for="item in siteStore.siteDevices?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))"
-                        class="site-item" :class="{'active-item': (item.uuid == checkedSites.uuid), 'isLogin': item.login}"
+                        class="site-item" :class="{'active-item': (item.uuid == checkedSites?.uuid), 'isLogin': item.login}"
                         @click="clickSite(item)">
                         <i class="iconfont icon-shebei"></i>
-                        <span>{{ item.deviceName }}</span>
-                        <i class="iconfont icon-guanbi1 close" @click.stop="delSite(item.ipv4Address)"></i>
+                        <el-tooltip :content="`${item.ipv4Address}:${item.enableHttps? item.httpsPort : item.httpPort}`" placement="top">
+                        <span>{{ item.deviceName }}</span>                        
+                        </el-tooltip>
+                        <i class="iconfont icon-guanbi1 close" @click.stop="delSite(item.ipv4Address)"></i>    
                     </li>
                 </ul>
                 <ul class="sites-list" v-if="activeName == 'available'">
                     <li v-for="item in siteStore.siteDevices?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))"
-                        v-show="item.enabled" class="site-item" :class="{'active-item': (item.uuid == checkedSites.uuid), 'isLogin': item.login}"
+                        v-show="item.enabled" class="site-item" :class="{'active-item': (item.uuid == checkedSites?.uuid), 'isLogin': item.login}"
                         @click="clickSite(item)">
                         <i class="iconfont icon-shebei"></i>
-                        <span>{{ item.deviceName }}</span>
+                        <el-tooltip :content="`${item.ipv4Address}:${item.enableHttps? item.httpsPort : item.httpPort}`" placement="top">
+                            <span>{{ item.deviceName }}</span>
+                        </el-tooltip>
                         <i class="iconfont icon-guanbi1 close" @click.stop="delSite(item.ipv4Address)"></i>
                     </li>
                 </ul>
                 <ul class="sites-list" v-if="activeName == 'unavailable'">
                     <li v-for="item in siteStore.siteDevices?.filter(data => !filterText || data.deviceName.toLowerCase().includes(filterText.toLowerCase()))" v-show="!item.enabled" class="site-item">
                         <i class="iconfont icon-shebei"></i>
+                        <el-tooltip :content="`${item.ipv4Address}:${item.enableHttps? item.httpsPort : item.httpPort}`" placement="top">
                         <span>{{ item.deviceName }}</span>
+                        </el-tooltip>
                         <i class="iconfont icon-guanbi1 close" @click.stop="delSite(item.ipv4Address)"></i>
                     </li>
                 </ul>
@@ -296,10 +349,14 @@ onUnmounted(() => {
             <div class="login-right">
                 <el-form :model="form" label-position="top" style="width: 100%;">
                     <el-form-item label="Username">
-                        <el-input v-model="form.username" placeholder="Username"></el-input>
+                        <el-tooltip content="Please Select Site First" placement="top" :disabled="!!checkedSites?.ipv4Address">
+                           <el-input v-model="form.username" placeholder="Username" :disabled="!checkedSites?.ipv4Address"></el-input> 
+                        </el-tooltip>
                     </el-form-item>
                     <el-form-item label="Password">
-                        <el-input v-model="form.password" type="password" placeholder="Password" show-password></el-input>
+                        <el-tooltip content="Please Select Site First" placement="top" :disabled="!!checkedSites?.ipv4Address">
+                          <el-input v-model="form.password" type="password" placeholder="Password" :disabled="!checkedSites?.ipv4Address" show-password></el-input>  
+                        </el-tooltip>
                     </el-form-item>
                     <!-- <el-form-item></el-form-item> -->
                 </el-form>
@@ -307,7 +364,7 @@ onUnmounted(() => {
                     <el-checkbox v-model="form.enableHttps" label="Enable HTTPS" />
                     <el-checkbox v-model="form.remPwd" label="Remember password" />
                 </div>
-                <el-button class="login-submit" type="primary" @click="LogIn" :disabled="!checkedSites.ipv4Address || checkedSites.login">Log In</el-button>
+                <el-button class="login-submit" type="primary" @click="LogIn" :disabled="!checkedSites?.ipv4Address || checkedSites?.login">Log In</el-button>
             </div>
              <el-dialog v-model="addVisible" title="Add Site" width="340" align-center>
                 <el-form :model="addform" label-position="top">
@@ -317,6 +374,9 @@ onUnmounted(() => {
                     <el-form-item label="Port">
                         <el-input v-model="addform.port"></el-input>
                     </el-form-item>
+                    <div class="checkboxs" style="padding-left: 12px;">
+                        <el-checkbox v-model="addform.isHttps" label="HTTPS" />
+                    </div>
                     <el-form-item class="submit-label" style="margin-top: 50px;">
                         <el-button type="primary" @click="addSite" class="add-site">Add</el-button>
                     </el-form-item>

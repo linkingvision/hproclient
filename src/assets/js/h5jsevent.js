@@ -67,6 +67,9 @@ H5jsEvent.prototype.init = function (conf) {
 		case "/api/v1/ws/anaEvent":
 			this.h5spath = conf.rootpath + conf.apipath + '?session=' + conf.session;
 			break;
+		case "/api/v1/h5slinksimilarity":
+			this.h5spath = conf.rootpath + conf.apipath + '?nodeid=' + conf.nodeid + '&session=' + conf.session;
+			break;
 		default:
 			this.h5spath = conf.rootpath + conf.apipath + '?session=' + conf.session;
 			break;
@@ -144,7 +147,7 @@ H5jsEvent.prototype.colors = function (data) {
 	}
 }
 H5jsEvent.prototype.send = function (data) {
-	console.log("send",data);
+	console.log("send", data);
 	try {
 		this.wsSocket.send(JSON.stringify(data));
 	} catch (e) {
@@ -235,5 +238,5 @@ H5jsEvent.prototype.disconnect = function () {
 		this.wsSocket = null;
 	}
 	if (this._debug === true) console.log("disconnect", this);
-} 
-export {H5jsEvent}
+}
+export { H5jsEvent }

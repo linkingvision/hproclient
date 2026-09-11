@@ -21,14 +21,36 @@ let basicRoutes: RouteRecordRaw[] = [
         name: 'SiteLogin',
         component: () => import('../views/site-login/SiteLogin.vue'),
     }, {
+        path: '/GridView',
+        name: 'GridView',
+        component: () => import('../views/view/GridView.vue'),
+    }, {
+        path: '/GridCloudView',
+        name: 'GridCloudView',
+        component: () => import('../views/view/GridCloudView.vue'),
+    }, {
         path: '/View',
         name: 'View',
         component: () => import('../views/view/View.vue'),
-    },{
-        path:'/Map',
-        name:'Map',
-        component:() => import('../views/map/Map.vue')
-    },{
+    }, {
+        path: '/Map',
+        name: 'Map',
+        component: () => import('../views/map/Map.vue')
+    }, {
+        path: '/ClientConfig',
+        name: 'ClientConfig',
+        redirect: '/ClientConfig/Basic',
+        component: () => import('../views/system/ClientConfig.vue'),
+        children: [{
+            path: '/ClientConfig/Basic',
+            name: 'Basic',
+            component: () => import('../views/system/basic/Basic.vue')
+        }, {
+            path: '/ClientConfig/Joystick',
+            name: 'Joystick',
+            component: () => import('../views/system/joystick/Joystick.vue')
+        }]
+    }, {
         path: '/Sidebar',
         name: 'Sidebar',
         component: () => import('../components/Sidebar.vue'),
@@ -41,6 +63,10 @@ let basicRoutes: RouteRecordRaw[] = [
         name: 'About',
         component: () => import('../components/About.vue'),
     }, {
+        path: '/AnalyticsPlayback',
+        name: 'AnalyticsPlayback',
+        component: () => import('../views/event/AnalyticsPlayback.vue'),
+    }, {
         path: '/Setup',
         name: 'Setup',
         component: () => import('../views/setup/Setup.vue'),
@@ -50,7 +76,7 @@ let basicRoutes: RouteRecordRaw[] = [
             name: 'SetupIndex',
             component: () => import('../views/setup/index.vue')
         }]
-    },{
+    }, {
         path: '/General',
         name: 'Gereral',
         component: () => import('../views/setup/General/Index.vue'),
@@ -106,7 +132,7 @@ let basicRoutes: RouteRecordRaw[] = [
             name: 'AccessControlDevice',
             component: () => import('../views/setup/Device/AccessControlDevice.vue')
         }]
-    },{
+    }, {
         path: '/VideoConfiguration',
         name: 'VideoConfiguration',
         component: () => import('../views/setup/VideoConfig/VideoConfiguration.vue'),
@@ -124,6 +150,28 @@ let basicRoutes: RouteRecordRaw[] = [
             name: 'CameraPoint',
             component: () => import('../views/setup/VideoConfig/CameraPoint.vue')
         }]
+    }, {
+        path: '/Search',
+        name: 'Search',
+        component: () => import('../views/search/Search.vue'),
+        redirect: '/Search/TextSearch',
+        children: [{
+            path: 'TextSearch',
+            name: 'TextSearch',
+            component: () => import("../views/search/TextSearch.vue")
+        }, {
+            path: 'VideoSlice',
+            name: 'VideoSlice',
+            component: () => import("../views/search/VideoSlice.vue")
+        }]
+    }, {
+        path: '/EventSearch',
+        name: 'EventSearch',
+        component: () => import('../views/setup/Event/EventSearch.vue')
+    }, {
+        path: '/SystemLog',
+        name: 'SystemLog',
+        component: () => import('../views/setup/Maintain/SystemLog.vue')
     }
 ]
 

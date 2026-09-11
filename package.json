@@ -1,8 +1,8 @@
 {
   "name": "hproclient",
-  "version": "1.1.0",
+  "version": "2.0.0910",
   "main": "dist/main/index.js",
-  "description": "r1.1.0211.26",
+  "description": "r2.0.0911.26",
   "homepage": "https://github.com/linkingvision/hproclient",
   "author": "linkingvision <z@linkingvision.com>",
   "license": "MIT",

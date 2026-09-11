@@ -6,7 +6,6 @@ import { usePlayStore } from '../store/play';
 import { useStore } from '../store';
 import { GetAccessDeviceV2, GetCascadeHierarchyV2, GetDeviceChannelsV2, GetDevPartitionFilterNodeV2, GetDevPartitionItem, GetDevPartitionListWithPage, GetGroupListV2, GetLogicPartitionListV2, GetMapListV2, GetRoleListV2, GetSysConfigItemV2, GetUserConfigItemV2, PostDeviceChannelsAll } from '../api/map';
 import { DiscoveredDevice } from '../types/site-info';
-import { useSelectedSite } from '../store/sites';
 
 const siteStore = useSiteInfo()
 const playStore = usePlayStore();
@@ -44,7 +43,11 @@ const getDeviceInfo = (): { target: DiscoveredDevice | null; access_token: strin
     if (!devices || devices.length === 0) {
         return { target: null, access_token: '', session: '', root: '', username: '' };
     }
-    const target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
+    let target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
+    if(target && target.login === false){
+      const matched = devices.find(d => d.ipv4Address === target.ipv4Address && d.login === true && d.session);
+      if(matched)target = matched;
+    }
     if (!target) {
         return { target: null, access_token: '', session: '', root: '', username: '' };
     }
@@ -1989,7 +1992,7 @@ function GetDevPartitionFilterNode(filterText: string): Promise<any> {
   })
 }
 
-function GetDeviceChannels(token: string, isDisabledExempt?: boolean, fromPage?: boolean, srcGroup?: any): Promise<any> {
+function GetDeviceChannels(token: string, isDisabledExempt?: boolean, fromPage?: any, srcGroup?: any): Promise<any> {
   return new Promise(resolve => {
     DeviceChannels(token, isDisabledExempt).then((res) => {
       DevicePartitionStreamProfile = [];
@@ -2011,7 +2014,7 @@ function GetDeviceChannelsAll(data: any, isDisabledExempt?: boolean, srcGroup?: 
   })
 }
 
-function GetCascadeHierarchy(token: string, casPartitionId: string, isDisabledExempt?: boolean): Promise<any> {
+function GetCascadeHierarchy(token: string, casPartitionId?: string, isDisabledExempt?: boolean): Promise<any> {
   return new Promise(resolve => {
     CascadeHierarchy(token, casPartitionId).then((res) => {
       CasDevicePartitionStreamProfile = [];

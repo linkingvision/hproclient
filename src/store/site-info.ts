@@ -21,6 +21,20 @@ export const useSiteInfo = defineStore('siteStore', () => {
     }
 
     function mergeSiteDevices(data:Array<DiscoveredDevice>){
+        console.log('=== mergeSiteDevices ===');
+        console.log('传入数据:', data.map(d => ({ ip: d.ipv4Address, session: d.session, login: d.login })));
+        console.log('当前 siteDevices:', siteDevices.value.map(d => ({ ip: d.ipv4Address, session: d.session, login: d.login })));
+        const loginBackup = new Map();
+        siteDevices.value.forEach(d => {
+            if(d.login && d.session){
+                loginBackup.set(d.ipv4Address,{
+                    session:d.session,
+                    access_token:d.access_token,
+                    login:true,
+                    username:d.username
+                })
+            }
+        })
         const map = new Map<string,DiscoveredDevice>();
         data.forEach(d => map.set(d.ipv4Address,{...d}));
 
@@ -39,17 +53,24 @@ export const useSiteInfo = defineStore('siteStore', () => {
 
         siteDevices.value = Array.from(map.values());
 
-        backupManualDevices();
+        siteDevices.value = siteDevices.value.map(d => {
+            const saved = loginBackup.get(d.ipv4Address);
+            if(saved) {
+                return {...d,...saved}
+            }
+            return d;
+        })
 
         if(selectedSite.value){
-            const currentIp = selectedSite.value.ipv4Address;
-            const updated = siteDevices.value.find(d => d.ipv4Address === currentIp);
-            if(updated){
-                selectedSite.value = updated;
+            const matched = siteDevices.value.find(d => d.ipv4Address === selectedSite.value?.ipv4Address);
+            if(matched){
+                selectedSite.value = {...matched};
             }else{
                 selectedSite.value = null;
             }
         }
+
+        backupManualDevices();
     }
 
     function addSiteDevice(device:DiscoveredDevice){
@@ -97,7 +118,7 @@ export const useSiteInfo = defineStore('siteStore', () => {
     function updateSiteName(ip: string, name: string) {
         siteDevices.value = siteDevices.value.map(item => {
             if (item.ipv4Address === ip) {
-                return { ...item, deviceName: name }; // creat new Object
+                return { ...item, deviceName: name }; // create new Object
             }
             return item;
         });

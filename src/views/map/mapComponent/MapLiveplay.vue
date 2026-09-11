@@ -60,6 +60,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { GetAccessDevice, GetCascadeHierarchy, GetDeviceChannels, GetDevPartition } from '../../../utils/DevicesTree';
 import { DiscoveredDevice } from '../../../types/site-info';
+import { getDeviceInfo } from '../../../utils/site';
 import H5smap from '../../../assets/js/h5mapts';
 import h5jssdk from '../../../assets/js/h5jssdk.esm.js';
 import { fromLonLat,toLonLat } from 'ol/proj';
@@ -161,25 +162,6 @@ const computeCellStyle = (cell:any,layoutType:string) => {
     style.border = `${selectedBorderWidth} solid #F44336`;
   }
   return style;
-}
-
-const getDeviceInfo = (): { target: DiscoveredDevice | null; access_token: string; session: string; root: string;} => {
-    const devices = siteStore.siteDevices;
-    if (!devices || devices.length === 0) {
-        return { target: null, access_token: '', session: '', root: '' };
-    }
-    const target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
-    if (!target) {
-        return { target: null, access_token: '', session: '', root: '' };
-    }
-    const protocol = target.enableHttps ? 'https' : 'http';
-    const port = target.enableHttps ? Number(target.httpsPort) : Number(target.httpPort);
-    return {
-        target,
-        access_token: target.access_token || '',
-        session: target.session || '',
-        root: `${protocol}://${target.ipv4Address}:${port}`
-    };
 }
 
 const defaultProps = {
@@ -414,6 +396,10 @@ const GISMap = (data: any, mapInstance: any): Promise<void> => {
     if (data.type === "USC_MAP_TIAN") {
       const getprojection = get("EPSG:4326");
       const projectionExtent = getprojection?.getExtent();
+      if(!projectionExtent){
+        resolve();
+        return;
+      }
       const size = getWidth(projectionExtent) / 256;
       const resolutions = new Array(18);
       const matrixIds = new Array(18);
@@ -515,6 +501,10 @@ const StaticMap = (data:any,mapInstance:any):Promise<void> => {
         }),
       });
       mapInstance.addLayer(staticImageLayer);
+      mapInstance.getView().fit(extent,{
+        padding:[10,10,10,10],
+        nearest:true
+      })
       resolve();
     };
     addScaleLineControl(mapInstance);
@@ -778,7 +768,7 @@ const EventCB = async(data:any) => {
             element:container,
             autoPan:true,
             autoPanAnimation:{duration:250}
-          });
+          }  as any);
           map.value.addOverlay(overlay.value[props.hsid + data.cameraToken]);
           overlay.value[props.hsid + data.cameraToken].setPosition(data.center);
         }
@@ -861,7 +851,7 @@ const EventCB = async(data:any) => {
         element:container,
         autoPan:true,
         autoPanAnimation:{duration:250}
-      });
+      } as any);
       map.value.addOverlay(overlay.value[uniqueId]);
       overlay.value[uniqueId].setPosition(data.center);
     }
@@ -943,7 +933,7 @@ const EventCB = async(data:any) => {
         element:container,
         autoPan:true,
         autoPanAnimation:{duration:250}
-      })
+      } as any)
       map.value.addOverlay(overlay.value[key]);
       overlay.value[key].setPosition(data.center);
     }

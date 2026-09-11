@@ -12,6 +12,7 @@
     "node_modules/**/*",
     "build/icons/**/*"
   ],
+  "afterPack":"./scripts/after-pack.cjs",
   "mac": {
     "icon": "./public/favicon.ico",
     "target": [
@@ -33,7 +34,7 @@
   },
   "nsis": {
     "oneClick": false,
-    "perMachine": true,
+    "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false
   },

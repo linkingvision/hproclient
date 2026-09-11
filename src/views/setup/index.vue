@@ -13,13 +13,17 @@ const site = computed(() => siteStore.getSiteDevice(tempStore.tempIP))
 
 const goPage = (url: string) => {
   // $router.push(url)
+  let baseType;
+  if(url.includes('_')){
+    baseType = url.replace('_','')
+  }
   window.ipcRenderer.send('open-new-tab', {
     data: {
       label: url,
-      key: url + uuid(4),
-      path: "/" + url,
+      key: baseType + uuid(4),
+      path: "/" + baseType,
     },
-    type: url,
+    type: baseType,
     ip: tempStore.tempIP
   })
 }
@@ -44,7 +48,7 @@ onMounted(() => {
               <i class="iconfont icon-icon-test1"></i>
               <span>General</span>
             </div>
-            <div class="box" @click="goPage('StorageSetting')">
+            <div class="box" @click="goPage('Storage_Setting')">
               <i class="iconfont icon-cunchupeizhi"></i>
               <span>Storage Settings</span>
             </div>
@@ -57,13 +61,31 @@ onMounted(() => {
         <div class="setup-item">
           <div class="title">Device</div>
           <div class="boxes">
-            <div class="box" @click="goPage('DeviceManagement')">
+            <div class="box" @click="goPage('Device_Management')">
               <i class="iconfont icon-shebeiguanli"></i>
               <span>Device Management</span>
             </div>
-            <div class="box" @click="goPage('VideoConfiguration')">
+            <div class="box" @click="goPage('Video_Configuration')">
               <i class="iconfont icon-shipinpeizhi"></i>
               <span>Video Configuration</span>
+            </div>
+          </div>
+        </div>
+        <div class="setup-item">
+          <div class="title">Event</div>
+          <div class="boxes">
+            <div class="box" @click="goPage('Event_Search')">
+              <i class="iconfont icon-shijiansousuo"></i>
+              <span>Event Search</span>
+            </div>
+          </div>
+        </div>
+        <div class="setup-item">
+          <div class="title">Maintain</div>
+          <div class="boxes">
+            <div class="box" @click="goPage('System_Log')">
+              <i class="iconfont icon-weihu"></i>
+              <span>System Log</span>
             </div>
           </div>
         </div>

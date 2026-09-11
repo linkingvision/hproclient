@@ -113,8 +113,8 @@ export const SetPresetApi = (root: string, access_token: string, ptzToken: strin
 })
 
 // ptz control
-export const PtzApi = (root: string, access_token: string, ptzToken: string, action: string, speed: number) => http({
-  url: root + '/uapi/v1/Ptz?token=' + ptzToken + '&action=' + action + '&speed=' + speed,
+export const PtzApi = (root: string, access_token: string, data:{ token: string, action: string, speed: number}) => http({
+  url: root + '/uapi/v1/Ptz?token=' + data.token + '&action=' + data.action + '&speed=' + data.speed,
   method: 'GET',
   headers: {
     Authorization: `Bearer ${access_token}`

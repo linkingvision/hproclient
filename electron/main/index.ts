@@ -8,7 +8,12 @@ import { GetDiscoveryClient } from './site-manager/site_client';
 import "./log-config/index"
 import log from 'electron-log';
 import http from '../http';
+import { vedWorker } from './ved-node/ved-worker';
+import { storage } from './storage/storage';
 const DiscoveryClient = GetDiscoveryClient()
+
+const ES = storage;
+let INITVED = false;
 
 // example: print device list every 30 seconds
 setInterval(() => {
@@ -22,7 +27,24 @@ setInterval(() => {
       log.info(`${index + 1}. ${device.deviceName} (${device.ipv4Address}) - has been updated before ${secondsAgo} seconds`);
     });
   }
-}, 30000);
+}, 10000);
+
+vedWorker.on('message',(msg:any)=>{
+  switch(msg.type){
+    case 'getVedPort': 
+      ES.setVedPortHttp(msg.port);
+      const allWindows = BrowserWindow.getAllWindows();
+      allWindows.forEach(win => {
+        win.webContents.send('ved-port-update',msg.port);
+      });
+      break;
+    case 'Init VED finished':
+      INITVED = true;
+      break;
+    default:
+      break;
+  }
+});
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -80,7 +102,7 @@ async function createSidebarWindow(parentWin: BrowserWindow) {
     },
   })
   if (VITE_DEV_SERVER_URL) {
-    // sidebarWin.webContents.openDevTools()
+    sidebarWin.webContents.openDevTools()
     sidebarWin.loadURL(`${VITE_DEV_SERVER_URL}#Sidebar`)
     // Open devTool if the app is not packaged
   } else {
@@ -178,6 +200,12 @@ async function createWindow(childPath: string) {
   }
 
   let mainWin = new BrowserWindow(windowOptions);
+  const handleBuffer = mainWin.getNativeWindowHandle();
+  const windowBuffer = Number(handleBuffer.readBigInt64LE());
+
+  ES.setWindowId(mainWin.id);
+  ES.setWindowBuffer(windowBuffer);
+
   if (VITE_DEV_SERVER_URL) {
     mainWin.webContents.openDevTools()
     mainWin.loadURL(VITE_DEV_SERVER_URL)
@@ -306,16 +334,70 @@ const splashScreen = () => {
   })
   winManager = new WindowPoolManager({ VITE_DEV_SERVER_URL, indexHtml, preload });
   const logoout = () => {
-    createWindow("SiteLogin")
-    logo_win?.close();
+    if(INITVED){
+      clearInterval(timer)
+      createWindow("SiteLogin");
+      logo_win?.close();
+    }
   }
-  setTimeout(logoout, 3000);
+  let timer = setInterval(logoout, 1000);
 
+  setTimeout(()=>{
+    clearInterval(timer);
+    createWindow("SiteLogin");
+    logo_win?.close();
+  },5000);
 };
 
 
+// deal with wpl
+let currentWPLConfig = {
+  recordPath:'',
+  capturePath:'',
+  gpuDecoding:'false',
+  metaRender:'true',
+};
+
+function boradcastWPLConfig(config:any){
+  BrowserWindow.getAllWindows().forEach(win => {
+    if(!win.isDestroyed()){
+      win.webContents.send('wpl-config-updated',config);
+    }
+  });
+}
+
+function registerWPLHandlers(){
+  ipcMain.handle('wpl:save-config',async(_,config)=>{
+    try{
+      const newConfig = {...currentWPLConfig,...config};
+      currentWPLConfig = newConfig;
+      boradcastWPLConfig(newConfig);
+      return {success:true};
+    }catch(error){
+      console.error('[WPL] save config failed : ',error);
+    }
+  });
+
+  ipcMain.handle('wpl:get-config',async()=>{
+    return {...currentWPLConfig};
+  });
+
+  ipcMain.handle('wpl:wait-config',async()=>{
+    let attempts = 0;
+    while(attempts < 30){
+      if(currentWPLConfig.recordPath !== undefined)return {...currentWPLConfig};
+      await new Promise(resolve => setTimeout(resolve,100));
+      attempts++
+    }
+    return {...currentWPLConfig};
+  })
+}
+
 // when Electron finishes initialization and is ready to create browser windows
-app.whenReady().then(splashScreen);
+app.whenReady().then(()=>{
+  registerWPLHandlers();
+  splashScreen();
+});
 
 // when all browser windows are closed
 app.on('window-all-closed', () => {
@@ -382,7 +464,7 @@ ipcMain.on('window-close', function (event) {
 // receive the order of closing tab
 ipcMain.on('window-tabs-close', function (event, id) {
   //close this tab
-  winManager.closeWindow(id);
+  if(winManager)winManager.closeWindow(id);
 })
 //receive sidebar navigation display messages
 ipcMain.on('sidebar-show', function (event, id) {
@@ -425,6 +507,32 @@ ipcMain.on('get-site-device', function (event, uuid) {
       });
     }
   });
+})
+
+ipcMain.handle('get-storage-data', (event) => {
+  const senderWindow = BrowserWindow.fromWebContents(event.sender);
+  if(senderWindow){
+    const handleBuffer = senderWindow.getNativeWindowHandle();
+    const windowBuffer = Number(handleBuffer.readBigInt64LE());
+    const data = ES.get();
+    data.windowId = senderWindow.id;
+    data.windowBuffer = windowBuffer;
+    return data;
+  }
+  return ES.get();
+});
+
+ipcMain.handle('get-wpl-host',async()=>{
+  const port = ES.getVedPortHttp();
+  const host = `127.0.0.1:${port}`;
+  log.info('[GET-WPL-Host] return:',host);
+  return host;
+});
+
+ipcMain.handle('get-current-window-id',(event)=>{
+  const senderWindow = BrowserWindow.fromWebContents(event.sender);
+  const windowId = senderWindow?.id || 0;
+  return windowId;
 })
 
 // save the information when the site has logined
@@ -484,7 +592,7 @@ ipcMain.on('open-new-win', (event, arg) => {
 // add the new tab
 ipcMain.handle('open-win-tabs', (event, arg) => {
   const newWin = winManager?.openWindow().window;
-  newWin.resizable = false;
+  if(newWin)newWin.resizable = false;
   const sender = event.sender;
   // find the clicked BrowserWindow by WebContents
   const senderWindow = BrowserWindow.fromWebContents(sender);
@@ -496,7 +604,7 @@ ipcMain.handle('open-win-tabs', (event, arg) => {
   newWin?.setParentWindow(senderWindow);
   let routerPath = arg.path;
   if (VITE_DEV_SERVER_URL) {
-    // newWin.webContents.openDevTools()
+    newWin?.webContents.openDevTools()
     newWin?.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`)
   } else {
     newWin?.loadFile(indexHtml, { hash: routerPath })
@@ -540,15 +648,18 @@ ipcMain.on('sidebar-switch-tab', async (event, data) => {
   const sender = event.sender;
   //find the current BrowserWindow by WebContents
   const senderWindow = BrowserWindow.fromWebContents(sender);
-  const mainWin = senderWindow.getParentWindow()
-  // mainWinArray.get('header')?.webContents.send('header-switch-tab', data)
-  mainWin?.webContents.send('header-switch-tab', data)
+  if(senderWindow){
+    const mainWin = senderWindow.getParentWindow()
+    // mainWinArray.get('header')?.webContents.send('header-switch-tab', data)
+    mainWin?.webContents.send('header-switch-tab', data)
+  }
+
 })
 
 // open the new Page in current page
 ipcMain.on('open-new-tab', async (event, arg) => {
   const newWin = winManager?.openWindow().window;
-  newWin.resizable = false;
+  if(newWin)newWin.resizable = false;
   const sender = event.sender;
   // find the current BrowserWindow by WebContents
   const senderWindow = BrowserWindow.fromWebContents(sender)?.getParentWindow();
@@ -566,7 +677,7 @@ ipcMain.on('open-new-tab', async (event, arg) => {
   newWin?.setParentWindow(senderWindow);
   let routerPath = arg.data.path;
   if (VITE_DEV_SERVER_URL) {
-    // newWin.webContents.openDevTools()
+    newWin.webContents.openDevTools()
     newWin?.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`)
   } else {
     newWin?.loadFile(indexHtml, { hash: routerPath })
@@ -657,3 +768,88 @@ ipcMain.on('header-about-show', (event) => {
   aboutWin.setPosition(x, y);
   aboutWin.show();
 })
+
+// ===== analytics window =====
+const analyticsInitDataMap = new Map<number,any>();
+
+  // get analytics data
+  ipcMain.handle('get-analytics-init-data',(event)=>{
+    const id = event.sender.id;
+    const data = analyticsInitDataMap.get(id);
+    if(data){
+      analyticsInitDataMap.delete(id);
+      return data;
+    }
+    return null;
+  });
+
+  // open analystics playback window
+  ipcMain.on('open-playback',(event,data)=>{
+     const logData = { ...data };
+  if (logData.img) {
+    logData.img = ''
+  }
+  
+    const parentWindow = BrowserWindow.fromWebContents(event.sender);
+    if(!parentWindow)return;
+    const win = new BrowserWindow({
+      width:1000,
+      height:600,
+      parent: parentWindow || undefined,
+      modal: true,
+      show: false,
+      frame: false,
+      webPreferences: {
+        preload,
+        nodeIntegration: false,
+      }
+    });
+
+    const routerPath = '/AnalyticsPlayback';
+    if(VITE_DEV_SERVER_URL){
+      win.webContents.openDevTools()
+      win.loadURL(`${VITE_DEV_SERVER_URL}#${routerPath}`);
+    }else{
+      win.loadFile(indexHtml,{hash:routerPath});
+    }
+
+    let webContentsId:number | null = null;
+
+    win.webContents.on('did-finish-load',()=>{
+      const handleBuffer = win.getNativeWindowHandle();
+      const windowBuffer = Number(handleBuffer.readBigInt64LE());
+
+      const msg = {
+        ...data,
+        windowId:win.id,
+        windowBuffer,
+      };
+      webContentsId = win.webContents.id;
+      analyticsInitDataMap.set(win.webContents.id,msg);
+      win.show();
+    });
+
+    win.on('closed',()=>{
+      if(webContentsId !== null){
+        analyticsInitDataMap.delete(webContentsId);
+      }
+    });
+  });
+
+  ipcMain.on('find-similar',(event,params)=> {
+  const allWindows = BrowserWindow.getAllWindows();
+  const textSearchWin = allWindows.find(win => {
+    return win.webContents.getURL().includes('/TextSearch');
+  });
+  if(textSearchWin && !textSearchWin.isDestroyed()){
+    textSearchWin.webContents.send('find-similar-data',params);
+  }
+})
+
+  // close Analytics playback window
+  ipcMain.on('close-playback',(event)=>{
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if(win && !win.isDestroyed()){
+      win.close();
+    }
+  })

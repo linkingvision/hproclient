@@ -38,14 +38,26 @@ onUnmounted(() => {
           <i class="iconfont icon-xitong"></i>
           <span>{{ 'View' }}</span>
         </el-menu-item>
+        <el-menu-item index="/GridView" @click="() => gotoPage('gridview')">
+          <i class="iconfont icon-wanggeshitu"></i>
+          <span>{{ 'Grid View' }}</span>
+        </el-menu-item>
+        <el-menu-item index="/GridCloudView" @click="() => gotoPage('gridcloudview')">
+          <i class="iconfont icon-wanggeyunshitu"></i>
+          <span>{{ 'Grid Cloud View' }}</span>
+        </el-menu-item>
         <el-menu-item index="/Map" @click="() => gotoPage('map')">
           <i class="iconfont icon-ditu"></i>
           <span>{{ 'Map' }}</span>
         </el-menu-item>
+        <el-menu-item index="/Search" @click="() => gotoPage('search')">
+          <i class="iconfont icon-sousuoicon"></i>
+          <span>{{ 'Search' }}</span>
+        </el-menu-item>
       </el-menu-item-group>
       <el-menu-item-group title="System">
-        <el-menu-item index="/Config" @click="() => gotoPage('config')">
-          <i class="iconfont icon-icon-test1"></i>
+        <el-menu-item index="/Config" @click="() => gotoPage('clientconfig')">
+          <i class="iconfont icon-General1"></i>
           <span>{{ 'Client Config' }}</span>
         </el-menu-item>
       </el-menu-item-group>

@@ -55,6 +55,7 @@ import { GetAccessDevice, GetCascadeHierarchy, GetDevPartition, GetSysConfig } f
 import { usePlayStore } from "../../store/play";
 import { GetUserItem, GetMapUserDefault, GetMapSystemDefault } from "../../api/map.js";
 import { DiscoveredDevice } from "../../types/site-info.js";
+import { getDeviceInfo } from "../../utils/site.js";
 
 const router = useRouter();
 const {t,locale} = useI18n();
@@ -94,28 +95,6 @@ const treeProps = {
     isLeaf:"isLeaf",
 };
 
-
-
-const getDeviceInfo = (): { target: DiscoveredDevice | null; access_token: string; session: string; root: string; username: string;} => {
-    const devices = siteStore.siteDevices;
-    if (!devices || devices.length === 0) {
-        return { target: null, access_token: '', session: '', root: '', username: '' };
-    }
-    const target = siteStore.selectedSite || devices.find((site: DiscoveredDevice) => site.login === true) || devices[0] || null;
-    if (!target) {
-        return { target: null, access_token: '', session: '', root: '', username: '' };
-    }
-    const protocol = target.enableHttps ? 'https' : 'http';
-    const port = target.enableHttps ? Number(target.httpsPort) : Number(target.httpPort);
-    return {
-        target,
-        access_token: target.access_token || '',
-        session: target.session || '',
-        root: `${protocol}://${target.ipv4Address}:${port}`,
-        username: target.username ? decodeURIComponent(target.username) : ''
-    };
-}
-
 const userList = async() => {
     const { username, access_token, root } = getDeviceInfo();
     const token = siteStore.siteDevices.find(site => site.login === true)?.access_token || siteStore.siteDevices[0]?.access_token || '';
@@ -126,12 +105,8 @@ const userList = async() => {
 };
 
 const UserDefaultMap = async(userId:string) => {
-    console.log('=== UserDefaultMap 开始 ===');
     const { access_token, root } = getDeviceInfo();
-    console.log('UserDefaultMap - root:', root);
-    console.log('UserDefaultMap - access_token:', access_token?.substring(0, 30) + '...');
     const result = await GetMapUserDefault({root,access_token,userId});
-    console.log('UserDefaultMap - result:', result.status, result.data?.code, result.data?.msg);
     const data = result.data?.result;
     if(data && Object.keys(data).length !== 0){
         playStore.SetPlay({
@@ -151,12 +126,8 @@ const UserDefaultMap = async(userId:string) => {
 }
 
 const SystemDefaultMap = async() => {
-    console.log('=== SystemDefaultMap 开始 ===');
     const { access_token, root } = getDeviceInfo();
-    console.log('SystemDefaultMap - root:', root);
-    console.log('SystemDefaultMap - access_token:', access_token?.substring(0, 30) + '...');
     const result = await GetMapSystemDefault({root,access_token});
-    console.log('SystemDefaultMap - result:', result.status, result.data?.code, result.data?.msg);
     const data = result.data?.result;
     if(data && Object.keys(data).length !== 0){
         playStore.SetPlay({
@@ -444,7 +415,6 @@ watch(filterText,(val)=>{
 })
 
 onMounted(async() => {
-    console.log('---------------------onmounted')
     try{
         await GetSysConfig();
     }catch(e){
