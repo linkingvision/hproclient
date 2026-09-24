@@ -51,7 +51,9 @@
           </div>
           <div class="tools">
             <i class="iconfont icon-zuobeisu" @click="backward"></i>
-            <div :class="playbackPlaying ? 'iconfont icon-zantingzhong' : 'iconfont icon-bofangzhong'"
+            <div v-if="client.isMac" :class="playbackPlaying ? 'iconfont icon-zantingzhong' : 'iconfont icon-bofangzhong'"
+              @click="toggleplaybackPause()" class="button_resume"></div>
+            <div v-else :class="playbackPlaying ? 'iconfont icon-bofangzhong' : 'iconfont icon-zantingzhong'"
               @click="toggleplaybackPause()" class="button_resume"></div>
             <i class="iconfont icon-youbeisu" @click="forward"></i>
           </div>
