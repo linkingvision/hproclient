@@ -72,6 +72,8 @@ declare module '*webpluginsdk.esm.js'{
   }
 };
 
+declare module '*.js'
+
 
 interface Window {
   // expose in the `electron/preload/index.ts`

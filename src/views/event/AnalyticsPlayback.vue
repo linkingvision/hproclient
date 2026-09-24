@@ -17,7 +17,7 @@
               :show-controls="false" :show-extral-component="false" @playback-time-update="onPlaybackTimeUpdate"
               @playback-pause="onPlaybcakStateChange" layout-type="WPL_LAYOUT_MODE_1X1"></WPLplayer>
           </div>
-          <div v-else-if="client.isMac">
+          <div v-else-if="client.isMac" style="display: flex;align-items: center;justify-content: center;">
             <Avintercomsplay ref="cellRefs" h5id="h1-1" h5videoid="hvideo1-1" canvasid="canvas1-1"
               :access_token="accessToken" :time="dateValue" :selectedId="selectedCellId" :grid="grid"
               :replayData="replayData" :root="root" :session="session" :MoveTo="false" :MouseMoveFlag="false"
@@ -777,6 +777,9 @@ onBeforeUnmount(() => {
         flex: 1;
         width: 100%;
         height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .timeline {

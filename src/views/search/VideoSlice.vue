@@ -133,7 +133,7 @@
 import { computed, onMounted, reactive, ref, } from 'vue'
 import dayjs from 'dayjs'
 import { GetAccessDevice, GetCascadeHierarchy, GetDeviceChannels, GetDevPartition, GetLogicPartition } from '../../utils/DevicesTree';
-import { H5sThumbnail } from '@/assets/js/h5sthumbnail.js'
+import { H5sThumbnail } from '../../assets/js/h5sthumbnail.js'
 import { ElMessage } from 'element-plus';
 import { GetCasDeviceChannelCount, GetDeviceChannelCount, SearchCentralStorage } from '../../api/search';
 import { usePlayStore } from '../../store/play';

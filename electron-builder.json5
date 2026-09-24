@@ -14,7 +14,7 @@
   ],
   "afterPack":"./scripts/after-pack.cjs",
   "mac": {
-    "icon": "./public/favicon.ico",
+    "icon": "./public/favicon.png",
     "target": [
       "dmg"
     ],

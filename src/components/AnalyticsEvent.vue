@@ -331,7 +331,7 @@ const setAnaEvent = () =>{
   for(const site of loggedInSites){
     const protocol = site.enableHttps ? 'https:' : 'http:'
     const port = site.enableHttps ? Number(site.httpsPort) : Number(site.httpPort);
-    const root = `${protocol}://${site.ipv4Address}:${port}`;
+    const root = `${protocol}//${site.ipv4Address}:${port}`;
     const session = site.session || '';
 
     if(!session) continue;

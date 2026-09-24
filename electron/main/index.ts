@@ -794,7 +794,7 @@ const analyticsInitDataMap = new Map<number,any>();
     if(!parentWindow)return;
     const win = new BrowserWindow({
       width:1000,
-      height:700,
+      height:650,
       parent: parentWindow || undefined,
       modal: true,
       show: false,

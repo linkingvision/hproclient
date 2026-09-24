@@ -36,7 +36,8 @@ declare module '@/assets/js/uplayersdk.esm.js' {
 }
 
 declare module '@/assets/js/uuid.js' {
-  export default uuid; any
+  const uuid : any
+  export default uuid;
 }
 
 declare module '@/assets/js/h5jsevent.js' {
@@ -44,7 +45,8 @@ declare module '@/assets/js/h5jsevent.js' {
 }
 
 declare module '@/assets/js/d3.v7.min.js' {
-  export default d3; any
+  const da : any
+  export default d3;
 }
 
 declare module '@/utils/localRecordingStatus.js' {
