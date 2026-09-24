@@ -96,7 +96,7 @@
 			<div class="liveplay_right">
 				<div class="liveplay_right_top">
 					<!-- v-if="isDataReady" -->
-					<div v-if="client.isLinux || client.isWindows">
+					<div v-if="client.isLinux || client.isWindows" style="width: 100%;height: 100%;">
 						<WPLplayer ref="wplPlayerRef" container-id="wplPlayer" :visible="true"
 							:layout-type="currentWPLLayoutType" :enable-playback="!isLive" @ready="onWPLReady"
 							@window-click="onWPLWindowClick" @fullscreen-exit="onWPLFullscreenExit" @info="onWPLInfo"
