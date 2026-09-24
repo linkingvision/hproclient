@@ -30,11 +30,11 @@
                         <span class="Aside_content_title">Decoder Version :</span>
                         <span>{{ wplVision }}</span>
                     </div>
-                    <div class="wpl-config-item">
+                    <div class="wpl-config-item" v-if="Configstore.isMac">
                         <span class="Aside_content_title">Metadata Rendering</span>
                         <el-switch v-model="metaData"></el-switch>
                     </div>
-                    <div class="wpl-config-item">
+                    <div class="wpl-config-item" v-if="Configstore.isMac">
                         <span class="Aside_content_title">Aspect Ratio</span>
                         <el-switch v-model="aspectRatio"></el-switch>
                     </div>

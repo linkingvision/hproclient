@@ -12,7 +12,7 @@
           <span>End Time:{{ endtime }}</span>
         </div>
         <div class="wplPlayer">
-          <div v-if="(client.isLinux || client.isWindows) && wplPlayerRef">
+          <div v-if="(client.isLinux || client.isWindows)" style="width: 100%;height: 100%;">
             <WPLplayer ref="wplPlayerRef" container-id="wplPlayer" :visible="true" :enable-playback="true"
               :show-controls="false" :show-extral-component="false" @playback-time-update="onPlaybackTimeUpdate"
               @playback-pause="onPlaybcakStateChange" layout-type="WPL_LAYOUT_MODE_1X1"></WPLplayer>

@@ -550,7 +550,7 @@ const updateDateSort = (data: string) => {
 }
 
 const clickImg = (data: any) => {
-  const {root} = getDeviceInfo();
+  const {root,session} = getDeviceInfo();
   const currentTime = new Date(data.time);
   const Before = new Date(currentTime.getTime() - 5 * 1000);
   const After = new Date(currentTime.getTime() + 30 * 1000);
@@ -565,7 +565,8 @@ const clickImg = (data: any) => {
     token: data.token || '',
     cls: data.cls || '',
     type: 'TextSearch',
-    root:root
+    root:root,
+    session:session,
   })
 }
 
@@ -640,6 +641,8 @@ const searchPlaybackCB = async (event: any) => {
       newMsg.strThumbnailTime = item.time;
       newMsg.strToken = item.token;
       newMsg.NodeId = v1.value._conf.nodeid;
+      newMsg.session = session;
+      newMsg.root = root;
       imgObj.value.push(newMsg);
     }
   }

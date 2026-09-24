@@ -557,11 +557,14 @@ const formatWithTimezoneOffset = (date: any) => {
 }
 
 const clickImg = (data: any) => {
+  const {session,root} = getDeviceInfo();
   window.ipcRenderer.send('open-playback',{
     img:data.img,
     channelName:data.channelName,
     time:data.strTime,
     token:data.strToken,
+    session:session,
+    root:root,
   })
 }
 
