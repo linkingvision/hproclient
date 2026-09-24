@@ -12,9 +12,24 @@
           <span>End Time:{{ endtime }}</span>
         </div>
         <div class="wplPlayer">
-          <WPLplayer ref="wplPlayerRef" container-id="wplPlayer" :visible="true" :enable-playback="true"
-            :show-controls="false" :show-extral-component="false" @playback-time-update="onPlaybackTimeUpdate"
-            @playback-pause="onPlaybcakStateChange" layout-type="WPL_LAYOUT_MODE_1X1"></WPLplayer>
+          <div v-if="(client.isLinux || client.isWindows) && wplPlayerRef">
+            <WPLplayer ref="wplPlayerRef" container-id="wplPlayer" :visible="true" :enable-playback="true"
+              :show-controls="false" :show-extral-component="false" @playback-time-update="onPlaybackTimeUpdate"
+              @playback-pause="onPlaybcakStateChange" layout-type="WPL_LAYOUT_MODE_1X1"></WPLplayer>
+          </div>
+          <div v-else-if="client.isMac">
+            <Avintercomsplay ref="cellRefs" h5id="h1-1" h5videoid="hvideo1-1" canvasid="canvas1-1"
+              :access_token="accessToken" :time="dateValue" :selectedId="selectedCellId" :grid="grid"
+              :replayData="replayData" :root="root" :session="session" :MoveTo="false" :MouseMoveFlag="false"
+              :zoomHourGrid="12" :offReplayVideo="''" :seekTime="seekTime" :play-command="playCommand"
+              :replay-trigger="replayTrigger" :speed-command="speedCommand" :volume-command="volumeCommand"
+              :fullscreen-icon="fullscreenIcon" hide-controls @pb-time="onPbTime" @record-list="onRecordList"
+              @update-grid-icon="onUpdateGridIcon" @close-token='onCloseToken' @fullscreen="panelFullScreen"
+              @update-playing="onUpdatePlaying" @register-handler="onRegisterHandler"
+              @unregister-handler="onUnregisterHandler" @update-channel-token="onUpdateChannelToken">
+            </Avintercomsplay>
+          </div>
+
         </div>
         <div class="timeline">
           <canvas id="timeline"></canvas>
@@ -36,7 +51,7 @@
           </div>
           <div class="tools">
             <i class="iconfont icon-zuobeisu" @click="backward"></i>
-            <div :class="playbackPlaying ? 'iconfont icon-bofangzhong' : 'iconfont icon-zantingzhong'"
+            <div :class="playbackPlaying ? 'iconfont icon-zantingzhong' : 'iconfont icon-bofangzhong'"
               @click="toggleplaybackPause()" class="button_resume"></div>
             <i class="iconfont icon-youbeisu" @click="forward"></i>
           </div>
@@ -115,13 +130,16 @@
 import { useI18n } from 'vue-i18n';
 import { ref, onMounted, onBeforeUnmount, nextTick, watch, reactive } from 'vue';
 import WPLplayer from '../../components/WPLplayer.vue';
+import Avintercomsplay from '../view/Avintercomsplay.vue';
 import { formatToDateTime } from '../../utils/dateUtil.js';
 import { TimeSlider } from '../../assets/js/timeline-canvas.js'
+import { useClientConfig } from '../../store/client.js';
 
 const props = defineProps({
   dialogBack: { type: Object, required: true }
 })
 
+const client = useClientConfig();
 const ES = ref<any>(null)
 const wplPlayerRef = ref<InstanceType<typeof WPLplayer> | null>(null);
 const playbackData = ref<any>(null);
@@ -170,12 +188,27 @@ const selectDate = reactive([
   },
 ])
 
+//WS2
+const grid = ref<any[]>([{ id: '1-1', rowStart: 1, rowEnd: 2, colStart: 1, colEnd: 2, merged: false }]);
+const selectedCellId = ref('1-1');
+const replayData = ref<any>(null);
+const playCommand = ref<any>(null);
+const accessToken = ref('');
+const seekTime = ref<number | null>(null);
+const replayTrigger = ref<any>(null);
+const speedCommand = ref<any>(null);
+const volumeCommand = ref<any>(null);
+const fullscreenIcon = ref('icon-fangda');
+const cellRefs = ref<any>(null);
+let h5Handler: any = null;
+
+
 
 onMounted(async () => {
   if (!ES.value) {
     ES.value = await window.ipcRenderer.invoke('get-storage-data');
   }
-  
+
 
   if (!ES.value.windowBuffer) {
     await new Promise<void>((resolve) => {
@@ -196,8 +229,6 @@ onMounted(async () => {
     ES.value.windowBuffer = data.windowBuffer;
     ES.value.windowId = data.windowId;
   }
-  console.log('-----------img',data.img)
-  console.log('-----------img',data.type)
   timeSelect.value = selectDate[0].label;
   initPlayback(data);
 })
@@ -221,6 +252,33 @@ const initPlayback = (data: any) => {
   session.value = data.session || '';
 
   currentTime.value = formatToDateTime(time.value);
+
+  if (client.isMac) {
+    const queryStartTime = new Date(initDate);
+    queryStartTime.setDate(queryStartTime.getDate() - 1);
+    queryStartTime.setHours(0, 0, 0, 0);
+    const queryEndTime = new Date(initDate);
+    initTimeline(queryStartTime, initDate);
+    if(token.value){
+      fetchTimelineData(token.value,queryStartTime,queryEndTime);
+      setTimeout(() => refreshWPLRecordCalendar(token.value),300);
+    }
+
+    accessToken.value = data.accessToken || '';
+    replayData.value = {
+      token: token.value,
+      vid: 'h1-1',
+      channelName: channelName.value,
+      streamprofile: 'main',
+      begintime: startDate.toISOString(),
+      endtime: endDate.toISOString(),
+      movetotime: initDate.toISOString(),
+    }
+    if(token.value){
+      setTimeout(() => refreshWPLRecordCalendar(token.value),300);
+    }
+    return;
+  }
 
   setTimeout(() => {
     if (wplPlayerRef.value && token.value) {
@@ -262,6 +320,11 @@ const initTimeline = (begintime: Date, currentTime?: Date) => {
   const canvas = document.getElementById('timeline') as HTMLCanvasElement;
   if (!canvas) return;
 
+  if (timeSlider.value) {
+    timeSlider.value.clearLine?.();
+    timeSlider.value = null;
+  }
+
   const container = canvas.parentElement;
   if (container) {
     canvas.width = container.clientWidth || 600;
@@ -276,6 +339,10 @@ const initTimeline = (begintime: Date, currentTime?: Date) => {
     begintime: begintime.getTime(),
     mousedown: () => { },
     mouseup: (time: number) => {
+      if (client.isMac) {
+        cellRefs.value?.moveto?.(new Date(time));
+        return;
+      }
       if (wplPlayerRef.value) {
         const player = wplPlayerRef.value as any;
         const targetTime = new Date(time).toISOString();
@@ -363,30 +430,37 @@ const onPlaybackTimeUpdate = (data: any) => {
 }
 
 const forward = () => {
-  if (!wplPlayerRef.value) return;
-  const player = wplPlayerRef.value as any;
   const currentTimeStr = currentTime.value;
   if (!currentTimeStr) return;
 
   const currentTimeMs = new Date(currentTimeStr).getTime();
   if (isNaN(currentTimeMs)) return;
 
-  const targetTime = new Date(currentTimeMs + 5000).toISOString();
-  player.moveto?.(0, targetTime);
+  const targetTime = new Date(currentTimeMs + 5000);
+  if (client.isMac) {
+    cellRefs.value?.moveto?.(targetTime);
+    return;
+  }
+  if (!wplPlayerRef.value) return;
+  const player = wplPlayerRef.value as any;
+  player.moveto?.(0, targetTime.toISOString());
 };
 
 const backward = () => {
+  const currentTimeStr = currentTime.value;
+  if (!currentTimeStr) return;
+  const currentTimeMs = new Date(currentTimeStr).getTime();
+  if (isNaN(currentTimeMs)) return;
+  const targetTime = new Date(currentTimeMs - 5000);
+
+  if (client.isMac) {
+    cellRefs.value?.moveto?.(targetTime);
+    return;
+  }
   if (!wplPlayerRef.value) return;
   const player = wplPlayerRef.value as any;
 
-  const currentTimeStr = currentTime.value;
-  if (!currentTimeStr) return;
-
-  const currentTimeMs = new Date(currentTimeStr).getTime();
-  if (isNaN(currentTimeMs)) return;
-
-  const targetTime = new Date(currentTimeMs - 5000).toISOString();
-  player.moveto?.(0, targetTime);
+  player.moveto?.(0, targetTime.toISOString());
 }
 
 const onPlaybcakStateChange = (data: any) => {
@@ -400,6 +474,15 @@ const onPlaybcakStateChange = (data: any) => {
 }
 
 const toggleplaybackPause = () => {
+  if (client.isMac) {
+    if (playbackPlaying.value) {
+      cellRefs.value?.pause?.();
+    } else {
+      cellRefs.value?.resume?.();
+    }
+    playbackPlaying.value = !playbackPlaying.value;
+    return;
+  }
   if (!wplPlayerRef.value) return;
   wplPlayerRef.value.togglePlaybackPause();
   playbackPlaying.value = !playbackPlaying.value;
@@ -446,6 +529,9 @@ const findSimilar = () => {
 }
 
 const closeWindow = () => {
+  if (client.isMac) {
+    cellRefs.value?.softCloseForLayout?.();
+  }
   if (wplPlayerRef.value) {
     wplPlayerRef.value.stopAll();
   }
@@ -505,16 +591,25 @@ const toggleShowCalendar = () => {
 }
 
 const refreshWPLRecordCalendar = (token: string) => {
-  if (!token || !wplPlayerRef.value) return;
+  if (client.isLinux || client.isWindows) {
+    if (!token || !wplPlayerRef.value) return;
 
-  const defaultStorage = (wplPlayerRef.value as any)?.DefaultStorage;
+    const defaultStorage = (wplPlayerRef.value as any)?.DefaultStorage;
 
-  if (defaultStorage !== 'CentralStorage') {
-    wplCustomDateArr.value = [];
-    calendarKey.value++;
-    return;
+    if (defaultStorage !== 'CentralStorage') {
+      wplCustomDateArr.value = [];
+      calendarKey.value++;
+      return;
+    }
+  }else if(client.isMac){
+    if(!token)return;
+    const defaultStorage = localStorage.getItem('DefaultStorage') || 'CentralStorage';
+    if(defaultStorage !== 'CentralStorage'){
+      wplCustomDateArr.value = [];
+      calendarKey.value++;
+      return;
+    }
   }
-
   const currentYear = dateValue.value.getFullYear();
   const currentMonth = dateValue.value.getMonth() + 1;
 
@@ -572,6 +667,60 @@ const refreshWPLRecordCalendar = (token: string) => {
     console.error(error);
   });
 }
+
+const onPbTime = (time: number, h5id: string) => {
+  if (h5id !== 'h1-1') return;
+  currentTime.value = formatToDateTime(new Date(time).toISOString());
+  updateTimePosition(time);
+}
+
+const onRecordList = (timedata: any[]) => {
+  updateTimeline(timedata)
+}
+
+const onUpdateGridIcon = () => { }
+const onCloseToken = () => { }
+
+const onUpdatePlaying = (cellId: string, v: boolean) => {
+  playbackPlaying.value = v;
+}
+
+const onRegisterHandler = (h5id: string, handler: any) => {
+  h5Handler = handler;
+}
+
+const onUnregisterHandler = () => {
+  h5Handler = null;
+}
+
+const panelFullScreen = () => { }
+
+const onUpdateChannelToken = () => { }
+
+watch(dateValue, (newVal, oldVal) => {
+  if (!newVal) return;
+  if (oldVal && newVal.getTime() === oldVal.getTime()) return;
+  if (!token.value) return;
+  if (client.isMac) {
+    const dayStart = new Date(newVal);
+    dayStart.setDate(dayStart.getDate() - 1);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(newVal);
+    dayEnd.setHours(23, 59, 59, 999);
+    replayData.value = {
+      token: token.value,
+      vid: 'h1-1',
+      channelName: channelName.value,
+      streamprofile: 'main',
+      begintime: dayStart.toISOString(),
+      endtime: dayEnd.toISOString(),
+      movetotime: dayStart.toISOString(),
+    };
+    initTimeline(dayStart, dayStart);
+    fetchTimelineData(token.value,dayStart,dayEnd);
+    refreshWPLRecordCalendar(token.value);
+  }
+})
 
 onBeforeUnmount(() => {
   if (timeSlider.value) {

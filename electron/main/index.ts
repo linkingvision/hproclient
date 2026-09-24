@@ -80,11 +80,11 @@ let mainWinArray: Map<number, BrowserWindow> = new Map<number, BrowserWindow>();
 const preload = path.join(__dirname, '../preload/index.mjs');
 const indexHtml = path.join(RENDERER_DIST, 'index.html');
 
-//win.hide()再使用win.show()会引起窗口闪烁问题
+
 app.commandLine.appendSwitch('wm-window-animations-disabled');
 app.commandLine.appendSwitch('ignore-certificate-errors');
 
-//侧边栏
+
 async function createSidebarWindow(parentWin: BrowserWindow) {
   let sidebarWin = new BrowserWindow({
     title: "Hpro client sidebar",
@@ -794,7 +794,7 @@ const analyticsInitDataMap = new Map<number,any>();
     if(!parentWindow)return;
     const win = new BrowserWindow({
       width:1000,
-      height:600,
+      height:700,
       parent: parentWindow || undefined,
       modal: true,
       show: false,
@@ -851,5 +851,13 @@ const analyticsInitDataMap = new Map<number,any>();
     const win = BrowserWindow.fromWebContents(event.sender);
     if(win && !win.isDestroyed()){
       win.close();
+    }
+  })
+
+  ipcMain.handle('get-platform',()=>{
+    return {
+      platform:process.platform,
+      arch:process.arch,
+      version:process.getSystemVersion?.()
     }
   })

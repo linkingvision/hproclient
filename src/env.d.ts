@@ -69,3 +69,24 @@ declare module '@/assets/js/h5jssdk.js' {
 declare module '@/assets/js/h5splayerhelper.js' {
   export const H5siOS: any
 }
+
+declare module '@/utils/drawBroad.js'{
+  export const RectangleSelector:any
+  export const initRectangleSelector:any
+  export const enableRectangleSelector:any
+  export const disableRectangleSelector:any
+  export const destroyRectangleSelector:any
+  export const updateRectangleSelectorSize:any
+}
+
+export {}
+declare global {
+  interface Window {
+    systemAPI:{
+      getPlatform: () => Promise<{
+        platform:string
+        arch:string
+      }>
+    }
+  }
+}

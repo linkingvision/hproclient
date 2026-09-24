@@ -12,9 +12,11 @@ import { Base64 } from 'js-base64';
 import { LoginApi, GetSiteApi, LoginSessionApi } from '../../api/login';
 import { ElMessage } from 'element-plus';
 import uuid from '@/assets/js/uuid.js';
+import { useClientConfig } from '../../store/client';
 
 const store = useStore()
 const siteStore = useSiteInfo();
+const client = useClientConfig();
 
 const activeName = ref('all')
 const filterText = ref<string>('')
@@ -254,6 +256,7 @@ const randomWord = (num:number) => {
 }
 // start timer when component is mounted
 onMounted(async() => {
+    client.systemPlatform();
     // account and password for querying records
     // const usersStr = localStorage.getItem('users');
     // rememberUsers.value = usersStr ? JSON.parse(usersStr) : [];

@@ -25,6 +25,10 @@ export const usePlayStore = defineStore('playStore',()=>{
   const offVideo = ref<string>('');
   const role = ref<string>('Administrator');
   const DefaultView = ref<string>('4');
+  const RBufferTime = ref(0);
+  const H264CpuDecode = ref('false');
+  const aspectRatio = ref(false);
+  const ws2MetaData = ref(false);
 
   const liveplay = computed(() => ({
     token: token.value || null,
@@ -88,7 +92,11 @@ export const usePlayStore = defineStore('playStore',()=>{
     WaitPatrolClose,
     offVideo,
     role,
-    DefaultView
+    DefaultView,
+    RBufferTime,
+    H264CpuDecode,
+    aspectRatio,
+    ws2MetaData,
   };
 },{
   persist:{
@@ -96,7 +104,7 @@ export const usePlayStore = defineStore('playStore',()=>{
     storage:localStorage,
     pick:['token','streamprofile','name','label','mapName','vid','resourceUUid','entityType','MapData','EnableDevPartitionLazyLoading',
       'devicemarktoggle','passwordLength','PartitionLoadDeviceOnly','EnableDevPartitionLazyLoading','EnableDevPartitionShowDeviceNode',
-      'EnablePartitionTreeCacheSearch','PlaybackShowStorageMode','mapCluster',
+      'EnablePartitionTreeCacheSearch','PlaybackShowStorageMode','mapCluster','aspectRatio','ws2MetaData',
     ]
   }
 })

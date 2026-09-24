@@ -916,8 +916,8 @@ const EventCB = async(data:any) => {
     <div id="${key}" class="ol-popup2" style="width:112px;height:32px;min-height:31px;border-radius:4px">
       <div id="popup-content" class="popup-content" style=height:100%>
         <div class="Map_Popup_content" style="height:100%;display:flex;justify-content:space-around;align-items:center;text-align:center;line-height:32px;font-size:10px">
-          <div id="${key}-openDoor" class="openDoor" style="width:unset;padding:0 20px;height:32px;background:#DAF0FF;border-radius:4px 0px 0px 4px;color:#0399FE;cursor:pointer;white-space:nowrap;">开门</div>
-          <div id="${key}-closeDoor" class="closeDoor" style="width:unset;padding:0 20px;height:32px;background:#FFE9DA;border-radius:0px 4px 4px 0px;color:#FA6400;cursor:pointer;white-space:nowrap;">关门</div>
+          <div id="${key}-openDoor" class="openDoor" style="width:unset;padding:0 20px;height:32px;background:#DAF0FF;border-radius:4px 0px 0px 4px;color:#0399FE;cursor:pointer;white-space:nowrap;">open door</div>
+          <div id="${key}-closeDoor" class="closeDoor" style="width:unset;padding:0 20px;height:32px;background:#FFE9DA;border-radius:0px 4px 4px 0px;color:#FA6400;cursor:pointer;white-space:nowrap;">close door</div>
         </div>
       </div>
     </div>

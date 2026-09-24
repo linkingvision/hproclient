@@ -189,7 +189,6 @@ const getAnaListPage = async () => {
               const person = faceList.find((p:any)=>p.id === strEntity);
               strEntity = person ? person.personName:'';
             }
-            console.log('[getAnaListPage] Inside map - root:', root, 'session:', session);
             return {
               anaName: item.anaName || item.strAnaName || '',
               channelName: item.channelName || item.strChannelName || '',
@@ -215,13 +214,6 @@ const getAnaListPage = async () => {
       }
     }
     allEvents.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-
-    console.log('[getAnaListPage] Total events:', allEvents.length);
-    if (allEvents.length > 0) {
-      console.log('[getAnaListPage] Final first event:', allEvents[0]);
-      console.log('[getAnaListPage] Final first event root:', allEvents[0].root);
-      console.log('[getAnaListPage] Final first event session:', allEvents[0].session);
-    }
 
     tableData.value = allEvents;
     total.value = tableData.value.length;
@@ -337,14 +329,13 @@ const setAnaEvent = () =>{
     return;
   }
   for(const site of loggedInSites){
-    const protocol = site.enableHttps ? 'https' : 'http'
+    const protocol = site.enableHttps ? 'https:' : 'http:'
     const port = site.enableHttps ? Number(site.httpsPort) : Number(site.httpPort);
     const root = `${protocol}://${site.ipv4Address}:${port}`;
     const session = site.session || '';
 
     if(!session) continue;
 
-    console.log('websocket connection',{root,session});
     try{
       if (typeof H5jsEvent === 'undefined' || !H5jsEvent) continue;
 
@@ -355,7 +346,7 @@ const setAnaEvent = () =>{
         protocol:protocol,
         host:host,
         rootpath:'/',
-        apipath:'uapi/v1/ws/anaEvent',
+        apipath:'/uapi/v1/ws/anaEvent',
         pbconf:pbconf,
         userdata:null,
         session:session,
@@ -466,17 +457,6 @@ const formatTime = (time: string) => {
 
 const handleImageClick = (item: AnalyticsEvent,index:number) => {
   popoverVisibleList.value[index] = false;
-  console.log('[AnalyticsPanel] Sending to open-playback:', {
-    channelName: item.channelName,
-    channelToken: item.channelToken,
-    targetType: item.targetType,
-    img: item.img ? 'present' : 'empty',
-    trackId: item.trackid,
-    time: item.time,
-    token: item.channelToken,
-    root: item.root,
-    session: item.session,
-  });
   window.ipcRenderer.send('open-playback', {
     channelName: item.channelName,
     channelToken: item.channelToken,

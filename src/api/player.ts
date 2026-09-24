@@ -49,7 +49,7 @@ export const SearchCentralStorage = (root:string,access_token:string,token:strin
 })
 
 export const SearchDeviceStorage = (root:string,access_token:string,token:string,start:any,end:any) => http({
-  url:`${root}/api/v1/SearchDeviceRecordByTime?token=${token}&start=${start}&end=${end}&maxlen=86400`,
+  url:`${root}/uapi/v1/SearchDeviceRecordByTime?token=${token}&start=${start}&end=${end}&maxlen=86400`,
   method:'GET',
   headers:{
     Authorization:`Bearer ${access_token}`
@@ -163,6 +163,71 @@ export const GetChannels = (root:string,access_token:string,data: object) => htt
 
 export const GetDevPartitionList = (root:string,access_token:string) => http({
   url:`${root}/uapi/v1/DevPartition/List?type=USC_DEVICE`,
+  method:'GET',
+  headers:{
+    Authorization:`Bearer ${access_token}`
+  }
+})
+
+export const GetInfomation = (root:string,access_token:string,token:string,stream:string) => http({
+  url:`${root}/uapi/v1/GetVidStreamStatus?token=${token}&stream=${stream}`,
+  method:'GET',
+  headers:{
+    Authorization:`Bearer ${access_token}`
+  }
+})
+
+export const ManualRecord = (root:string,access_token:string,data:any) => http({
+  url:`${root}/uapi/v1/ManualRecEnable`,
+  method:'PUT',
+  data:data,
+  headers:{
+    Authorization:`Bearer ${access_token}`
+  }
+})
+
+export const PTZAction = (root:string,access_token:string,token:string,action:string,speed:number) => http({
+  url:`${root}/uapi/v1/Ptz?token=${token}&action=${action}&speed=${speed}}`,
+  method:'GET',
+  headers:{
+    Authorization:`Bearer ${access_token}`
+  }
+})
+
+export const PTZPreset = (root:string,access_token:string,token:string) => http({
+  url:`${root}/uapi/v1/GetPresets?token=${token}`,
+  method:'GET',
+  headers:{
+    Authorization:`Bearer ${access_token}`
+  }
+})
+
+export const PTZJump = (root:string,access_token:string,token:string,preToken:string,speed:number) => http({
+  url:`${root}/uapi/v1/Ptz?token=${token}&action=preset&preset=${preToken}&speed=${speed}`,
+  method:'GET',
+  headers:{
+    Authorization:`Bearer ${access_token}`
+  }
+})
+
+export const PTZSet = (root:string,access_token:string,token:string,name:string,setToken:string) => http({
+  url:`${root}/uapi/v1/SetPreset?token=${token}&presetname=${name}&presettoken=${setToken}`,
+  method:'GET',
+  headers:{
+    Authorization:`Bearer ${access_token}`,
+  }
+})
+
+export const GetViews = (root:string,access_token:string,viewId:number) => http({
+  url:`${root}/uapi/v1/View/${viewId}`,
+  method:"GET",
+  headers:{
+    Authorization:`Bearer ${access_token}`
+  }
+})
+
+export const PTZSelZoomIn = (root:string,access_token:string,session:string,token:string,speed:number,topx:number,topy:number,bottomx:number,bottomy:number)=> http({
+  url:`${root}/uapi/v1/Ptz?token=${token}&action=selzoomin&speed=${speed}&session=${session}&topx=${topx}&topy=${topy}&bottomx=${bottomx}&bottomy=${bottomy}`,
   method:'GET',
   headers:{
     Authorization:`Bearer ${access_token}`

@@ -100,6 +100,10 @@ function useLoading() {
   }
 }
 
+contextBridge.exposeInMainWorld('systemAPI',{
+  getPlatform:() => ipcRenderer.invoke('get-platform')
+})
+
 // ----------------------------------------------------------------------
 
 const { appendLoading, removeLoading } = useLoading()

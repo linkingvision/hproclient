@@ -6,6 +6,27 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "36559012",
+      "name": "垃圾桶",
+      "font_class": "lajitong",
+      "unicode": "e7d3",
+      "unicode_decimal": 59347
+    },
+    {
+      "icon_id": "37513838",
+      "name": "放大",
+      "font_class": "dianzifangda",
+      "unicode": "e7f5",
+      "unicode_decimal": 59381
+    },
+    {
+      "icon_id": "1092133",
+      "name": "电子放大",
+      "font_class": "quyufangda",
+      "unicode": "e624",
+      "unicode_decimal": 58916
+    },
+    {
       "icon_id": "40678826",
       "name": "搜索icon",
       "font_class": "sousuoicon",
