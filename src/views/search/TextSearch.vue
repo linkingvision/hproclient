@@ -964,9 +964,12 @@ onBeforeUnmount(() => {
 
       .search_center_item {
         text-align: center;
-        height: 15px;
-        .el-progress__text{
-
+        height: 150px;
+        .search_center_item_img{
+          height: 150px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
       }
 
